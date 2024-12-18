@@ -55,3 +55,11 @@ export type INavLink = {
     setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
     checkAuthUser: () => Promise<boolean>;
   };
+
+  export type Song {
+    songId: string;
+    title: string;
+    album: string;
+    coverUrl: string;
+    created_at: string;
+  }

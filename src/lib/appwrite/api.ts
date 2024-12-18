@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite';
 
-import { INewUser } from "@/types";
+import { INewUser, Song } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
 export async function createUserAccount(user: INewUser) {
@@ -87,5 +87,26 @@ export async function signOutAccount() {
         return session;
     } catch (error) {
         console.log(error);
+    }
+}
+
+
+
+export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
+    try {
+        const response = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.songsCollectionID,
+            [
+                Query.limit(limit),
+                Query.offset((page - 1) * limit),
+                Query.orderAsc("created_at"),
+            ]
+        );
+        return response.documents as unknown as Song[];
+    }
+    catch (error) {
+        console.log(error);
+        return []
     }
 }

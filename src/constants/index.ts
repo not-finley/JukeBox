@@ -28,6 +28,16 @@ export const sidebarLinks = [
       label: "Home",
     },
     {
+      imgURL: "/assets/icons/search.svg",
+      route: "/search",
+      label: "Search",
+    },
+    {
+      imgURL: "/assets/icons/add.svg",
+      route: "/add",
+      label: "Add",
+    },
+    {
       imgURL: "/assets/icons/vinyl.svg",
       route: "/songs",
       label: "Songs",

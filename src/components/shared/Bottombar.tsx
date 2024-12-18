@@ -17,7 +17,7 @@ const Bottombar = () => {
                   src={link.imgURL}
                   className={`${isActive && 'invert-white'}`}
                 />
-                <p className="tiny-medium text-light-2">{link.label}</p>
+                {/* <p className="tiny-medium text-light-2">{link.label}</p> */}
               </Link>
             )
           })}

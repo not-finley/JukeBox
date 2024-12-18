@@ -8,6 +8,8 @@ import SigninForm from './_auth/forms/SigninForm';
 import SignupForm from './_auth/forms/SignupForm';
 import { Home, Songs, Library, AllUsers, Profile, UpdateProfile, SongDetails, AddReview } from './_root/pages';
 import { Toaster } from "@/components/ui/toaster"
+import Search from './_root/pages/Search';
+import Add from './_root/pages/Add';
 
 
 const App = () => {
@@ -29,6 +31,8 @@ const App = () => {
                 <Route path="/update-profile/:id" element={<UpdateProfile />}/>
                 <Route path="/song/:id" element={<SongDetails />}/>
                 <Route path="/song/:id/add-review" element={<AddReview />}/>
+                <Route path="/search" element={<Search  />}/>
+                <Route path="/add" element={<Add  />}/>
             </Route>
         </Routes>
         <Toaster />
