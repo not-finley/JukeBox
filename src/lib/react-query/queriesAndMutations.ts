@@ -1,5 +1,4 @@
 import {
-    useQuery, 
     useMutation
 } from '@tanstack/react-query'
 import { createUserAccount, signInAccount, signOutAccount } from '../appwrite/api'
