@@ -56,7 +56,7 @@ export type INavLink = {
     checkAuthUser: () => Promise<boolean>;
   };
 
-  export type Song {
+  export type Song = {
     songId: string;
     title: string;
     album: string;
