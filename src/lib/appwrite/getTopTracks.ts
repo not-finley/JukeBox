@@ -34,13 +34,13 @@ export const populateSongs = async () => {
             const songData = {
                 songId: track.mbid || track.url.split("/").pop(),
                 title: track.name,
-                album: null,
+                album: '',
                 coverUrl: track.image?.pop()?.["#text"] || "",
                 created_at: new Date().toISOString(),
             }
 
             try {
-                const result = await addsong(songData);
+                await addsong(songData);
                 console.log(`✅ Added song: ${songData.title}`);
             } catch (err) {
                 console.log(`❌ failed to add song: ${songData.title}`);
