@@ -1,11 +1,10 @@
 
-import Loader from "@/components/shared/loader";
-import { useLocation, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 
 const SongDetails = () => {
   const { id } = useParams();
   console.log(id);
-  const { pathname } = useLocation();
+  //const { pathname } = useLocation();
 
 
   // const { data: currentSong } = useGetSongById(id || "");

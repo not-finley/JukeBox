@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite';
 
-import { AppwriteSong, INewUser, Song, SpotifyTrack } from "@/types";
+import { INewUser, Song } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
 export async function createUserAccount(user: INewUser) {
