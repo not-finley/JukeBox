@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { fetchSongs } from "@/lib/appwrite/api";
 import { Song } from "@/types";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 const Songs = () => {
   const [song, setSongs] = useState<Song[]>([]);
@@ -30,10 +31,12 @@ const Songs = () => {
             <h1>Top Songs</h1>
             <div className="song-grid">
                 {song.map((s) => (
-                    <div className="song-card" key={s.songId}>
-                        <img src={s.coverUrl} alt={s.title} className="song-image" />
+                    <Link to={`/song/${s.songId}`}>
+                      <div className="song-card" key={s.songId}>
+                        <img src={s.album_cover_url} alt={s.title} className="song-image" />
                         <p className="song-title">{s.title} - {s.album}</p>
-                    </div>
+                      </div>
+                    </Link>
                 ))}
             </div>
 

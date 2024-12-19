@@ -182,6 +182,7 @@
 }
 
 /* Responsive behavior for medium screens (3 columns) */
+
 @media (min-width: 768px) {
     .song-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -191,7 +192,7 @@
 /* Responsive behavior for large screens (3 columns) */
 @media (min-width: 1200px) {
     .song-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 

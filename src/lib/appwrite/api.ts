@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite';
 
-import { INewUser, Song } from "@/types";
+import { AppwriteSong, INewUser, Song, SpotifyTrack } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
 export async function createUserAccount(user: INewUser) {
@@ -90,7 +90,45 @@ export async function signOutAccount() {
     }
 }
 
+// export async function addsong(song : SpotifyTrack) {
+//     const formattedSong: AppwriteSong = {
+//         songId: song.id,
+//         title: song.name,
+//         album: song.album.name,
+//         coverUrl: song.album.images[0]?.url || '',
+//         created_at: new Date().toISOString(),
+//         artist: song.artists.map((artist) => artist.name).join(', '),
+//     };
+//     try {
+//         await databases.createDocument(
+//             appwriteConfig.databaseId,
+//             appwriteConfig.songsCollectionID,
+//             ID.unique(),
+//             formattedSong
+//         )
+//         console.log(`Added song: ${formattedSong.title}`)
+//     } catch (error) {
+//         console.log(error);
+//         return error;
+//     }
+// }
 
+
+// export async function getSongById(songId: string) {
+//     try {
+//         const song = await databases.getDocument(
+//             appwriteConfig.databaseId,
+//             appwriteConfig.songsCollectionID,
+//             songId
+//         );
+
+//         if (!song) throw Error;
+
+//         return song;
+//     } catch (error) {
+//         console.log(error);
+//     }
+// }
 
 export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
     try {

@@ -1,6 +1,11 @@
+
 const Home = () => {
   return (
-    <div>Home</div>
+    <div>Home
+      {/* <button onClick={populateSongs}>
+        Populate
+      </button> */}
+    </div>
   )
 }
 
