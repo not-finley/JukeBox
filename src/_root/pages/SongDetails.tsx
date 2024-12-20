@@ -1,5 +1,5 @@
 import { Song } from "@/types";
-import { Link, useLocation, useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { getSongById } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
 import Loader from "@/components/shared/loader";
