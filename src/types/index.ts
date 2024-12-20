@@ -62,24 +62,7 @@ export type INavLink = {
     album: string;
     spotify_url: string;
     album_cover_url: string;
-    created_at: string;
+    release_date: string,
+    popularity: number
   }
-
-  export type SpotifyTrack = {
-    id: string;
-    name: string;
-    album: {
-        name: string;
-        images: { url: string }[];
-    };
-    artists: { name: string }[];
-  }
-
-  export type AppwriteSong = {
-    songId: string;
-    title: string;
-    album: string;
-    coverUrl: string;
-    created_at: string;
-    artist: string;
-  }
+ 

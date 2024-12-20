@@ -90,45 +90,38 @@ export async function signOutAccount() {
     }
 }
 
-// export async function addsong(song : SpotifyTrack) {
-//     const formattedSong: AppwriteSong = {
-//         songId: song.id,
-//         title: song.name,
-//         album: song.album.name,
-//         coverUrl: song.album.images[0]?.url || '',
-//         created_at: new Date().toISOString(),
-//         artist: song.artists.map((artist) => artist.name).join(', '),
-//     };
-//     try {
-//         await databases.createDocument(
-//             appwriteConfig.databaseId,
-//             appwriteConfig.songsCollectionID,
-//             ID.unique(),
-//             formattedSong
-//         )
-//         console.log(`Added song: ${formattedSong.title}`)
-//     } catch (error) {
-//         console.log(error);
-//         return error;
-//     }
-// }
 
 
-// export async function getSongById(songId: string) {
-//     try {
-//         const song = await databases.getDocument(
-//             appwriteConfig.databaseId,
-//             appwriteConfig.songsCollectionID,
-//             songId
-//         );
+export async function getSongById(songId: string): Promise<Song | null> {
+    try {
+        const songData = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.songsCollectionID,
+            songId
+        );
 
-//         if (!song) throw Error;
+        if (!songData) {
+            throw new Error('Song not found');
+        }
 
-//         return song;
-//     } catch (error) {
-//         console.log(error);
-//     }
-// }
+        // Validate or map the returned songData to a Song type
+        const song: Song = {
+            songId: songData.songId,
+            title: songData.title,
+            album: songData.album,
+            release_date: songData.release_date,
+            spotify_url: songData.spotify_url,
+            album_cover_url: songData.album_cover_url,
+            popularity: songData.popularity
+            // Add all required fields as per your Song interface
+        };
+
+        return song;
+    } catch (error) {
+        console.error('Failed to fetch song:', error);
+        return null;
+    }
+}
 
 export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
     try {
@@ -138,7 +131,7 @@ export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
             [
                 Query.limit(limit),
                 Query.offset((page - 1) * limit),
-                Query.orderAsc("release_date"),
+                Query.orderDesc("release_date"),
             ]
         );
         return response.documents as unknown as Song[];

@@ -28,13 +28,13 @@ const Songs = () => {
   
   return (
     <div className="song-container">
-            <h1>Top Songs</h1>
+            <h1 className="text-4xl font-bold">Songs</h1>
             <div className="song-grid">
                 {song.map((s) => (
                     <Link to={`/song/${s.songId}`}>
                       <div className="song-card" key={s.songId}>
                         <img src={s.album_cover_url} alt={s.title} className="song-image" />
-                        <p className="song-title">{s.title} - {s.album}</p>
+                        <p className="song-title">{s.title}</p>
                       </div>
                     </Link>
                 ))}

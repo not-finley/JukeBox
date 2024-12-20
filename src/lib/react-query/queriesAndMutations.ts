@@ -1,8 +1,10 @@
 import {
-    useMutation
+    useMutation,
+    useQuery
 } from '@tanstack/react-query'
 import { createUserAccount, signInAccount, signOutAccount } from '../appwrite/api'
 import { INewUser } from '@/types'
+import { QUERY_KEYS } from './queryKeys'
 
 export const useCreateUserAccount = () => {
     return useMutation({
@@ -27,3 +29,9 @@ export const useSignOutAccount = () => {
 //         queryKey: [QUERY_KEYS.GET_RECENT_SONGS]
 //     })
 // }
+
+export const useGetSongById = (songId: string) => {
+    return useQuery({
+        queryKey: [QUERY_KEYS.GET_SONG_BY_ID]
+    })
+}
