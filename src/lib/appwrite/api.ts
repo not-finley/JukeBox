@@ -138,7 +138,7 @@ export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
             [
                 Query.limit(limit),
                 Query.offset((page - 1) * limit),
-                Query.orderAsc("created_at"),
+                Query.orderAsc("release_date"),
             ]
         );
         return response.documents as unknown as Song[];
