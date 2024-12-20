@@ -30,7 +30,7 @@ export const useSignOutAccount = () => {
 //     })
 // }
 
-export const useGetSongById = (songId: string) => {
+export const useGetSongById = () => {
     return useQuery({
         queryKey: [QUERY_KEYS.GET_SONG_BY_ID]
     })

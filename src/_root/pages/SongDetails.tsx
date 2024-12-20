@@ -8,7 +8,6 @@ import { useUserContext } from "@/context/AuthContext";
 
 const SongDetails = () => {
   const { id } = useParams();
-  const { pathname } = useLocation();
   const [song, setSong] = useState<Song | null>(null);
   const { user } = useUserContext();
 
