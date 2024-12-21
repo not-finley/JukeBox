@@ -10,11 +10,14 @@ import { Home, Songs, Library, AllUsers, Profile, UpdateProfile, SongDetails, Ad
 import { Toaster } from "@/components/ui/toaster"
 import Search from './_root/pages/Search';
 import Add from './_root/pages/Add';
-
+import { Helmet } from 'react-helmet';
 
 const App = () => {
   return (
     <main className="flex h-screen">
+        <Helmet>
+          <meta name="description" content="A place to review and share your music!"></meta>
+        </Helmet>
         <Routes>
             {/* public routes */}
             <Route element={<AuthLayout />}>
