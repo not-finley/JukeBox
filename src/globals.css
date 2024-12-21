@@ -319,7 +319,7 @@
   }
 
   .shad-button_dark_4 {
-    @apply h-12 bg-dark-4 px-5 text-light-1 flex gap-2 !important;
+    @apply h-12 bg-dark-4 hover:bg-emerald-900 px-5 text-light-1 flex gap-2 !important;
   }
 
   .shad-button_ghost {

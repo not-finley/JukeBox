@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import { getSongById } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
 import Loader from "@/components/shared/loader";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useUserContext } from "@/context/AuthContext";
 
 const SongDetails = () => {
@@ -27,6 +27,9 @@ const SongDetails = () => {
       </div>
     )
   }
+
+  var listened = true;
+
   return (
     <div className="common-container">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
@@ -37,6 +40,31 @@ const SongDetails = () => {
             alt="Album Cover"
             className="rounded-lg shadow-lg"
           />
+          <div className="flex gap-2 mt-2">
+            <Button className="shad-button_primary w-1/2"> 
+              <div className="flex-col flex-center">
+                <img
+                  width={25}
+                  src={listened? '/assets/icons/headphones-filled.svg' : '/assets/icons/headphones.svg'}
+                />
+                <p className="tiny-medium text-black">{listened? 'remove' : 'Listened'}</p> 
+              </div>
+            </Button>
+          
+            <Link className={`${buttonVariants({ variant: "default" })} shad-button_primary w-1/2`}
+              to={`/song/${song.songId}/add-review`}
+              key="add-review" 
+            >
+              <div className="flex-col flex-center">
+                <img
+                  width={25}
+                  src='/assets/icons/pen-nib.svg'
+                />
+                <p className="tiny-medium text-black">Review</p> 
+              </div>
+            </Link>
+         
+          </div>
         </div>
 
         {/* Right Section: Details */}
@@ -56,15 +84,13 @@ const SongDetails = () => {
               <span className="text-gray-400 text-sm">(none)</span>
             </div>
           </div>
-
-          <p>Popularity: {song.popularity}</p>
-
+    
           {/* Where to Listen*/}
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Where to Listen</h2>
             <div className="space-y-2">
               <Button className="shad-button_primary">
-                <a href={song.spotify_url} target="_blank">Spotify</a>
+                <a href={song.spotify_url} target="_blank" className="text-black">Spotify</a>
               </Button>
             </div>
           </div>
