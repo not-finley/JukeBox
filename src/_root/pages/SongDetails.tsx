@@ -1,20 +1,27 @@
-import { Song } from "@/types";
+import { Review, Song } from "@/types";
 import { Link, useParams } from "react-router-dom"
-import { getSongById } from "@/lib/appwrite/api";
+import { fetchReviews, getSongById } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
 import Loader from "@/components/shared/loader";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useUserContext } from "@/context/AuthContext";
 
 const SongDetails = () => {
   const { id } = useParams();
   const [song, setSong] = useState<Song | null>(null);
-  const { user } = useUserContext();
-
+  const [reviews, setReviews] = useState<Review[]>([]);
   useEffect(() => {
     const fetchSong = async () => {
       const fetchedSong = await getSongById(id || "");
       setSong(fetchedSong); // fetchedSong can be null, so it stays consistent
+      try {
+        if (id) {
+          const reviews = await fetchReviews(id);
+          setReviews(reviews);
+        }
+      }
+      catch(error) {
+        console.log(error)
+      }
     };
 
     fetchSong();
@@ -97,32 +104,18 @@ const SongDetails = () => {
 
           {/* Reviews */}
           <div>
-            <div className="flex space-x-4 border-b border-gray-700 pb-2 mb-4">
-              Popular reviews
-            </div>
-              <div className="review-container">
-                <img
-                  src={user.imageUrl}
-                  className="h-10 w-10 rounded-full mr-5"
-                />
-                <div>
-                  <p>Reviwed by  <Link to="/" className="underline">User</Link></p>
-                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam tincidunt molestie lorem ac pharetra. Nulla lectus mauris, cursus eu lacus.</p>
+            {reviews.map((r) => (
+                  <div className="review-container">
+                    {/* <img
+                      src={r.creator.imageUrl}
+                      className="h-10 w-10 rounded-full mr-5"
+                    /> */}
+                  <div>
+                    <p>Reviewd by  <Link to={`/profile/${r.creator}`} className="underline">r.creator</Link></p>
+                    <p>{r.text}</p>
+                  </div>
                 </div>
-              </div>
-            <div className="flex space-x-4 border-b border-gray-700 pb-2 mb-4">
-              Recent Reviews
-            </div>
-            <div className="review-container">
-                <img
-                  src={user.imageUrl}
-                  className="h-10 w-10 rounded-full mr-5"
-                />
-                <div>
-                  <p>Reviwed by  <Link to="/" className="underline">User</Link></p>
-                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam tincidunt molestie lorem ac pharetra. Nulla lectus mauris, cursus eu lacus.</p>
-                </div>
-              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite';
 
-import { INewUser, Song } from "@/types";
+import { INewUser, Review, Song } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
 export async function createUserAccount(user: INewUser) {
@@ -135,6 +135,46 @@ export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
             ]
         );
         return response.documents as unknown as Song[];
+    }
+    catch (error) {
+        console.log(error);
+        return []
+    }
+}
+
+
+export async function addReview(songId : string, userId : string, reviewText : string) {
+    try {
+      const review = await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.reviewsCollectionID,
+        ID.unique(), // Auto-generate a unique document ID
+        {
+          song: songId, // Reference to the song
+          creator: userId, // User submitting the review
+          text: reviewText, // Review text
+        }
+      );
+  
+      return review;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  }
+
+
+  export async function fetchReviews(songId : string, limit = 20): Promise<Review[]> {
+    try {
+        const response = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.reviewsCollectionID,
+            [
+                Query.equal('song', songId),
+                Query.limit(limit),
+            ]
+        );
+        return response.documents as unknown as Review[];
     }
     catch (error) {
         console.log(error);

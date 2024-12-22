@@ -65,4 +65,11 @@ export type INavLink = {
     release_date: string,
     popularity: number
   }
+
+  export type Review = {
+    text : string;
+    creator : string;
+    song: string;
+    likes: string[];
+  }
  
