@@ -18,7 +18,7 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 
 ### Frontend:
 - **React**: A JavaScript library for building user interfaces.
-- **Bootstrap**: Ensures responsive and visually appealing design.
+- **TailWind CSS**: Ensures responsive and visually appealing design.
 
 ### Backend:
 - **Appwrite**: Manages database and user authentication.
@@ -93,12 +93,6 @@ We welcome contributions! Please follow these steps:
 2. Create a new branch (`feature/your-feature-name`).
 3. Commit your changes and push to your branch.
 4. Open a pull request.
-
----
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for more information.
 
 ---
 
