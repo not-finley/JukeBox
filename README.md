@@ -68,6 +68,7 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 2. **Discover Music:** Search for tracks and albums directly via the Spotify API.
 3. **Write Reviews:** Post your thoughts, rate music, and engage with other users.
 4. **Personalized Recommendations:** Explore music tailored to your preferences.
+5. **Social Features:** Follow your friends or other accounts and get updated on their activity.
 
 ---
 
@@ -81,10 +82,8 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 
 ## Roadmap
 
-- **Playlist Sharing:** Allow users to create and share playlists.
-- **Advanced Analytics:** Provide insights into user listening trends.
-- **Social Features:** Add the ability to follow other users and see their reviews.
-- **Dark Mode:** Enhance the UI with a dark theme option.
+- **Playlist Sharing:** Allow users to create and share playlists, and import exsiting ones from spotify.
+- **Advanced Analytics:** Provide insights into user listening trends. (Like Spotify wrapped but year round)
 
 ---
 
