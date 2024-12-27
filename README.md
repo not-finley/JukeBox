@@ -57,10 +57,8 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 
 4. Start the development server:
    ```bash
-   npm start
+   npm run dev
    ```
-
-   The application will run on `http://localhost:3000` by default.
 
 ---
 
