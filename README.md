@@ -109,4 +109,4 @@ We welcome contributions! Please follow these steps:
 For questions or feedback, feel free to reach out:
 - **Email:** [fharriso@uwaterloo.ca](mailto:fharriso@uwaterloo.ca)
 - **GitHub:** [not-finley](https://github.com/not-finley)
-- **LinkedIn:** [Finley Harrison](https://www.linkedin.com/in/finley-harrison-14a242311/)
+- **LinkedIn:** [Finley Harrison](https://www.linkedin.com/in/finley-harrison-163b16291/)
