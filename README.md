@@ -1,50 +1,118 @@
-# React + TypeScript + Vite
+# JukeBox
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+JukeBox is a social media platform designed for music lovers to share, rate, and discover music. Built using modern web development frameworks, JukeBox integrates the Spotify API to enhance music discovery and provides a seamless, user-friendly experience.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Dynamic Music Reviews:** Users can post reviews, rate albums, and interact with others' opinions.
+- **Spotify Integration:** Search and explore music directly from Spotify's extensive library.
+- **User Authentication:** Secure login and account management through Appwrite.
+- **Personalized Recommendations:** Algorithms suggest music based on user preferences and interactions.
+- **Responsive Design:** Optimized for desktop and mobile for an enhanced user experience.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+---
 
-- Configure the top-level `parserOptions` property like this:
+## Tech Stack
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+### Frontend:
+- **React**: A JavaScript library for building user interfaces.
+- **Bootstrap**: Ensures responsive and visually appealing design.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### Backend:
+- **Appwrite**: Manages database and user authentication.
+- **Spotify API**: Powers music search and discovery features.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+---
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## Installation
+
+### Prerequisites:
+1. Node.js and npm installed.
+2. An Appwrite instance set up.
+3. Spotify API credentials (client ID and secret).
+
+### Steps:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/not-finley/jukebox.git
+   cd jukebox
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables:
+   Create a `.env` file in the root directory with the following:
+   ```env
+   REACT_APP_SPOTIFY_CLIENT_ID=your_spotify_client_id
+   REACT_APP_SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+   REACT_APP_APPWRITE_ENDPOINT=your_appwrite_endpoint
+   REACT_APP_APPWRITE_PROJECT_ID=your_appwrite_project_id
+   ```
+
+4. Start the development server:
+   ```bash
+   npm start
+   ```
+
+   The application will run on `http://localhost:3000` by default.
+
+---
+
+## Usage
+
+1. **Sign Up/Login:** Create an account or log in securely using the Appwrite authentication system.
+2. **Discover Music:** Search for tracks and albums directly via the Spotify API.
+3. **Write Reviews:** Post your thoughts, rate music, and engage with other users.
+4. **Personalized Recommendations:** Explore music tailored to your preferences.
+
+---
+
+## Screenshots
+
+
+## Roadmap
+
+- **Playlist Sharing:** Allow users to create and share playlists.
+- **Advanced Analytics:** Provide insights into user listening trends.
+- **Social Features:** Add the ability to follow other users and see their reviews.
+- **Dark Mode:** Enhance the UI with a dark theme option.
+
+---
+
+## Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch (`feature/your-feature-name`).
+3. Commit your changes and push to your branch.
+4. Open a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for more information.
+
+---
+
+## Acknowledgments
+
+- [Spotify API](https://developer.spotify.com/documentation/web-api/)
+- [Appwrite](https://appwrite.io/)
+- [React](https://reactjs.org/)
+
+---
+
+## Contact
+
+For questions or feedback, feel free to reach out:
+- **Email:** [fharriso@uwaterloo.ca](mailto:fharriso@uwaterloo.ca)
+- **GitHub:** [not-finley](https://github.com/not-finley)
+- **LinkedIn:** [Finley Harrison](https://www.linkedin.com/in/finley-harrison-14a242311/)
