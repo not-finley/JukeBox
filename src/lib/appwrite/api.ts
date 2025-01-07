@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite';
 
-import { INewUser, IUser, Review, Song, SongDeatils } from "@/types";
+import { INewUser, IUser, Review, Song, SongDetails } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
 export async function createUserAccount(user: INewUser) {
@@ -125,7 +125,6 @@ export async function getSongById(songId: string): Promise<Song | null> {
 
 export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
     try {
-        console.log("a")
         const response = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.songsCollectionID,
@@ -135,7 +134,6 @@ export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
                 Query.orderAsc("title")
             ]
         );
-        console.log("here")
         return response.documents as unknown as Song[];
     }
     catch (error) {
@@ -221,7 +219,7 @@ export async function getUserById(userId: string): Promise<IUser | null> {
     }
 }
 
-export async function getSongDetailsById(songId: string): Promise<SongDeatils | null> {
+export async function getSongDetailsById(songId: string): Promise<SongDetails | null> {
     try {
         const songData = await databases.getDocument(
             appwriteConfig.databaseId,
@@ -234,7 +232,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDeatils | 
         }
 
         // Validate or map the returned songData to a Song type
-        const song: SongDeatils = {
+        const song: SongDetails = {
             songId: songData.songId,
             title: songData.title,
             album: songData.album,

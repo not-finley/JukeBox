@@ -9,11 +9,11 @@ export const sidebarLinks = [
       route: "/search",
       label: "Search",
     },
-    {
-      imgURL: "/assets/icons/add.svg",
-      route: "/add",
-      label: "Add",
-    },
+    // {
+    //   imgURL: "/assets/icons/add.svg",
+    //   route: "/add",
+    //   label: "Add",
+    // },
     {
       imgURL: "/assets/icons/vinyl.svg",
       route: "/songs",
@@ -37,11 +37,11 @@ export const sidebarLinks = [
       route: "/search",
       label: "Search",
     },
-    {
-      imgURL: "/assets/icons/add.svg",
-      route: "/add",
-      label: "Add",
-    },
+    // {
+    //   imgURL: "/assets/icons/add.svg",
+    //   route: "/add",
+    //   label: "Add",
+    // },
     {
       imgURL: "/assets/icons/vinyl.svg",
       route: "/songs",

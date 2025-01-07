@@ -6,11 +6,11 @@ import AuthLayout from './_auth/AuthLayout';
 import RootLayout from './_root/RootLayout';
 import SigninForm from './_auth/forms/SigninForm';
 import SignupForm from './_auth/forms/SignupForm';
-import { Home, Songs, Library, AllUsers, Profile, UpdateProfile, SongDetails, AddReview } from './_root/pages';
+import { Home, Songs, Library, AllUsers, Profile, UpdateProfile, AddReview } from './_root/pages';
 import { Toaster } from "@/components/ui/toaster"
 import Search from './_root/pages/Search';
-import Add from './_root/pages/Add';
 import { Helmet } from 'react-helmet';
+import SongDetailsSection from './_root/pages/SongDetails';
 
 const App = () => {
   return (
@@ -32,10 +32,9 @@ const App = () => {
                 <Route path="/all-users" element={<AllUsers />}/>
                 <Route path="/profile/:id/*" element={<Profile />}/>
                 <Route path="/update-profile/:id" element={<UpdateProfile />}/>
-                <Route path="/song/:id" element={<SongDetails />}/>
+                <Route path="/song/:id" element={<SongDetailsSection />}/>
                 <Route path="/song/:id/add-review" element={<AddReview />}/>
                 <Route path="/search" element={<Search  />}/>
-                <Route path="/add" element={<Add  />}/>
             </Route>
         </Routes>
         <Toaster />

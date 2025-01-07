@@ -96,3 +96,34 @@ export async function searchSongsInSpotify(query: string, token: string) {
         return [];
     }
 }
+
+export async function SpotifyById(songId: string, token: string) {
+    try {
+        const response = await fetch(
+            `${SPOTIFY_API_BASE_URL}/tracks/${songId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        const data = await response.json();
+        if (data) {
+            const track = data;
+            
+            return {
+                title: track.name,
+                album_cover_url: track.album.images[0]?.url || "",
+                songId: track.id,
+                spotify_url: track.external_urls.spotify,
+                album: track.album.name,
+                release_date: track.album.release_date,
+                popularity: track.popularity
+            };    
+        }
+        return null
+    } catch (error) {
+        console.error("Error searching song in Spotify:", error);
+        return null
+    }
+}

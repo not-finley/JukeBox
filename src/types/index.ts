@@ -72,7 +72,7 @@ export type INavLink = {
     rating: number
   }
 
-  export type SongDeatils = {
+  export type SongDetails = {
     songId: string;
     title: string;
     album: string;

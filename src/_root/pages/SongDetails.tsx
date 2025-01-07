@@ -1,24 +1,29 @@
-import { SongDeatils } from "@/types";
+import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
-import { getSongDetailsById } from "@/lib/appwrite/api";
+import { addSongToDatabase, getSongDetailsById } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
+import { getSpotifyToken, SpotifyById } from "@/lib/appwrite/spotify";
 
-const SongDetails = () => {
+const SongDetailsSection = () => {
   const { id } = useParams();
-  const [song, setSong] = useState<SongDeatils | null>(null);
+  const [song, setSong] = useState<SongDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [songNotFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const fetchSongAndReviews = async () => {
       try {
         const fetchedSong = await getSongDetailsById(id || "");
-        setSong(fetchedSong);
+        if (!fetchedSong) {
+          await getSong(); // Only call getSong if the song is not in the database
+        } else {
+          setSong(fetchedSong);
+        }
       } catch (error) {
         console.error("Error fetching song or reviews:", error);
       } finally {
-        song?.review.sort((b, a) => a.createdAt - b.createdAt)
         setLoading(false);
       }
     };
@@ -34,12 +39,31 @@ const SongDetails = () => {
     );
   }
 
+  const getSong = async () => {
+    try {
+      const spotifyToken: string = await getSpotifyToken();
+      const spotifySong = await SpotifyById(id? id : "", spotifyToken);
+      if (!spotifySong) {
+        return;
+      }
+      await addSongToDatabase(spotifySong);
+      const fetchedSong = await getSongDetailsById(id || "");
+      setSong(fetchedSong);
+    } 
+    catch (error) {
+      setNotFound(true);
+    }
+  }
   if (!song) {
-    return (
-      <div className="common-container">
-        <p>Song not found.</p>
-      </div>
-    );
+    /*add to database if exists in spotify*/
+    getSong();
+    if(songNotFound) {
+      return (
+        <div className="common-container">
+         <p>Song not found</p>
+        </div>
+      )
+    }
   }
 
   var listened = true;
@@ -50,7 +74,7 @@ const SongDetails = () => {
         {/* Left Section: Album Cover */}
         <div className="lg:w-1/3 flex-shrink-0 mb-8 lg:mb-0">
           <img
-            src={song.album_cover_url}
+            src={song?.album_cover_url}
             alt="Album Cover"
             className="rounded-lg shadow-lg"
           />
@@ -66,7 +90,7 @@ const SongDetails = () => {
             </Button>
 
             <Link className={`${buttonVariants({ variant: "default" })} shad-button_primary w-1/2`}
-              to={`/song/${song.songId}/add-review`}
+              to={`/song/${song?.songId}/add-review`}
               key="add-review"
             >
               <div className="flex-col flex-center">
@@ -83,10 +107,10 @@ const SongDetails = () => {
         {/* Right Section: Details */}
         <div className="lg:w-2/3 lg:ml-8">
           <h1 className="lg:text-4xl md:text-2xl sm:text-3xl xs:text-2xl mb-4">
-            <p className="font-bold">{song.title}</p> {song.album}
+            <p className="font-bold">{song?.title}</p> {song?.album}
           </h1>
           <p className="text-lg text-gray-400 mb-4">
-            <span>{song.release_date.slice(0, 4)}</span> | By <span className="text-white"></span>
+            <span>{song?.release_date.slice(0, 4)}</span> | By <span className="text-white"></span>
           </p>
 
           {/* Ratings */}
@@ -105,7 +129,7 @@ const SongDetails = () => {
             <h2 className="text-xl font-semibold mb-2">Where to Listen</h2>
             <div className="space-y-2">
               <Button className="shad-button_primary">
-                <a href={song.spotify_url} target="_blank" className="text-black">Spotify</a>
+                <a href={song?.spotify_url} target="_blank" className="text-black">Spotify</a>
               </Button>
             </div>
           </div>
@@ -113,7 +137,7 @@ const SongDetails = () => {
           {/* Reviews */}
           <div>
             <ul>
-              {song.review.map((r) => (
+              {song?.review.map((r) => (
                 <li key={r.reviewId} className="review-container flex items-start gap-4 mb-6">
                   <img
                     src={r.creator.imageUrl}
@@ -136,4 +160,4 @@ const SongDetails = () => {
   );
 };
 
-export default SongDetails;
+export default SongDetailsSection;
