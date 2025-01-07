@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getSpotifyToken, searchSongsInSpotify } from "@/lib/appwrite/spotify";
 import { Song } from "@/types";
+import { useState } from "react";
 
 const Search = () => {
   // const [query, setQuery] = useState<string>(""); // Query input state
