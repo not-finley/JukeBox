@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 
 export const INITIAL_USER = {
-    id: '',
+    accountId: '',
     name: '',
     username: '',
     email: '',
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (currentAccount) {
                 setUser({
-                    id: currentAccount.$id,
+                    accountId: currentAccount.$id,
                     name: currentAccount.name,
                     username: currentAccount.username,
                     email: currentAccount.email,

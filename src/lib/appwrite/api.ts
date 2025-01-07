@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite';
 
-import { INewUser, Review, Song } from "@/types";
+import { INewUser, IUser, Review, Song, SongDeatils } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
 export async function createUserAccount(user: INewUser) {
@@ -125,15 +125,17 @@ export async function getSongById(songId: string): Promise<Song | null> {
 
 export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
     try {
+        console.log("a")
         const response = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.songsCollectionID,
             [
                 Query.limit(limit),
                 Query.offset((page - 1) * limit),
-                Query.orderDesc("release_date"),
+                Query.orderAsc("title")
             ]
         );
+        console.log("here")
         return response.documents as unknown as Song[];
     }
     catch (error) {
@@ -144,15 +146,20 @@ export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
 
 
 export async function addReview(songId : string, userId : string, reviewText : string) {
+    const id = ID.unique();
+    const date = Date.now();
     try {
       const review = await databases.createDocument(
         appwriteConfig.databaseId,
         appwriteConfig.reviewsCollectionID,
-        ID.unique(), // Auto-generate a unique document ID
+        id, // Auto-generate a unique document ID
         {
+          reviewId: id,
           song: songId, // Reference to the song
           creator: userId, // User submitting the review
           text: reviewText, // Review text
+          createdAt: date,
+          updatedAt: date
         }
       );
   
@@ -172,6 +179,7 @@ export async function addReview(songId : string, userId : string, reviewText : s
             [
                 Query.equal('song', songId),
                 Query.limit(limit),
+                Query.orderAsc("createdAt"),
             ]
         );
         return response.documents as unknown as Review[];
@@ -181,3 +189,134 @@ export async function addReview(songId : string, userId : string, reviewText : s
         return []
     }
 }
+
+
+export async function getUserById(userId: string): Promise<IUser | null> {
+    try {
+        const userData = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.usersCollectionID,
+            userId
+        );
+
+        if (!userData) {
+            throw new Error('User not found');
+        }
+
+        // Validate or map the returned songData to a Song type
+        const user: IUser = {
+            accountId: userData.accountId,
+            name: userData.name,
+            username: userData.username,
+            email: userData.email,
+            imageUrl: userData.imageUrl,
+            bio: userData.bio
+            // Add all required fields as per your Song interface
+        };
+
+        return user;
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return null;
+    }
+}
+
+export async function getSongDetailsById(songId: string): Promise<SongDeatils | null> {
+    try {
+        const songData = await databases.getDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.songsCollectionID,
+            songId
+        );
+
+        if (!songData) {
+            throw new Error('Song not found');
+        }
+
+        // Validate or map the returned songData to a Song type
+        const song: SongDeatils = {
+            songId: songData.songId,
+            title: songData.title,
+            album: songData.album,
+            release_date: songData.release_date,
+            spotify_url: songData.spotify_url,
+            album_cover_url: songData.album_cover_url,
+            popularity: songData.popularity,
+            review: songData.review,
+            ratings: songData.ratings
+        };
+
+        return song;
+    } catch (error) {
+        console.error('Failed to fetch song:', error);
+        return null;
+    }
+}
+
+
+export async function searchSongInDatabase(query: string) {
+    try {
+        const response = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.songsCollectionID,
+            [
+                Query.search("title", query), // Full-text search
+            ]
+        );
+
+        if (response.documents.length > 0) {
+            // Prioritize exact match
+            const exactMatch = response.documents.find(
+                (doc) => doc.title.toLowerCase() === query.toLowerCase()
+            );
+
+            return exactMatch
+                ? (exactMatch as unknown as Song)
+                : (response.documents[0] as unknown as Song); // Return the first match as fallback
+        }
+
+        return null; // No matches found
+    } catch (error) {
+        console.error("Error searching for song in database:", error);
+        return null;
+    }
+}
+
+
+export async function getSearchSuggestions(query: string) {
+    try {
+        const response = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.songsCollectionID,
+            [
+                Query.search("title", query), // Full-text search
+            ]
+        );
+
+        if (response.documents.length > 0) {
+            return response.documents as unknown as Song[]
+        }
+
+        return []; 
+    } catch (error) {
+        console.error("Error searching for song in database:", error);
+        return [];
+    }
+}
+
+export async function addSongToDatabase(song : Song) {
+    try {
+        const response = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.songsCollectionID,
+            song.songId,
+            song
+        );
+        return response;
+    } catch (error) {
+        console.error("Error adding song to database:", error);
+        throw error;
+    }
+}
+
+

@@ -3,9 +3,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUserContext } from "@/context/AuthContext";
 import { addReview, getSongById } from "@/lib/appwrite/api";
 import { Song } from "@/types";
-import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -17,6 +16,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import LoaderMusic from "@/components/shared/loaderMusic";
+import { toast } from "@/hooks/use-toast";
+import Loader from "@/components/shared/loader";
 
 
 const formSchema = z.object({
@@ -27,6 +29,8 @@ const AddReview = () => {
   const { id } = useParams();
   const [song, setSong] = useState<Song | null>(null);
   const { user } = useUserContext();
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -35,14 +39,18 @@ const AddReview = () => {
     },
   })
  
-  // 2. Define a submit handler.
+  
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      await addReview(song?song.songId:'', user.id, values.text);
+    setLoading(true);
+    const review = await addReview(song?song.songId:'', user.accountId, values.text);
+    if (!review) {
+      return toast({ title: "Failed to add review. Please try again."})
     }
-    catch(error) {
-      console.log(error);
-    }
+
+    form.reset();
+    navigate(`/song/${song?.songId}`);
+    setLoading(false);
+    return toast({ title: "Added Review!"})
   }
 
   useEffect(() => {
@@ -57,7 +65,7 @@ const AddReview = () => {
   if (!song) {
     return (
       <div className="common-container">
-        <Loader />
+        <LoaderMusic />
       </div>
     )
   }
@@ -93,7 +101,13 @@ const AddReview = () => {
                     </FormItem>
                   )}
                 />
-                <Button className="shad-button_primary" type="submit">Submit</Button>
+                <Button className="shad-button_primary" type="submit">
+                  {loading? (
+                    <div className="flex-center gap-2">
+                      <Loader /> Loading...
+                    </div>
+                  ):'Submit'}
+                </Button>
               </form>
             </Form>
         </div>

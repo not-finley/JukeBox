@@ -1,38 +1,45 @@
-import { Review, Song } from "@/types";
-import { Link, useParams } from "react-router-dom"
-import { fetchReviews, getSongById } from "@/lib/appwrite/api";
+import { SongDeatils } from "@/types";
+import { Link, useParams } from "react-router-dom";
+import { getSongDetailsById } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
-import Loader from "@/components/shared/loader";
 import { Button, buttonVariants } from "@/components/ui/button";
+import LoaderMusic from "@/components/shared/loaderMusic";
 
 const SongDetails = () => {
   const { id } = useParams();
-  const [song, setSong] = useState<Song | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [song, setSong] = useState<SongDeatils | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const fetchSong = async () => {
-      const fetchedSong = await getSongById(id || "");
-      setSong(fetchedSong); // fetchedSong can be null, so it stays consistent
+    const fetchSongAndReviews = async () => {
       try {
-        if (id) {
-          const reviews = await fetchReviews(id);
-          setReviews(reviews);
-        }
-      }
-      catch(error) {
-        console.log(error)
+        const fetchedSong = await getSongDetailsById(id || "");
+        setSong(fetchedSong);
+      } catch (error) {
+        console.error("Error fetching song or reviews:", error);
+      } finally {
+        song?.review.sort((b, a) => a.createdAt - b.createdAt)
+        setLoading(false);
       }
     };
 
-    fetchSong();
+    fetchSongAndReviews();
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="common-container">
+        <LoaderMusic />
+      </div>
+    );
+  }
 
   if (!song) {
     return (
       <div className="common-container">
-        <Loader />
+        <p>Song not found.</p>
       </div>
-    )
+    );
   }
 
   var listened = true;
@@ -48,37 +55,38 @@ const SongDetails = () => {
             className="rounded-lg shadow-lg"
           />
           <div className="flex gap-2 mt-2">
-            <Button className="shad-button_primary w-1/2"> 
+            <Button className="shad-button_primary w-1/2">
               <div className="flex-col flex-center">
                 <img
                   width={25}
-                  src={listened? '/assets/icons/headphones-filled.svg' : '/assets/icons/headphones.svg'}
+                  src={listened ? '/assets/icons/headphones-filled.svg' : '/assets/icons/headphones.svg'}
                 />
-                <p className="tiny-medium text-black">{listened? 'remove' : 'Listened'}</p> 
+                <p className="tiny-medium text-black">{listened ? 'remove' : 'Listened'}</p>
               </div>
             </Button>
-          
+
             <Link className={`${buttonVariants({ variant: "default" })} shad-button_primary w-1/2`}
               to={`/song/${song.songId}/add-review`}
-              key="add-review" 
+              key="add-review"
             >
               <div className="flex-col flex-center">
                 <img
                   width={25}
                   src='/assets/icons/pen-nib.svg'
                 />
-                <p className="tiny-medium text-black">Review</p> 
+                <p className="tiny-medium text-black">Review</p>
               </div>
             </Link>
-         
           </div>
         </div>
 
         {/* Right Section: Details */}
         <div className="lg:w-2/3 lg:ml-8">
-          <h1 className="lg:text-4xl md:text-2xl sm:text-3xl xs:text-2xl mb-4"><p className="font-bold">{song.title}</p> {song.album}</h1> 
+          <h1 className="lg:text-4xl md:text-2xl sm:text-3xl xs:text-2xl mb-4">
+            <p className="font-bold">{song.title}</p> {song.album}
+          </h1>
           <p className="text-lg text-gray-400 mb-4">
-            <span>{song.release_date.slice(0,4)}</span> | By <span className="text-white"></span>
+            <span>{song.release_date.slice(0, 4)}</span> | By <span className="text-white"></span>
           </p>
 
           {/* Ratings */}
@@ -91,8 +99,8 @@ const SongDetails = () => {
               <span className="text-gray-400 text-sm">(none)</span>
             </div>
           </div>
-    
-          {/* Where to Listen*/}
+
+          {/* Where to Listen */}
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Where to Listen</h2>
             <div className="space-y-2">
@@ -104,23 +112,28 @@ const SongDetails = () => {
 
           {/* Reviews */}
           <div>
-            {reviews.map((r) => (
-                  <div className="review-container">
-                    {/* <img
-                      src={r.creator.imageUrl}
-                      className="h-10 w-10 rounded-full mr-5"
-                    /> */}
+            <ul>
+              {song.review.map((r) => (
+                <li key={r.reviewId} className="review-container flex items-start gap-4 mb-6">
+                  <img
+                    src={r.creator.imageUrl}
+                    alt={r.creator.username}
+                    className="h-10 w-10 rounded-full"
+                  />
                   <div>
-                    <p>Reviewd by  <Link to={`/profile/${r.creator}`} className="underline">r.creator</Link></p>
+                    <p>
+                      Reviewed by <Link to={`/profile/${r.creator.accountId}`} className="underline">{r.creator.username}</Link>
+                    </p>
                     <p>{r.text}</p>
                   </div>
-                </div>
-            ))}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SongDetails
+export default SongDetails;

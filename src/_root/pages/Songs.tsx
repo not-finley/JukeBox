@@ -31,7 +31,7 @@ const Songs = () => {
             <h1 className="text-4xl font-bold">Songs</h1>
             <div className="song-grid">
                 {song.map((s) => (
-                    <Link to={`/song/${s.songId}`}>
+                    <Link key={s.songId} to={`/song/${s.songId}`}>
                       <div className="song-card" key={s.songId}>
                         <img src={s.album_cover_url} alt={s.title} className="song-image" />
                         <p className="song-title">{s.title}</p>

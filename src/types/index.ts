@@ -32,7 +32,7 @@ export type INavLink = {
   };
   
   export type IUser = {
-    id: string;
+    accountId: string;
     name: string;
     username: string;
     email: string;
@@ -66,10 +66,31 @@ export type INavLink = {
     popularity: number
   }
 
+
+  export type Rating = {
+    user: IUser,
+    rating: number
+  }
+
+  export type SongDeatils = {
+    songId: string;
+    title: string;
+    album: string;
+    spotify_url: string;
+    album_cover_url: string;
+    release_date: string,
+    popularity: number,
+    review: Review[],
+    ratings: Rating[],
+  }
+
   export type Review = {
+    reviewId: string;
     text : string;
-    creator : string;
-    song: string;
+    creator : IUser;
+    song: Song;
     likes: string[];
+    createdAt: number;
+    updatedAt: number;
   }
  
