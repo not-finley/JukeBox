@@ -14,6 +14,18 @@ const SongDetailsSection = () => {
   const [listened, setListened] = useState(true);
   const [songNotFound, setNotFound] = useState(false);
   const { user } = useUserContext();
+  const [rating, setRating] = useState(0); // Selected rating
+  const [hover, setHover] = useState(0); // Hovered rating
+
+  const handleRating = (value : number) => {
+    setRating(value);
+    //console.log(value);
+  };
+
+  const handleHover = (value : number ) => {
+    setHover(value);
+    //console.log(value);
+  };
 
   const getSong = async () => {
     try {
@@ -128,6 +140,30 @@ const SongDetailsSection = () => {
               </div>
             </Link>
           </div>
+          <div className="bg-emerald-500 w-full h-10 rounded-md mt-2 justify-center flex items-center">
+            <div className="flex gap-1">
+              {[...Array(5)].map((_, index) => {
+                const value = (index + 1);
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className="text-2xl text-black hover:text-gray-50"
+                    onClick={() => handleRating(value)}
+                    onMouseEnter={() => handleHover(value)}
+                    onMouseLeave={() => setHover(0)}
+                  >
+                    <img
+                      //src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
+                      //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
+                      src={hover > 0? (hover >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg') : rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg' }
+                      className="h-4/6 w-10"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Right Section: Details */}
@@ -163,6 +199,7 @@ const SongDetailsSection = () => {
           {/* Reviews */}
           <div>
             <ul>
+              <h2 className="text-xl font-semibold mb-2">Recent Reviews</h2>
               {song?.review.map((r) => (
                 <li key={r.reviewId} className="review-container flex items-start gap-4 mb-6">
                   <img
