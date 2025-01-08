@@ -380,3 +380,93 @@ export async function removeListened(songId: string, userId: string){
         return false;
     }
 }
+
+
+export async function addRating(songId : string, userId : string, rating: number) {
+    const id = ID.unique();
+    const date = Date.now();
+    try {
+        await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.raitingsCollectionID,
+        id, // Auto-generate a unique document ID
+            {
+            ratingId: id,
+            song: songId,
+            user: userId, 
+            rating: rating,
+            createdAt: date,
+            }
+        );
+    } catch (error) {
+      console.log(error);
+    }
+}
+
+export async function hasRating(songId: string, userId: string,): Promise<Boolean> {
+    try {
+        const rating = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.raitingsCollectionID,
+            [
+                Query.equal("user", [userId]),
+                Query.equal("song", [songId]),
+            ]
+        );
+        if (rating.total === 0) {
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return false;
+    }
+}
+
+export async function getRating(songId: string, userId: string): Promise<number> {
+    try {
+        const rating = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.raitingsCollectionID,
+            [
+                Query.equal("song", songId),
+                Query.equal("user", userId),
+            ]
+        );
+        if (rating.total === 0) {
+            return 0;
+        }
+
+        return rating.documents[0].rating;
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return 0;
+    }
+}
+
+export async function updateRating(songId: string, userId: string, value: number){
+    try {
+        const date = Date.now();
+        const rating = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.raitingsCollectionID,
+            [
+                Query.equal("song", songId),
+                Query.equal("user", userId),
+            ]
+        );
+
+        await databases.updateDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.raitingsCollectionID,
+            rating.documents[0].$id, 
+            {
+                rating: value,
+                createdAt: date
+            }
+        );
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+    }
+}

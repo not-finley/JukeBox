@@ -1,6 +1,6 @@
 import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
-import { addListened, addSongToDatabase, getSongDetailsById, hasListened, removeListened } from "@/lib/appwrite/api";
+import { addListened, addRating, addSongToDatabase, getRating, getSongDetailsById, hasListened, hasRating, removeListened, updateRating } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
@@ -17,15 +17,24 @@ const SongDetailsSection = () => {
   const [rating, setRating] = useState(0); // Selected rating
   const [hover, setHover] = useState(0); // Hovered rating
 
-  const handleRating = (value : number) => {
+  const handleRating = async (value : number) => {
     setRating(value);
-    //console.log(value);
+    const doesHaveRating = await hasRating(id? id: '', user.accountId);
+    if (doesHaveRating) {
+      await updateRating(id? id: '', user.accountId, value);
+    } else {
+      await addRating(id? id: '', user.accountId, value);
+    }
   };
 
-  const handleHover = (value : number ) => {
+  const handleHover = async (value : number ) => {
     setHover(value);
-    //console.log(value);
   };
+
+  const updateRatinglocal = async () => {
+    const num = await getRating(id? id: '', user.accountId);
+    setRating(num);
+  }
 
   const getSong = async () => {
     try {
@@ -75,6 +84,12 @@ const SongDetailsSection = () => {
     if (id && user?.accountId) {
       fetchSongAndReviews();
       fetchListened();
+    }
+  }, [user?.accountId, id]);
+
+  useEffect(() => {
+    if (id && user?.accountId) {
+      updateRatinglocal();
     }
   }, [user?.accountId, id]);
 
@@ -133,7 +148,7 @@ const SongDetailsSection = () => {
             >
               <div className="flex-col flex-center">
                 <img
-                  width={25}
+                  width={22.5}
                   src='/assets/icons/pen-nib.svg'
                 />
                 <p className="tiny-medium text-black">Review</p>
