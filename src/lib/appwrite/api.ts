@@ -166,7 +166,7 @@ export async function addReview(songId : string, userId : string, reviewText : s
       console.log(error);
       return null;
     }
-  }
+}
 
 
   export async function fetchReviews(songId : string, limit = 20): Promise<Review[]> {
@@ -318,3 +318,65 @@ export async function addSongToDatabase(song : Song) {
 }
 
 
+
+export async function addListened(songId : string, userId : string) {
+    const id = ID.unique();
+    const date = Date.now();
+    try {
+        await databases.createDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.listenedToCollectionID,
+        id, // Auto-generate a unique document ID
+            {
+            listenedId: id,
+            song: songId, // Reference to the song
+            user: userId, 
+            createdAt: date,
+            }
+        );
+    } catch (error) {
+      console.log(error);
+    }
+}
+
+export async function hasListened(userId: string, songId: string): Promise<Boolean> {
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.listenedToCollectionID,
+            [
+                Query.equal("user", [userId]),
+                Query.equal("song", [songId]),
+            ]
+        );
+        if (listened.total === 0) {
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return false;
+    }
+}
+
+export async function removeListened(songId: string, userId: string){
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.listenedToCollectionID,
+            [
+                Query.equal("user", [userId]),
+                Query.equal("song", [songId]),
+            ]
+        );
+        await databases.deleteDocument(
+            appwriteConfig.databaseId, 
+            appwriteConfig.listenedToCollectionID,
+            listened.documents[0].$id
+        )
+    } catch (error) {
+        console.error('Failed to delete listen:', error);
+        return false;
+    }
+}

@@ -1,43 +1,19 @@
 import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
-import { addSongToDatabase, getSongDetailsById } from "@/lib/appwrite/api";
+import { addListened, addSongToDatabase, getSongDetailsById, hasListened, removeListened } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { getSpotifyToken, SpotifyById } from "@/lib/appwrite/spotify";
+import { useUserContext } from "@/context/AuthContext";
 
 const SongDetailsSection = () => {
   const { id } = useParams();
   const [song, setSong] = useState<SongDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [listened, setListened] = useState(true);
   const [songNotFound, setNotFound] = useState(false);
-
-  useEffect(() => {
-    const fetchSongAndReviews = async () => {
-      try {
-        const fetchedSong = await getSongDetailsById(id || "");
-        if (!fetchedSong) {
-          await getSong(); // Only call getSong if the song is not in the database
-        } else {
-          setSong(fetchedSong);
-        }
-      } catch (error) {
-        console.error("Error fetching song or reviews:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSongAndReviews();
-  }, [id]);
-
-  if (loading) {
-    return (
-      <div className="common-container">
-        <LoaderMusic />
-      </div>
-    );
-  }
+  const { user } = useUserContext();
 
   const getSong = async () => {
     try {
@@ -54,9 +30,52 @@ const SongDetailsSection = () => {
       setNotFound(true);
     }
   }
+
+  const fetchSongAndReviews = async () => {
+    try {
+      const fetchedSong = await getSongDetailsById(id || "");
+      if (!fetchedSong) {
+        await getSong(); // Only call getSong if the song is not in the database
+      } else {
+        setSong(fetchedSong);
+      }
+    } catch (error) {
+      console.error("Error fetching song or reviews:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const fetchListened = async () => {
+    try {
+      const listenedtemp = await hasListened(user.accountId, id || "") 
+      if (listenedtemp) {
+        setListened(true);
+      } else {
+        setListened(false);
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    if (id && user?.accountId) {
+      fetchSongAndReviews();
+      fetchListened();
+    }
+  }, [user?.accountId, id]);
+
+  if (loading) {
+    return (
+      <div className="common-container">
+        <LoaderMusic />
+      </div>
+    );
+  }
   if (!song) {
     /*add to database if exists in spotify*/
-    getSong();
+    //getSong();
     if(songNotFound) {
       return (
         <div className="common-container">
@@ -66,8 +85,15 @@ const SongDetailsSection = () => {
     }
   }
 
-  var listened = true;
-
+  const listenedClick = async () => {
+    if (listened) {
+      await removeListened(song?song.songId: '', user.accountId)
+      setListened(false);
+    } else {
+      await addListened(song?song.songId: '', user.accountId)
+      setListened(true);
+    }
+  }
   return (
     <div className="common-container">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
@@ -79,7 +105,7 @@ const SongDetailsSection = () => {
             className="rounded-lg shadow-lg"
           />
           <div className="flex gap-2 mt-2">
-            <Button className="shad-button_primary w-1/2">
+            <Button className="shad-button_primary w-1/2" onClick={listenedClick}>
               <div className="flex-col flex-center">
                 <img
                   width={25}
