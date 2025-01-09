@@ -226,7 +226,8 @@ const SongDetailsSection = () => {
                     <p>
                       Reviewed by <Link to={`/profile/${r.creator.accountId}`} className="underline">{r.creator.username}</Link>
                     </p>
-                    <p>{r.text}</p>
+                    {r.text.length > 400? (<p className="text-sm w-fit">{r.text.slice(0, 400)} ...</p>)
+                :(<p className="text-sm w-fit">{r.text}</p>)}
                   </div>
                 </li>
               ))}

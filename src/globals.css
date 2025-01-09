@@ -168,7 +168,7 @@
 }
 
 .review-container {
-  @apply p-4 bg-emerald-600 rounded-lg flex flex-row bg-opacity-80
+  @apply p-4 bg-emerald-600 rounded-lg flex flex-row
 }
 
 
