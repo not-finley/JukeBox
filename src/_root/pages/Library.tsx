@@ -15,19 +15,20 @@ const Library = () => {
   const [loading3, setLoading3] = useState(true);
 
   const loadSongs = async () => {
+    if (user?.accountId) {
+      const newReviews = await getReviewedWithLimit(user.accountId, 3);
+      setReviewed(newReviews);
+      setLoading1(false);
 
-    const newReviews = await getReviewedWithLimit(user.accountId, 3);
-    setReviewed(newReviews);
-    setLoading1(false);
 
+      const newRaitings = await getRatedWithLimit(user.accountId, 4);
+      setRated(newRaitings);
+      setLoading2(false);
 
-    const newRaitings = await getRatedWithLimit(user.accountId, 4);
-    setRated(newRaitings);
-    setLoading2(false);
-
-    const newSongs = await getListenedWithLimit(user.accountId, 2);
-    setListened(newSongs);
-    setLoading3(false);
+      const newSongs = await getListenedWithLimit(user.accountId, 2);
+      setListened(newSongs);
+      setLoading3(false);
+    }
   };
 
   useEffect(() => {
@@ -43,7 +44,7 @@ const Library = () => {
         <h2 className="text-md text-gray-400">See more</h2>
       </div>
       {reviewed.map((s) => (
-            <li key={s.reviewId} className="review-container flex items-start gap-4 w-full">
+            <li key={s.reviewId} className="review-container flex items-start gap-4 w-full max-w-screen-md">
               <Link to={`/song/${s.song.songId}`}>
                 <img
                   src={s.song.album_cover_url}
