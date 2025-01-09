@@ -27,7 +27,7 @@ const Songs = () => {
   }
   
   return (
-    <div className="song-container">
+    <div className="song-container ">
             <h1 className="text-4xl font-bold">Songs</h1>
             <div className="song-grid">
                 {song.map((s) => (

@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite';
 
-import { INewUser, IUser, Review, Song, SongDetails } from "@/types";
+import { INewUser, IUser, Listened, Review, Song, SongDetails } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
 export async function createUserAccount(user: INewUser) {
@@ -468,5 +468,48 @@ export async function updateRating(songId: string, userId: string, value: number
         );
     } catch (error) {
         console.error('Failed to fetch user:', error);
+    }
+}
+
+
+
+
+export async function getListened(userId: string): Promise<Listened[]> {
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.listenedToCollectionID,
+            [
+                Query.equal("user", [userId]),
+            ]
+        );
+        if (listened.total === 0) {
+            return [];
+        }
+
+        return listened.documents as unknown as Listened[];
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return [];
+    }
+}
+
+export async function getReviewed(userId: string): Promise<Review[]> {
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.reviewsCollectionID,
+            [
+                Query.equal("creator", [userId]),
+            ]
+        );
+        if (listened.total === 0) {
+            return [];
+        }
+
+        return listened.documents as unknown as Review[];
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return [];
     }
 }

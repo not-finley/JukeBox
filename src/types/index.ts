@@ -93,4 +93,11 @@ export type INavLink = {
     createdAt: number;
     updatedAt: number;
   }
+
+  export type Listened = {
+    createdAt: number;
+    listenedId: string;
+    song: Song;
+    user: IUser
+  }
  
