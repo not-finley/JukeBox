@@ -135,6 +135,13 @@
 }
 
 
+.raiting-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr); /* Default: 2 columns */
+  gap: 1rem;
+  justify-content: center;
+}
+
 .song-card { 
     padding: 0.5rem;
     text-align: left;
@@ -161,7 +168,21 @@
 }
 
 .review-container {
-  @apply p-4 bg-emerald-900 rounded-lg flex flex-row bg-opacity-80
+  @apply p-4 bg-emerald-600 rounded-lg flex flex-row bg-opacity-80
+}
+
+
+
+@media (min-width: 955px) {
+  .raiting-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1560px) {
+  .raiting-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 
@@ -171,6 +192,7 @@
     .song-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
 }
 
 /* Responsive behavior for large screens (3 columns) */

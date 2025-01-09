@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite';
 
-import { INewUser, IUser, Listened, Review, Song, SongDetails } from "@/types";
+import { INewUser, IUser, Listened, Rating, Review, Song, SongDetails } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
 export async function createUserAccount(user: INewUser) {
@@ -474,13 +474,15 @@ export async function updateRating(songId: string, userId: string, value: number
 
 
 
-export async function getListened(userId: string): Promise<Listened[]> {
+export async function getListenedWithLimit(userId: string, limit: number): Promise<Listened[]> {
     try {
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.listenedToCollectionID,
             [
                 Query.equal("user", [userId]),
+                Query.limit(limit),
+                Query.orderDesc('createdAt')
             ]
         );
         if (listened.total === 0) {
@@ -494,13 +496,37 @@ export async function getListened(userId: string): Promise<Listened[]> {
     }
 }
 
-export async function getReviewed(userId: string): Promise<Review[]> {
+export async function getRatedWithLimit(userId: string, limit: number): Promise<Rating[]> {
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.raitingsCollectionID,
+            [
+                Query.equal("user", [userId]),
+                Query.limit(limit),
+                Query.orderDesc('createdAt')
+            ]
+        );
+        if (listened.total === 0) {
+            return [];
+        }
+
+        return listened.documents as unknown as Rating[];
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return [];
+    }
+} 
+
+export async function getReviewedWithLimit(userId: string, limit: number): Promise<Review[]> {
     try {
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.reviewsCollectionID,
             [
                 Query.equal("creator", [userId]),
+                Query.orderDesc('createdAt'),
+                Query.limit(limit)
             ]
         );
         if (listened.total === 0) {

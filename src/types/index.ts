@@ -69,7 +69,10 @@ export type INavLink = {
 
   export type Rating = {
     user: IUser,
-    rating: number
+    rating: number,
+    song: Song,
+    ratingId: string,
+    createdAt: number
   }
 
   export type SongDetails = {
