@@ -201,30 +201,32 @@ const SongDetailsSection = () => {
           <h1 className="lg:text-4xl md:text-2xl sm:text-3xl xs:text-2xl mb-4">
             <p className="font-bold">{song?.title}</p> {song?.album}
           </h1>
-          <p className="text-lg text-gray-400 mb-4">
+          <p className="text-lg text-gray-300 mb-4">
             <span>{song?.release_date.slice(0, 4)}</span> | By <span className="text-white"></span>
           </p>
 
           {/* Ratings */}
-          <div className="flex items-center space-x-2 w-full h-1/2 justify-center">
-            <div className="flex justify-between items-end h-4/5 w-4/5">
+          <span className="text-gray-400 text-md text-center w-full">{GlobalNumRatings} Ratings:</span>
+          <div className="flex items-center w-full h-1/2 justify-center">
+          
+            <div className="-mt-10 flex justify-between items-end h-4/5 w-4/5">
               {counts.map((c, index) => {
                 const percentage = GlobalNumRatings > 0 ? (c / GlobalNumRatings) * 100 : 0;
                 return (
                   <div key={index + 1} className="flex flex-col items-center w-1/6">
+                    <span className="text-sm mt-2 text-gray-400">{percentage}%</span>
                     {/* Bar */}
                     <div
-                      className="bg-blue-500 rounded-t-lg w-full"
+                      className="bg-emerald-500 rounded-t-lg w-full"
                       style={{ height: `${percentage}px` }}
                       title={`Count: ${c}`}
                     ></div>
                     {/* Label */}
-                    <span className="text-sm mt-2 text-white">{index + 1}</span>
+                    <span className="text-sm mt-2 text-gray-400">{index + 1}</span>
                   </div>
                 );
               })}
             </div>
-            <span className="text-gray-400 text-sm">{GlobalNumRatings}</span>
           </div>
           
 
