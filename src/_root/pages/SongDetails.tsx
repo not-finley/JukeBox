@@ -1,6 +1,6 @@
 import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
-import { addListened, addRating, addSongToDatabase, getRating, getSongDetailsById, hasListened, hasRating, removeListened, updateRating } from "@/lib/appwrite/api";
+import { addListened, addRating, addSongToDatabase, getAllRatingsOfaSong, getRating, getSongDetailsById, hasListened, hasRating, removeListened, updateRating } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
@@ -16,6 +16,24 @@ const SongDetailsSection = () => {
   const { user } = useUserContext();
   const [rating, setRating] = useState(0); // Selected rating
   const [hover, setHover] = useState(0); // Hovered rating
+  const [GlobalNumRatings, setGlobalNumRatings] = useState(0); 
+  const [counts, setCounts] = useState<number[]>([]); 
+
+
+  const songGlobalRating = async () => {
+    const GlobalRaitings = await getAllRatingsOfaSong(id?id: '');
+    setGlobalNumRatings(GlobalRaitings.length);
+
+    const raitings = GlobalRaitings.map(a => a.rating);
+
+    let countslocal = [0, 0, 0, 0, 0];
+    for(let i = 0; i < 5; i++) {
+      let count = 0;
+      raitings.forEach((v) => v === (i + 1) && count++);
+      countslocal[i] = count;
+    }
+    setCounts(countslocal);
+  }
 
   const handleRating = async (value : number) => {
     setRating(value);
@@ -25,6 +43,7 @@ const SongDetailsSection = () => {
     } else {
       await addRating(id? id: '', user.accountId, value);
     }
+    songGlobalRating();
   };
 
   const handleHover = async (value : number ) => {
@@ -84,12 +103,8 @@ const SongDetailsSection = () => {
     if (id && user?.accountId) {
       fetchSongAndReviews();
       fetchListened();
-    }
-  }, [user?.accountId, id]);
-
-  useEffect(() => {
-    if (id && user?.accountId) {
       updateRatinglocal();
+      songGlobalRating();
     }
   }, [user?.accountId, id]);
 
@@ -191,15 +206,27 @@ const SongDetailsSection = () => {
           </p>
 
           {/* Ratings */}
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="flex items-center space-x-2">
-              <span className="text-emerald-500 text-xl font-semibold">3.1</span>
-              <div className="h-5 w-32 bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500" style={{ width: "30%" }}></div>
-              </div>
-              <span className="text-gray-400 text-sm">(none)</span>
+          <div className="flex items-center space-x-2 w-full h-1/2 justify-center">
+            <div className="flex justify-between items-end h-4/5 w-4/5">
+              {counts.map((c, index) => {
+                const percentage = GlobalNumRatings > 0 ? (c / GlobalNumRatings) * 100 : 0;
+                return (
+                  <div key={index + 1} className="flex flex-col items-center w-1/6">
+                    {/* Bar */}
+                    <div
+                      className="bg-blue-500 rounded-t-lg w-full"
+                      style={{ height: `${percentage}px` }}
+                      title={`Count: ${c}`}
+                    ></div>
+                    {/* Label */}
+                    <span className="text-sm mt-2 text-white">{index + 1}</span>
+                  </div>
+                );
+              })}
             </div>
+            <span className="text-gray-400 text-sm">{GlobalNumRatings}</span>
           </div>
+          
 
           {/* Where to Listen */}
           <div className="mb-6">

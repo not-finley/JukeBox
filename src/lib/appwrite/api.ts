@@ -467,10 +467,29 @@ export async function updateRating(songId: string, userId: string, value: number
             }
         );
     } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error('Failed to fetch raitings:', error);
     }
 }
 
+export async function getAllRatingsOfaSong(songId: string): Promise<Rating[]> {
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.raitingsCollectionID,
+            [
+                Query.equal("song", [songId]),
+            ]
+        );
+        if (listened.total === 0) {
+            return [];
+        }
+
+        return listened.documents as unknown as Rating[];
+    } catch (error) {
+        console.error('Failed to fetch raitings:', error);
+        return [];
+    }
+}
 
 
 
@@ -491,7 +510,7 @@ export async function getListenedWithLimit(userId: string, limit: number): Promi
 
         return listened.documents as unknown as Listened[];
     } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error('Failed to fetch listened:', error);
         return [];
     }
 }
@@ -539,3 +558,5 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
         return [];
     }
 }
+
+
