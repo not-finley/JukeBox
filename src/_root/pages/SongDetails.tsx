@@ -253,15 +253,17 @@ const SongDetailsSection = () => {
           </p>
 
           {/* Ratings */}
-          <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
+          <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-300">
             <p className="text-xl font-semibold text-left ">Ratings</p>
             <p className="text-gray-400 text-md text-right">{GlobalNumRatings} listeners</p>
           </div>
-          <div className="flex items-center w-full h-48 justify-center">
+          {GlobalNumRatings == 0?(<p className="text-center text-gray-300 mb-5">No ratings yet. Be the first to rate this track!</p>):(
+            <div className="flex items-center w-full h-48 justify-center">
             <div>
               <p className="text-2xl text-gray-300 mr-2 text-center">{GlobalRaiting}</p>
               <p className="text-2xl text-gray-300 mr-2 text-center"> Stars</p>
             </div>
+            
             <div className=" flex justify-between items-end h-4/5 w-4/5">
               {counts.map((c, index) => {
                 const percentage = GlobalNumRatings > 0 ? (c / GlobalNumRatings) * 100 : 0;
@@ -281,7 +283,9 @@ const SongDetailsSection = () => {
               })}
             </div>
             
-          </div>
+            </div>    
+          )}
+          
           
 
           {/* Where to Listen */}
@@ -303,35 +307,11 @@ const SongDetailsSection = () => {
                 <p className="text-xl font-semibold text-left ">Recent Reviews</p>
                 <p className="text-gray-400 text-md text-right">see more</p>
               </div>
+              {song?.review.length == 0?(<p className="text-center text-gray-300">No reviews yet. Be the first to review this track!</p>):''}
               {song?.review.map((r) => (
                 <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} song={r.song} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId}/>
               )
               )}
-
-
-
-
-
-
-
-
-              {/* {song?.review.map((r) => 
-                (  
-                <li key={r.reviewId} className="review-container flex items-start gap-4 mb-6">
-                  <img
-                    src={r.creator.imageUrl}
-                    alt={r.creator.username}
-                    className="h-10 w-10 rounded-full"
-                  />
-                  <div>
-                    <p>
-                      Reviewed by <Link to={`/profile/${r.creator.accountId}`} className="underline">{r.creator.username}</Link>
-                    </p>
-                    {r.text.length > 400? (<p className="text-gray-200 text-sm w-fit">{r.text.slice(0, 400)} ... <button className="text-white hover:text-green-400">more</button></p>)
-                :(<p className="text-gray-200 text-sm w-fit">{r.text}</p>)}
-                  </div>
-                </li>
-              ))} */}
             </ul>
           </div>
         </div>
