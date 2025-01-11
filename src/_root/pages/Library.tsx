@@ -25,7 +25,7 @@ const Library = () => {
       setRated(newRaitings);
       setLoading2(false);
 
-      const newSongs = await getListenedWithLimit(user.accountId, 2);
+      const newSongs = await getListenedWithLimit(user.accountId, 4);
       setListened(newSongs);
       setLoading3(false);
     }

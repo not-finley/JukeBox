@@ -1,4 +1,4 @@
-import { SongDetails } from "@/types";
+import { Review, SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
 import { addListened, addRating, addSongToDatabase, getAllRatingsOfaSong, getRating, getSongDetailsById, hasListened, hasRating, removeListened, updateRating } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
@@ -6,6 +6,46 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { getSpotifyToken, SpotifyById } from "@/lib/appwrite/spotify";
 import { useUserContext } from "@/context/AuthContext";
+
+const ReviewItem = (review : Review ) => {
+  const [longVis, setLongVis] = useState(false);
+  const toggleLongVis = () => setLongVis(!longVis);
+
+  return (
+    <li className="review-container flex items-start gap-4 mb-6">
+      <img
+        src={review.creator.imageUrl}
+        alt={review.creator.username}
+        className="h-10 w-10 rounded-full"
+      />
+      <div>
+        <p>
+          Reviewed by{" "}
+          <Link to={`/profile/${review.creator.accountId}`} className="underline">
+            {review.creator.username}
+          </Link>
+        </p>
+        {!longVis && review.text.length > 400 ? (
+          <p className="text-gray-200 text-sm w-fit">
+            {review.text.slice(0, 400)} ...
+            <button
+              onClick={toggleLongVis}
+              className="text-white hover:text-green-400"
+            >
+              more
+            </button>
+          </p>
+        ) : (
+          <p className="text-gray-200 text-sm w-fit">{review.text}</p>
+        )}
+      </div>
+    </li>
+  );
+};
+
+
+
+
 
 const SongDetailsSection = () => {
   const { id } = useParams();
@@ -16,7 +56,8 @@ const SongDetailsSection = () => {
   const { user } = useUserContext();
   const [rating, setRating] = useState(0); // Selected rating
   const [hover, setHover] = useState(0); // Hovered rating
-  const [GlobalNumRatings, setGlobalNumRatings] = useState(0); 
+  const [GlobalNumRatings, setGlobalNumRatings] = useState(0);
+  const [GlobalRaiting, setGlobalRating] = useState(0); 
   const [counts, setCounts] = useState<number[]>([]); 
 
 
@@ -27,12 +68,18 @@ const SongDetailsSection = () => {
     const raitings = GlobalRaitings.map(a => a.rating);
 
     let countslocal = [0, 0, 0, 0, 0];
+    let raitingG = 0;
     for(let i = 0; i < 5; i++) {
       let count = 0;
+      if (raitings[i]) {
+        raitingG += raitings[i];
+      }
       raitings.forEach((v) => v === (i + 1) && count++);
       countslocal[i] = count;
     }
     setCounts(countslocal);
+    
+    setGlobalRating(raitingG/GlobalRaitings.length);
   }
 
   const handleRating = async (value : number) => {
@@ -206,18 +253,24 @@ const SongDetailsSection = () => {
           </p>
 
           {/* Ratings */}
-          <span className="text-gray-400 text-md text-center w-full">{GlobalNumRatings} Ratings:</span>
-          <div className="flex items-center w-full h-1/2 justify-center">
-          
-            <div className="-mt-10 flex justify-between items-end h-4/5 w-4/5">
+          <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
+            <p className="text-xl font-semibold text-left ">Ratings</p>
+            <p className="text-gray-400 text-md text-right">{GlobalNumRatings} listeners</p>
+          </div>
+          <div className="flex items-center w-full h-48 justify-center">
+            <div>
+              <p className="text-2xl text-gray-300 mr-2 text-center">{GlobalRaiting}</p>
+              <p className="text-2xl text-gray-300 mr-2 text-center"> Stars</p>
+            </div>
+            <div className=" flex justify-between items-end h-4/5 w-4/5">
               {counts.map((c, index) => {
                 const percentage = GlobalNumRatings > 0 ? (c / GlobalNumRatings) * 100 : 0;
                 return (
-                  <div key={index + 1} className="flex flex-col items-center w-1/6">
+                  <div key={index + 1} className="flex flex-col items-center w-1/5">
                     <span className="text-sm mt-2 text-gray-400">{percentage}%</span>
                     {/* Bar */}
                     <div
-                      className="bg-emerald-500 rounded-t-lg w-full"
+                      className="bg-emerald-600 rounded-t-lg max-w-14 w-full"
                       style={{ height: `${percentage}px` }}
                       title={`Count: ${c}`}
                     ></div>
@@ -227,12 +280,15 @@ const SongDetailsSection = () => {
                 );
               })}
             </div>
+            
           </div>
           
 
           {/* Where to Listen */}
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Where to Listen</h2>
+            <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-300">
+              <p className="text-xl font-semibold text-left ">Where to Listen</p>
+            </div>
             <div className="space-y-2">
               <Button className="shad-button_primary">
                 <a href={song?.spotify_url} target="_blank" className="text-black">Spotify</a>
@@ -243,8 +299,24 @@ const SongDetailsSection = () => {
           {/* Reviews */}
           <div>
             <ul>
-              <h2 className="text-xl font-semibold mb-2">Recent Reviews</h2>
+              <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-300">
+                <p className="text-xl font-semibold text-left ">Recent Reviews</p>
+                <p className="text-gray-400 text-md text-right">see more</p>
+              </div>
               {song?.review.map((r) => (
+                <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} song={r.song} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId}/>
+              )
+              )}
+
+
+
+
+
+
+
+
+              {/* {song?.review.map((r) => 
+                (  
                 <li key={r.reviewId} className="review-container flex items-start gap-4 mb-6">
                   <img
                     src={r.creator.imageUrl}
@@ -255,11 +327,11 @@ const SongDetailsSection = () => {
                     <p>
                       Reviewed by <Link to={`/profile/${r.creator.accountId}`} className="underline">{r.creator.username}</Link>
                     </p>
-                    {r.text.length > 400? (<p className="text-sm w-fit">{r.text.slice(0, 400)} ...</p>)
-                :(<p className="text-sm w-fit">{r.text}</p>)}
+                    {r.text.length > 400? (<p className="text-gray-200 text-sm w-fit">{r.text.slice(0, 400)} ... <button className="text-white hover:text-green-400">more</button></p>)
+                :(<p className="text-gray-200 text-sm w-fit">{r.text}</p>)}
                   </div>
                 </li>
-              ))}
+              ))} */}
             </ul>
           </div>
         </div>
