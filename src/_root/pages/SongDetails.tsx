@@ -124,6 +124,7 @@ const SongDetailsSection = () => {
       if (!fetchedSong) {
         await getSong(); // Only call getSong if the song is not in the database
       } else {
+        fetchedSong.review.sort((a, b) => b.createdAt - a.createdAt);
         setSong(fetchedSong);
       }
     } catch (error) {
