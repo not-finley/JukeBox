@@ -80,7 +80,7 @@ const Home = () => {
         <h2 className="text-2xl">Popular Reviews</h2>
         <h2 className="text-md text-gray-400">See more</h2>
       </div>
-
+        <p className="text-gray-500 text-lg">Coming soon</p>
 
 
       <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
