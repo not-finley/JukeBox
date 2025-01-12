@@ -1,4 +1,4 @@
-import { Review, SongDetails } from "@/types";
+import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
 import { addListened, addRating, addSongToDatabase, getAllRatingsOfaSong, getRating, getSongDetailsById, hasListened, hasRating, removeListened, updateRating } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
