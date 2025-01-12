@@ -399,7 +399,7 @@ export async function addRating(songId : string, userId : string, rating: number
             }
         );
     } catch (error) {
-      console.log(error);
+        console.log(error);
     }
 }
 
@@ -559,4 +559,22 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
     }
 }
 
+export async function getLastWeekPopularSongs(): Promise<Song[]> {
 
+    const cachedData = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.cacheDataCollectionID
+    );
+
+    const topSongs = cachedData.documents.map((document) => {
+        const data = document.data;
+        console.log(data);
+        return {
+            songId: data.songId,
+            title: data.title,
+            album_cover_url: data.album_cover_url,
+        } as Song;
+    });
+    
+    return topSongs;
+}

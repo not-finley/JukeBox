@@ -6,44 +6,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { getSpotifyToken, SpotifyById } from "@/lib/appwrite/spotify";
 import { useUserContext } from "@/context/AuthContext";
-
-const ReviewItem = (review : Review ) => {
-  const [longVis, setLongVis] = useState(false);
-  const toggleLongVis = () => setLongVis(!longVis);
-
-  return (
-    <li className="review-container flex items-start gap-4 mb-6">
-      <img
-        src={review.creator.imageUrl}
-        alt={review.creator.username}
-        className="h-10 w-10 rounded-full"
-      />
-      <div>
-        <p>
-          Reviewed by{" "}
-          <Link to={`/profile/${review.creator.accountId}`} className="underline">
-            {review.creator.username}
-          </Link>
-        </p>
-        {!longVis && review.text.length > 400 ? (
-          <p className="text-gray-200 text-sm w-fit">
-            {review.text.slice(0, 400)} ...
-            <button
-              onClick={toggleLongVis}
-              className="text-white hover:text-green-400"
-            >
-              more
-            </button>
-          </p>
-        ) : (
-          <p className="text-gray-200 text-sm w-fit">{review.text}</p>
-        )}
-      </div>
-    </li>
-  );
-};
-
-
+import ReviewItem from "@/components/ReviewItem";
 
 
 
@@ -169,7 +132,7 @@ const SongDetailsSection = () => {
     if(songNotFound) {
       return (
         <div className="common-container">
-         <p>Song not found</p>
+          <p>Song not found</p>
         </div>
       )
     }
@@ -254,7 +217,7 @@ const SongDetailsSection = () => {
           </p>
 
           {/* Ratings */}
-          <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-300">
+          <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-400">
             <p className="text-xl font-semibold text-left ">Ratings</p>
             <p className="text-gray-400 text-md text-right">{GlobalNumRatings} listeners</p>
           </div>
@@ -291,7 +254,7 @@ const SongDetailsSection = () => {
 
           {/* Where to Listen */}
           <div className="mb-6">
-            <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-300">
+            <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-400">
               <p className="text-xl font-semibold text-left ">Where to Listen</p>
             </div>
             <div className="space-y-2">
@@ -304,7 +267,7 @@ const SongDetailsSection = () => {
           {/* Reviews */}
           <div>
             <ul>
-              <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-300">
+              <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-400">
                 <p className="text-xl font-semibold text-left ">Recent Reviews</p>
                 <p className="text-gray-400 text-md text-right">see more</p>
               </div>

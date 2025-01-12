@@ -11,7 +11,8 @@ export const appwriteConfig = {
     raitingsCollectionID: import.meta.env.VITE_APPWRITE_RATINGS_ID,
     usersCollectionID: import.meta.env.VITE_APPWRITE_USERS_ID,
     reviewsCollectionID: import.meta.env.VITE_APPWRITE_REVIEWS_ID,
-    artistsCollectionID: import.meta.env.VITE_APPWRITE_ARTISTS_ID
+    artistsCollectionID: import.meta.env.VITE_APPWRITE_ARTISTS_ID,
+    cacheDataCollectionID: import.meta.env.VITE_APPWRITE_CACHEDATA_ID
 }
 
 export const client = new Client();

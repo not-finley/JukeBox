@@ -34,7 +34,7 @@ const Songs = () => {
                     <Link key={s.songId} to={`/song/${s.songId}`}>
                       <div className="song-card" key={s.songId}>
                         <img src={s.album_cover_url} alt={s.title} className="song-image" />
-                        <p className="song-title">{s.title}</p>
+                        <p className="song-title">{s.title.length >30? s.title.slice(0,30) + "...": s.title}</p>
                       </div>
                     </Link>
                 ))}

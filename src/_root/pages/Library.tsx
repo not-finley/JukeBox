@@ -5,6 +5,39 @@ import { Listened, Rating, Review } from "@/types";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+const ReviewItemLibrary = (review : Review ) => {
+  const [longVis, setLongVis] = useState(false);
+  const toggleLongVis = () => setLongVis(!longVis);
+
+  return (
+    <li key={review.reviewId} className="review-container flex items-start gap-4 w-full max-w-screen-md -mb-4">
+              <Link to={`/song/${review.song.songId}`}>
+                <img
+                  src={review.song.album_cover_url}
+                  className="h-24 min-w-24"
+                />
+                <p>{review.song.title}</p>
+              </Link>
+              <div>
+                {!longVis && review.text.length > 400 ? (
+                  <p className="text-gray-200 text-sm w-fit">
+                    {review.text.slice(0, 400)} ...
+                    <button
+                      onClick={toggleLongVis}
+                      className="text-white hover:text-green-400"
+                    >
+                      more
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-gray-200 text-sm w-fit">{review.text}</p>
+                )}
+              </div>
+    </li>
+  )
+};
+
+
 const Library = () => {
   const { user } = useUserContext();
   const [listened, setListened] = useState<Listened[]>([]);
@@ -44,19 +77,7 @@ const Library = () => {
         <h2 className="text-md text-gray-400">See more</h2>
       </div>
       {reviewed.map((s) => (
-            <li key={s.reviewId} className="review-container flex items-start gap-4 w-full max-w-screen-md">
-              <Link to={`/song/${s.song.songId}`}>
-                <img
-                  src={s.song.album_cover_url}
-                  className="h-24 min-w-24"
-                />
-                <p>{s.song.title}</p>
-              </Link>
-              <div>
-                {s.text.length > 400? (<p className="text-sm w-fit">{s.text.slice(0, 400)} ...</p>)
-                :(<p className="text-sm w-fit">{s.text}</p>)}
-              </div>
-            </li>
+        <ReviewItemLibrary reviewId={s.reviewId} text={s.text} creator={s.creator} song={s.song} likes={s.likes} createdAt={s.createdAt} updatedAt={s.updatedAt}/>
       ))}
       {loading1 ? (
             <LoaderMusic />): 
@@ -67,7 +88,7 @@ const Library = () => {
             ('')
       }
 
-      <div className="w-full flex items-center justify-between -m-5 border-b-2 border-gray-300">
+      <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
         <h2 className="text-2xl">Rated</h2>
         <h2 className="text-md text-gray-400">See more</h2>
       </div>
@@ -78,12 +99,12 @@ const Library = () => {
                 <Link to={`/song/${s.song.songId}`} className="flex-col items-center justify-center w-16">
                   <img
                     src={s.song.album_cover_url}
-                    className="h-16"
+                    className="h-16 m-1"
                   />
                 </Link>
-                <div className="flex-col text-left">
-                  <p className="text-sm pl-5 max-w-64">{s.song.title}</p>
-                  <div className="flex p-5">
+                <div className="flex-col text-left items-center justify-normal">
+                  <p className="text-sm pl-5">{s.song.title.length >28? s.song.title.slice(0,28) + "...": s.song.title}</p>
+                  <div className="flex mx-3">
                     {[...Array(5)].map((_, index) => {
                         const value = (index + 1);
                         return (
@@ -97,8 +118,8 @@ const Library = () => {
                   </div>
                 </div>  
               </li>
-       ))}
-       </div>)
+      ))}
+      </div>)
       :''}
       {loading2 ? (
             <LoaderMusic />): 
