@@ -2,6 +2,13 @@ import LoaderMusic from "@/components/shared/loaderMusic";
 import { getLastWeekPopularSongs } from "@/lib/appwrite/api";
 import { Song } from "@/types";
 import { useEffect, useState } from "react";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, EffectCoverflow } from 'swiper/modules';
+
+import 'swiper/css';
+import "swiper/css/effect-coverflow";
+import "swiper/css/pagination";
+import "./css/SongCarousel.css";
 
 const Home = () => {
   const [popularSongs, setPopularSongs] = useState<Song[]>([]);
@@ -13,7 +20,7 @@ const Home = () => {
     const fetchTopTracks = async () => {
       try { 
         const topSongs = await getLastWeekPopularSongs();
-        setPopularSongs(topSongs.slice(0,4));
+        setPopularSongs(topSongs.splice(0,8));
       }
       catch(error) {
         console.log(error);
@@ -24,29 +31,66 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="common-container">
+    <div className="song-container">
       <h1 className="text-4xl font-bold">Home</h1>
-      <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
+      <div className="w-full flex items-center justify-between border-b-2 -m-5 border-gray-300">
         <h2 className="text-2xl">Top Songs</h2>
         <h2 className="text-md text-gray-400">See more</h2>
       </div>
       {loading?(<LoaderMusic />): ''}
-      <div className="flex">
-      {popularSongs.map((song) => (
-        <div key={song.songId} className="w-52 p-4 border rounded-lg text-center">
-          <img
-            src={song.album_cover_url}
-            alt={`${song.title} Album Cover`}
-            className="w-full rounded"
-          />
-          <h3 className="mt-4 font-semibold">{song.title}</h3>
-        </div>
-      ))}
+      <div className="swiper-container">
+        <Swiper
+          modules={[EffectCoverflow, Pagination]}
+          effect="coverflow"
+          grabCursor={true}
+          loop={true}
+          centeredSlides={true}
+          slidesPerView="auto"
+          coverflowEffect={{
+            rotate: 30,
+            stretch: -20,
+            depth: 100,
+            modifier: 1,
+            slideShadows: true, // Cleaner modern look without shadows
+          }}
+          pagination={{ clickable: true }}
+          className="swiper-container"
+        >
+          {popularSongs.map((song) => (
+            <SwiperSlide key={song.songId}>
+              <div className="song-card">
+                <img
+                  src={song.album_cover_url}
+                  alt={song.title}
+                  className="album-cover"
+                />
+                
+                <h3 className="song-title">{song.title}</h3>
+                
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </div>
+
+
+
+
       <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
         <h2 className="text-2xl">Popular Reviews</h2>
         <h2 className="text-md text-gray-400">See more</h2>
       </div>
+
+
+
+      <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
+        <h2 className="text-2xl">Recent Activity</h2>
+        <h2 className="text-md text-gray-400">See more</h2>
+      </div>
+        <p className="text-gray-500 text-lg">Coming soon</p>
+
+
+
     </div>
   )
 }

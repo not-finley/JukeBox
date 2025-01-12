@@ -566,15 +566,24 @@ export async function getLastWeekPopularSongs(): Promise<Song[]> {
         appwriteConfig.cacheDataCollectionID
     );
 
-    const topSongs = cachedData.documents.map((document) => {
-        const data = document.data;
-        console.log(data);
-        return {
-            songId: data.songId,
-            title: data.title,
-            album_cover_url: data.album_cover_url,
-        } as Song;
-    });
+    const rawData = cachedData.documents[0]?.data;
+
+    if (!rawData) {
+        throw Error("no data found");
+    }
+
+    let topSongs: Song[] = [];
+
+    try {
+        topSongs = JSON.parse(rawData);
+    } catch (error) {
+        console.error("Failed to parse cached data:", error);
+        throw new Error("Invalid cached data format.");
+    }
     
-    return topSongs;
+    return topSongs.map((item) => ({
+        songId: item.songId,
+        title: item.title,
+        album_cover_url: item.album_cover_url,
+    })) as Song[];
 }

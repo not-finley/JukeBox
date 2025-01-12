@@ -1,0 +1,73 @@
+/* Global Swiper container styling */
+.jukebox-carousel {
+@apply w-fit;
+}
+
+
+
+/* Swiper container styles */
+.swiper-container {
+@apply w-full md:max-w-sm xl:max-w-7xl lg:max-w-7xl;
+} 
+
+.swiper-slide {
+@apply flex justify-center items-center flex-col w-fit h-5/6 bg-transparent transition-transform
+}
+
+
+.swiper-slide:not(.swiper-slide-active) {
+    opacity: 0.7;
+}
+
+/* Song card styling */
+.song-card {
+    @apply flex flex-col items-center p-4 shadow-md transition-transform w-full;
+}
+
+.song-card:hover {
+@apply -translate-y-1
+}
+
+/* Album cover styling */
+.album-cover {
+@apply rounded-2xl mb-3 mt-12 transition-transform w-full max-w-xs;
+}
+
+.swiper-slide-active .album-cover {
+transform: scale(1.1); /* Enlarge the active slide */
+}
+
+/* Song info styling */
+
+.song-title {
+@apply text-lg mt-10 mb-10;
+}
+
+/* Responsive design */
+/* @media (max-width: 768px) {
+    .swiper-container {
+        @apply w-full;
+    }
+
+    .album-cover {
+        @apply max-w-md;
+    }
+
+    .song-title {
+        font-size: 16px;
+    }
+
+    .song-activity {
+        font-size: 12px;
+    }
+}
+
+@media (min-width: 1200px) {
+.swiper-slide-active {
+    transform: scale(1.15); 
+}
+
+.album-cover {
+    @apply max-w-lg;
+}
+} */

@@ -77,7 +77,7 @@ const Library = () => {
         <h2 className="text-md text-gray-400">See more</h2>
       </div>
       {reviewed.map((s) => (
-        <ReviewItemLibrary reviewId={s.reviewId} text={s.text} creator={s.creator} song={s.song} likes={s.likes} createdAt={s.createdAt} updatedAt={s.updatedAt}/>
+        <ReviewItemLibrary reviewId={s.reviewId} text={s.text} creator={s.creator} song={s.song} likes={s.likes} createdAt={s.createdAt} updatedAt={s.updatedAt} key={s.reviewId}/>
       ))}
       {loading1 ? (
             <LoaderMusic />): 
@@ -95,7 +95,7 @@ const Library = () => {
       {rated.length > 0? (
         <div className="raiting-grid">
         {rated.map((s) => (
-              <li key={s.ratingId} className="flex max-w-md min-w-md bg-emerald-600 rounded-md justify-center items-center p-2">
+              <li key={s.ratingId} className="flex w-full bg-emerald-600 rounded-md justify-center items-center p-2 hover:bg-emerald-500">
                 <Link to={`/song/${s.song.songId}`} className="flex-col items-center justify-center w-16">
                   <img
                     src={s.song.album_cover_url}

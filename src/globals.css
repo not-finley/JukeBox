@@ -4,6 +4,21 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
+:root {
+  --swiper-pagination-color: #0f9736;
+  --swiper-pagination-bullet-size: 8px;
+  --swiper-pagination-bullet-width: 8px;
+  --swiper-pagination-bullet-height: 8px;
+  --swiper-pagination-bullet-inactive-color: #fff;
+  --swiper-pagination-bullet-inactive-opacity: 0.4;
+  --swiper-pagination-bullet-opacity: 1;
+  --swiper-pagination-bullet-horizontal-gap: 4px;
+  --swiper-pagination-bullet-vertical-gap: 5px;
+}
+
+
 @layer base {
   * {
     @apply box-border list-none p-0 m-0 scroll-smooth;
@@ -167,6 +182,29 @@
     color: text-white;
 }
 
+.swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide {
+  text-align: center;
+  font-size: 18px;
+  background: #fff;
+
+  /* Center slide text vertically */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.swiper-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .review-container {
   @apply bg-emerald-900 p-4 rounded-lg flex flex-row opacity-90
 }
@@ -315,6 +353,7 @@
   .user-card {
     @apply flex-center flex-col gap-4 border border-dark-4 rounded-[20px] px-5 py-8;
   }
+
 }
 
 @layer components {
