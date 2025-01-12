@@ -42,7 +42,7 @@ const SongDetailsSection = () => {
     }
     setCounts(countslocal);
     
-    setGlobalRating(raitingG/GlobalRaitings.length);
+    setGlobalRating(Number((raitingG/GlobalRaitings.length).toFixed(1)));
   }
 
   const handleRating = async (value : number) => {
@@ -233,7 +233,7 @@ const SongDetailsSection = () => {
                 const percentage = GlobalNumRatings > 0 ? (c / GlobalNumRatings) * 100 : 0;
                 return (
                   <div key={index + 1} className="flex flex-col items-center w-1/5">
-                    <span className="text-sm mt-2 text-gray-400">{percentage}%</span>
+                    <span className="text-sm mt-2 text-gray-400">{Math.round(percentage)}%</span>
                     {/* Bar */}
                     <div
                       className="bg-emerald-600 rounded-t-lg max-w-14 w-full"

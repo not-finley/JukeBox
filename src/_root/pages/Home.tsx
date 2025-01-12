@@ -9,6 +9,7 @@ import 'swiper/css';
 import "swiper/css/effect-coverflow";
 import "swiper/css/pagination";
 import "./css/SongCarousel.css";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   const [popularSongs, setPopularSongs] = useState<Song[]>([]);
@@ -58,16 +59,19 @@ const Home = () => {
         >
           {popularSongs.map((song) => (
             <SwiperSlide key={song.songId}>
-              <div className="song-card">
-                <img
-                  src={song.album_cover_url}
-                  alt={song.title}
-                  className="album-cover"
-                />
-                
-                <h3 className="song-title">{song.title}</h3>
-                
-              </div>
+              <Link key={song.songId} to={`/song/${song.songId}`}>
+                <div className="song-card">
+                  <img
+                    src={song.album_cover_url}
+                    alt={song.title}
+                    className="album-cover"
+                  />
+                  
+                  <h3 className="song-title">{song.title}</h3>
+                  
+                </div>
+              </Link>
+              
             </SwiperSlide>
           ))}
         </Swiper>
