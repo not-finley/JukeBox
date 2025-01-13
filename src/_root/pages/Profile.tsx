@@ -1,6 +1,8 @@
 const Profile = () => {
   return (
-    <div>Profile</div>
+    <div className="common-container">
+      <p className="text-gray-500 text-3xl">Coming soon</p>
+    </div>
   )
 }
 

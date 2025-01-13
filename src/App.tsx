@@ -11,6 +11,7 @@ import { Toaster } from "@/components/ui/toaster"
 import Search from './_root/pages/Search';
 import { Helmet } from 'react-helmet';
 import SongDetailsSection from './_root/pages/SongDetails';
+import TopTracks from './_root/pages/TopTracks';
 
 const App = () => {
   return (
@@ -35,6 +36,7 @@ const App = () => {
                 <Route path="/song/:id" element={<SongDetailsSection />}/>
                 <Route path="/song/:id/add-review" element={<AddReview />}/>
                 <Route path="/search" element={<Search  />}/>
+                <Route path="/toptracks" element={<TopTracks />}/>
             </Route>
         </Routes>
         <Toaster />

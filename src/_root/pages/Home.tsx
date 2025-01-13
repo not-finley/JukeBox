@@ -3,7 +3,7 @@ import { getLastWeekPopularSongs } from "@/lib/appwrite/api";
 import { Song } from "@/types";
 import { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, EffectCoverflow } from 'swiper/modules';
+import { Pagination, EffectCoverflow, Mousewheel } from 'swiper/modules';
 
 import 'swiper/css';
 import "swiper/css/effect-coverflow";
@@ -21,7 +21,7 @@ const Home = () => {
     const fetchTopTracks = async () => {
       try { 
         const topSongs = await getLastWeekPopularSongs();
-        setPopularSongs(topSongs.splice(0,8));
+        setPopularSongs(topSongs.splice(0,9));
       }
       catch(error) {
         console.log(error);
@@ -31,17 +31,18 @@ const Home = () => {
     setLoading(false);
   }, []);
 
+
   return (
     <div className="song-container">
       <h1 className="text-4xl font-bold">Home</h1>
       <div className="w-full flex items-center justify-between border-b-2 -m-5 border-gray-300">
         <h2 className="text-2xl">Top Songs</h2>
-        <h2 className="text-md text-gray-400">See more</h2>
+        <Link to='/toptracks' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
       {loading?(<LoaderMusic />): ''}
       <div className="swiper-container">
         <Swiper
-          modules={[EffectCoverflow, Pagination]}
+          modules={[EffectCoverflow, Pagination, Mousewheel]}
           effect="coverflow"
           grabCursor={true}
           loop={true}
@@ -52,7 +53,11 @@ const Home = () => {
             stretch: -20,
             depth: 100,
             modifier: 1,
-            slideShadows: true, // Cleaner modern look without shadows
+            slideShadows: false, // Cleaner modern look without shadows
+          }}
+          mousewheel={{
+            forceToAxis: true,
+            sensitivity: 3,  
           }}
           pagination={{ clickable: true }}
           className="swiper-container"
