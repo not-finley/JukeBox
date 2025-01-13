@@ -67,9 +67,6 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 1. **Sign Up/Login:** Create an account or log in securely using the Appwrite authentication system.
 2. **Discover Music:** Search for tracks and albums directly via the Spotify API.
 3. **Write Reviews:** Post your thoughts, rate music, and engage with other users.
-4. **Personalized Recommendations:** Explore music tailored to your preferences.
-5. **Social Features:** Follow your friends or other accounts and get updated on their activity.
-
 ---
 
 ## Screenshots
@@ -79,6 +76,7 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 ![search](https://github.com/user-attachments/assets/24a8b76e-086e-45fc-9e2f-8688abebba00)
 
 ![library](https://github.com/user-attachments/assets/5e8de02b-c956-4064-9686-5ebb11520875)
+![song_details](https://github.com/user-attachments/assets/ad1d7151-66ca-424b-8cd9-db2817e76e97)
 
 
 
@@ -86,7 +84,8 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 
 
 ## Roadmap
-
+- **Social Features:** Follow your friends or other accounts and get updated on their activity.
+- **Personalized Recommendations:** Explore music tailored to your preferences.
 - **Playlist Sharing:** Allow users to create and share playlists, and import exsiting ones from spotify.
 - **Advanced Analytics:** Provide insights into user listening trends. (Like Spotify wrapped but year round)
 
@@ -94,7 +93,7 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 
 ## Contributing
 
-We welcome contributions! Please follow these steps:
+I welcome contributions! Please follow these steps:
 
 1. Fork the repository.
 2. Create a new branch (`feature/your-feature-name`).
