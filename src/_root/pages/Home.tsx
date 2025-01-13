@@ -56,8 +56,8 @@ const Home = () => {
             slideShadows: false, // Cleaner modern look without shadows
           }}
           mousewheel={{
-            forceToAxis: true,
-            sensitivity: 3,  
+            forceToAxis: false,
+            sensitivity: 2,  
           }}
           pagination={{ clickable: true }}
           className="swiper-container"
