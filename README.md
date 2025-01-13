@@ -9,7 +9,6 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 - **Dynamic Music Reviews:** Users can post reviews, rate albums, and interact with others' opinions.
 - **Spotify Integration:** Search and explore music directly from Spotify's extensive library.
 - **User Authentication:** Secure login and account management through Appwrite.
-- **Personalized Recommendations:** Algorithms suggest music based on user preferences and interactions.
 - **Responsive Design:** Optimized for desktop and mobile for an enhanced user experience.
 
 ---
