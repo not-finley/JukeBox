@@ -40,7 +40,7 @@ transform: scale(1.1); /* Enlarge the active slide */
 /* Song info styling */
 
 .song-title {
-@apply text-lg mt-10 mb-10;
+@apply text-lg mt-3 mb-10;
 }
 
 /* Responsive design */
