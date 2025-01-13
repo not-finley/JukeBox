@@ -8,9 +8,9 @@
 
 :root {
   --swiper-pagination-color: #0f9736;
-  --swiper-pagination-bullet-size: 8px;
-  --swiper-pagination-bullet-width: 8px;
-  --swiper-pagination-bullet-height: 8px;
+  --swiper-pagination-bullet-size: 10px;
+  --swiper-pagination-bullet-width: 10px;
+  --swiper-pagination-bullet-height: 10px;
   --swiper-pagination-bullet-inactive-color: #fff;
   --swiper-pagination-bullet-inactive-opacity: 0.4;
   --swiper-pagination-bullet-opacity: 1;
@@ -138,9 +138,13 @@
 
   /* Songs */
   .song-container {
-    @apply flex flex-col flex-1 items-center gap-10 overflow-scroll py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col h-full flex-1 items-center overflow-scroll gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+
 }
 
+.element-container {
+  height: 84dvh
+}
 
 .song-grid {
     display: grid;
