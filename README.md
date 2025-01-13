@@ -73,9 +73,14 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 ---
 
 ## Screenshots
+![Home_Phone](https://github.com/user-attachments/assets/efffe66b-0db8-4f01-9efa-0443d9558e7c)
+![Home_Desktop](https://github.com/user-attachments/assets/b60e1fcb-27b1-42c3-8a90-8726d7fad46e)
 
-![Songs Desktop](https://github.com/user-attachments/assets/e2b7f21a-fd38-4f65-ad19-bf13472269be)
-![Soongs Mobile](https://github.com/user-attachments/assets/aea59b90-0795-4932-bac4-8bbb110bcf53)
+![search](https://github.com/user-attachments/assets/24a8b76e-086e-45fc-9e2f-8688abebba00)
+
+![library](https://github.com/user-attachments/assets/5e8de02b-c956-4064-9686-5ebb11520875)
+
+
 
 ![Log-in](https://github.com/user-attachments/assets/e7bf31eb-76f9-4692-b851-cdcbd92b47c1)
 
