@@ -56,7 +56,7 @@ const Home = () => {
             slideShadows: false, // Cleaner modern look without shadows
           }}
           mousewheel={{
-            forceToAxis: false,
+            forceToAxis: true,
             sensitivity: 2,  
           }}
           pagination={{ clickable: true }}
