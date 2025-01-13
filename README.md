@@ -13,6 +13,25 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
 - **Responsive Design:** Optimized for desktop and mobile for an enhanced user experience.
 
 ---
+## Usage
+
+1. **Sign Up/Login:** Create an account or log in securely using the Appwrite authentication system.
+2. **Discover Music:** Search for tracks and albums directly via the Spotify API.
+3. **Write Reviews:** Post your thoughts, rate music, and engage with other users.
+---
+## Screenshots
+![Home_Phone](https://github.com/user-attachments/assets/efffe66b-0db8-4f01-9efa-0443d9558e7c)
+![Home_Desktop](https://github.com/user-attachments/assets/b60e1fcb-27b1-42c3-8a90-8726d7fad46e)
+
+![search](https://github.com/user-attachments/assets/24a8b76e-086e-45fc-9e2f-8688abebba00)
+
+![library](https://github.com/user-attachments/assets/5e8de02b-c956-4064-9686-5ebb11520875)
+![song_details](https://github.com/user-attachments/assets/ad1d7151-66ca-424b-8cd9-db2817e76e97)
+
+
+
+![Log-in](https://github.com/user-attachments/assets/e7bf31eb-76f9-4692-b851-cdcbd92b47c1)
+---
 
 ## Tech Stack
 
@@ -61,26 +80,6 @@ JukeBox is a social media platform designed for music lovers to share, rate, and
    ```
 
 ---
-
-## Usage
-
-1. **Sign Up/Login:** Create an account or log in securely using the Appwrite authentication system.
-2. **Discover Music:** Search for tracks and albums directly via the Spotify API.
-3. **Write Reviews:** Post your thoughts, rate music, and engage with other users.
----
-
-## Screenshots
-![Home_Phone](https://github.com/user-attachments/assets/efffe66b-0db8-4f01-9efa-0443d9558e7c)
-![Home_Desktop](https://github.com/user-attachments/assets/b60e1fcb-27b1-42c3-8a90-8726d7fad46e)
-
-![search](https://github.com/user-attachments/assets/24a8b76e-086e-45fc-9e2f-8688abebba00)
-
-![library](https://github.com/user-attachments/assets/5e8de02b-c956-4064-9686-5ebb11520875)
-![song_details](https://github.com/user-attachments/assets/ad1d7151-66ca-424b-8cd9-db2817e76e97)
-
-
-
-![Log-in](https://github.com/user-attachments/assets/e7bf31eb-76f9-4692-b851-cdcbd92b47c1)
 
 
 ## Roadmap
