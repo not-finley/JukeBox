@@ -26,9 +26,9 @@ const Home = () => {
       catch(error) {
         console.log(error);
       }
+      setLoading(false);
     }
     fetchTopTracks();
-    setLoading(false);
   }, []);
 
 
@@ -39,8 +39,8 @@ const Home = () => {
         <h2 className="text-2xl">Top Songs</h2>
         <Link to='/toptracks' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
-      {loading?(<LoaderMusic />): ''}
-      <div className="swiper-container">
+      {loading?(<LoaderMusic />): (
+        <div className="swiper-container">
         <Swiper
           modules={[EffectCoverflow, Pagination, Mousewheel]}
           effect="coverflow"
@@ -81,6 +81,7 @@ const Home = () => {
           ))}
         </Swiper>
       </div>
+      )}
 
 
 
