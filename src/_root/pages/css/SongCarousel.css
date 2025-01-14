@@ -1,17 +1,17 @@
 /* Global Swiper container styling */
 .jukebox-carousel {
-@apply w-fit;
+@apply w-full md:max-w-sm  xl:max-w-7xl lg:max-w-2xl;
 }
 
 
 
 /* Swiper container styles */
 .swiper-container {
-@apply w-full md:max-w-sm xl:max-w-7xl lg:max-w-7xl;
+    @apply w-full;
 } 
-
+/* md:max-w-sm xl:max-w-7xl lg:max-w-2xl */
 .swiper-slide {
-@apply flex justify-center items-center flex-col w-fit h-5/6 bg-transparent transition-transform
+    @apply flex justify-center items-center flex-col w-fit h-5/6 bg-transparent transition-transform
 }
 
 

@@ -515,6 +515,27 @@ export async function getListenedWithLimit(userId: string, limit: number): Promi
     }
 }
 
+export async function getListened(userId: string): Promise<Listened[]> {
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.listenedToCollectionID,
+            [
+                Query.equal("user", [userId]),
+                Query.orderDesc('createdAt')
+            ]
+        );
+        if (listened.total === 0) {
+            return [];
+        }
+
+        return listened.documents as unknown as Listened[];
+    } catch (error) {
+        console.error('Failed to fetch listened:', error);
+        return [];
+    }
+}
+
 export async function getRatedWithLimit(userId: string, limit: number): Promise<Rating[]> {
     try {
         const listened = await databases.listDocuments(
@@ -523,6 +544,27 @@ export async function getRatedWithLimit(userId: string, limit: number): Promise<
             [
                 Query.equal("user", [userId]),
                 Query.limit(limit),
+                Query.orderDesc('createdAt')
+            ]
+        );
+        if (listened.total === 0) {
+            return [];
+        }
+
+        return listened.documents as unknown as Rating[];
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return [];
+    }
+} 
+
+export async function getRated(userId: string): Promise<Rating[]> {
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.raitingsCollectionID,
+            [
+                Query.equal("user", [userId]),
                 Query.orderDesc('createdAt')
             ]
         );
@@ -546,6 +588,27 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
                 Query.equal("creator", [userId]),
                 Query.orderDesc('createdAt'),
                 Query.limit(limit)
+            ]
+        );
+        if (listened.total === 0) {
+            return [];
+        }
+
+        return listened.documents as unknown as Review[];
+    } catch (error) {
+        console.error('Failed to fetch user:', error);
+        return [];
+    }
+}
+
+export async function getReviewed(userId: string): Promise<Review[]> {
+    try {
+        const listened = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.reviewsCollectionID,
+            [
+                Query.equal("creator", [userId]),
+                Query.orderDesc('createdAt'),
             ]
         );
         if (listened.total === 0) {

@@ -1,3 +1,4 @@
+import ReviewItemLibrary from "@/components/ReviewItemLibrary";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { useUserContext } from "@/context/AuthContext";
 import { getListenedWithLimit, getRatedWithLimit, getReviewedWithLimit } from "@/lib/appwrite/api";
@@ -5,37 +6,6 @@ import { Listened, Rating, Review } from "@/types";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-const ReviewItemLibrary = (review : Review ) => {
-  const [longVis, setLongVis] = useState(false);
-  const toggleLongVis = () => setLongVis(!longVis);
-
-  return (
-    <li key={review.reviewId} className="review-container flex items-start gap-4 w-full max-w-screen-md -mb-4">
-              <Link to={`/song/${review.song.songId}`}>
-                <img
-                  src={review.song.album_cover_url}
-                  className="h-24 min-w-24"
-                />
-                <p>{review.song.title}</p>
-              </Link>
-              <div>
-                {!longVis && review.text.length > 400 ? (
-                  <p className="text-gray-200 text-sm w-fit">
-                    {review.text.slice(0, 400)} ...
-                    <button
-                      onClick={toggleLongVis}
-                      className="text-white hover:text-green-400"
-                    >
-                      more
-                    </button>
-                  </p>
-                ) : (
-                  <p className="text-gray-200 text-sm w-fit">{review.text}</p>
-                )}
-              </div>
-    </li>
-  )
-};
 
 
 const Library = () => {
@@ -49,7 +19,7 @@ const Library = () => {
 
   const loadSongs = async () => {
     if (user?.accountId) {
-      const newReviews = await getReviewedWithLimit(user.accountId, 3);
+      const newReviews = await getReviewedWithLimit(user.accountId, 2);
       setReviewed(newReviews);
       setLoading1(false);
 
@@ -74,7 +44,7 @@ const Library = () => {
       <h1 className="text-4xl font-bold">Library</h1>
       <div className="w-full flex items-center justify-between -m-5 border-b-2 border-gray-300">
         <h2 className="text-2xl">Reviewed</h2>
-        <h2 className="text-md text-gray-400">See more</h2>
+        <Link to='/library/reviews' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
       {reviewed.map((s) => (
         <ReviewItemLibrary reviewId={s.reviewId} text={s.text} creator={s.creator} song={s.song} likes={s.likes} createdAt={s.createdAt} updatedAt={s.updatedAt} key={s.reviewId}/>
@@ -90,7 +60,7 @@ const Library = () => {
 
       <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
         <h2 className="text-2xl">Rated</h2>
-        <h2 className="text-md text-gray-400">See more</h2>
+        <Link to='/library/rated' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
       {rated.length > 0? (
         <div className="raiting-grid">
@@ -132,7 +102,7 @@ const Library = () => {
       
       <div className="w-full flex items-center justify-between -m-5 border-b-2 border-gray-300">
         <h2 className="text-2xl">Listened To</h2>
-        <h2 className="text-md text-gray-400">See more</h2>
+        <Link to='/library/listened' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
       {listened.length > 0? (
         <div className='song-grid'>

@@ -12,6 +12,9 @@ import Search from './_root/pages/Search';
 import { Helmet } from 'react-helmet';
 import SongDetailsSection from './_root/pages/SongDetails';
 import TopTracks from './_root/pages/TopTracks';
+import LibraryReviews from './_root/pages/LibraryReviews';
+import LibraryRatings from './_root/pages/LibraryRatings';
+import LibraryListened from './_root/pages/LibraryListened';
 
 const App = () => {
   return (
@@ -30,6 +33,9 @@ const App = () => {
                 <Route index element={<Home />}/>
                 <Route path="/songs" element={<Songs />}/>
                 <Route path="/library" element={<Library />}/>
+                <Route path="/library/reviews" element={<LibraryReviews />}/>
+                <Route path="/library/rated" element={<LibraryRatings />}/>
+                <Route path="/library/listened" element={<LibraryListened />}/>
                 <Route path="/all-users" element={<AllUsers />}/>
                 <Route path="/profile/:id/*" element={<Profile />}/>
                 <Route path="/update-profile/:id" element={<UpdateProfile />}/>

@@ -40,7 +40,7 @@ const Home = () => {
         <Link to='/toptracks' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
       {loading?(<LoaderMusic />): (
-        <div className="swiper-container">
+        <div className="jukebox-carousel">
         <Swiper
           modules={[EffectCoverflow, Pagination, Mousewheel]}
           effect="coverflow"
