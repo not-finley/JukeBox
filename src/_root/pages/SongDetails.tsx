@@ -146,6 +146,7 @@ const SongDetailsSection = () => {
       setListened(true);
     }
   }
+ 
   return (
     <div className="common-container">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
@@ -155,6 +156,7 @@ const SongDetailsSection = () => {
             src={song?.album_cover_url}
             alt="Album Cover"
             className="rounded-lg shadow-lg"
+            style={{ width: '100%', height: 'auto' }}
           />
           <div className="flex gap-2 mt-2">
             <Button className="shad-button_primary w-1/2" onClick={listenedClick}>
@@ -216,7 +218,7 @@ const SongDetailsSection = () => {
           </p>
 
           {/* Ratings */}
-          <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-400">
+          <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-500">
             <p className="text-xl font-semibold text-left ">Ratings</p>
             <p className="text-gray-400 text-md text-right">{GlobalNumRatings} listeners</p>
           </div>
@@ -253,7 +255,7 @@ const SongDetailsSection = () => {
 
           {/* Where to Listen */}
           <div className="mb-6">
-            <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-400">
+            <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-500">
               <p className="text-xl font-semibold text-left ">Where to Listen</p>
             </div>
             <div className="space-y-2">
@@ -266,7 +268,7 @@ const SongDetailsSection = () => {
           {/* Reviews */}
           <div>
             <ul>
-              <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-400">
+              <div className="w-full flex items-center justify-between border-b-2 mb-5 border-gray-300">
                 <p className="text-xl font-semibold text-left ">Recent Reviews</p>
                 <p className="text-gray-400 text-md text-right">see more</p>
               </div>

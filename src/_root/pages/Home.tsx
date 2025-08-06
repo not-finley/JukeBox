@@ -35,7 +35,7 @@ const Home = () => {
   return (
     <div className="song-container">
       <h1 className="text-4xl font-bold">Home</h1>
-      <div className="w-full flex items-center justify-between border-b-2 -m-5 border-gray-300">
+      <div className="w-full flex items-center justify-between border-b-2 -m-5 border-gray-500">
         <h2 className="text-2xl">Top Songs</h2>
         <Link to='/toptracks' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
@@ -86,14 +86,14 @@ const Home = () => {
 
 
 
-      <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
+      <div className="w-full flex items-center justify-between border-b-2 border-gray-500">
         <h2 className="text-2xl">Popular Reviews</h2>
         <h2 className="text-md text-gray-400">See more</h2>
       </div>
         <p className="text-gray-500 text-lg">Coming soon</p>
 
 
-      <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
+      <div className="w-full flex items-center justify-between border-b-2 border-gray-500">
         <h2 className="text-2xl">Recent Activity</h2>
         <h2 className="text-md text-gray-400">See more</h2>
       </div>

@@ -40,7 +40,7 @@ const Songs = () => {
                 ))}
             </div>
 
-        <div className="mt-1, text-center">
+        <div className="mt-1 text-center">
           {loading ? (
             <LoaderMusic />): 
             (

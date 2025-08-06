@@ -129,7 +129,7 @@
 
   /* All Users */
   .user-container {
-    @apply max-w-5xl flex flex-col items-start w-full gap-6 md:gap-9;
+    @apply flex flex-col h-full flex-1 items-center overflow-scroll gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   .user-grid {
@@ -151,6 +151,7 @@
     grid-template-columns: repeat(2, 1fr); /* Default: 2 columns */
     gap: 1rem;
     justify-content: center;
+    width: 100%;
 }
 
 

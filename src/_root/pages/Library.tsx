@@ -42,7 +42,7 @@ const Library = () => {
   return (
     <div className="song-container">
       <h1 className="text-4xl font-bold">Library</h1>
-      <div className="w-full flex items-center justify-between -m-5 border-b-2 border-gray-300">
+      <div className="w-full flex items-center justify-between -m-5 border-b-2 border-gray-500">
         <h2 className="text-2xl">Reviewed</h2>
         <Link to='/library/reviews' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
@@ -58,7 +58,7 @@ const Library = () => {
             ('')
       }
 
-      <div className="w-full flex items-center justify-between border-b-2 border-gray-300">
+      <div className="w-full flex items-center justify-between border-b-2 border-gray-500">
         <h2 className="text-2xl">Rated</h2>
         <Link to='/library/rated' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
@@ -100,7 +100,7 @@ const Library = () => {
             ('')
       }
       
-      <div className="w-full flex items-center justify-between -m-5 border-b-2 border-gray-300">
+      <div className="w-full flex items-center justify-between -m-5 border-b-2 border-gray-500">
         <h2 className="text-2xl">Listened To</h2>
         <Link to='/library/listened' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
       </div>
