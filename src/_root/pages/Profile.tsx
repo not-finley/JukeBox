@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUserContext } from "@/context/AuthContext";
 import { useParams } from "react-router-dom";
+import { getListenedWithLimit, getRatedWithLimit, getReviewedWithLimit } from "@/lib/appwrite/api";
+import { Listened, Rating, Review } from "@/types";
 import { IUser } from "@/types";
+import { Link } from "react-router-dom";
 
 const mockUser = {
   avatar: "https://randomuser.me/api/portraits/men/51.jpg",
@@ -50,9 +53,12 @@ type profileProps = {
   activeTab: string;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   isCurrentUser: boolean;
+  listened: Listened[];
+  reviews: Review[];
+  raitings: Rating[];
 }
 
-const ProfileComponent = ({ user, activeTab, setActiveTab, isCurrentUser } : profileProps) => (
+const ProfileComponent = ({ user, activeTab, setActiveTab, isCurrentUser, listened, reviews, raitings } : profileProps) => (
   <div className="w-full max-w-6xl mx-auto shadow rounded-2xl p-4 md:p-8  border border-gray-800 flex flex-col lg:flex-row gap-8">
     {/* Left: Avatar, Stats, Bio */}
     <div className="flex flex-col items-center w-full lg:max-w-xs flex-shrink-0">
@@ -80,10 +86,6 @@ const ProfileComponent = ({ user, activeTab, setActiveTab, isCurrentUser } : pro
         <div className="flex gap-8 text-center md:text-left mb-2 w-full justify-between">
           <div>
             <span className="font-bold">__</span>
-            <div className="text-xs text-gray-400">Posts</div>
-          </div>
-          <div>
-            <span className="font-bold">__</span>
             <div className="text-xs text-gray-400">Followers</div>
           </div>
           <div>
@@ -92,7 +94,7 @@ const ProfileComponent = ({ user, activeTab, setActiveTab, isCurrentUser } : pro
           </div>
         </div>
         <div className="text-sm text-gray-400 mb-2 w-full text-center lg:text-left">
-          {mockUser.bio}
+          {user.bio || "No bio yet."}
         </div>
       </div>
     </div>
@@ -118,35 +120,40 @@ const ProfileComponent = ({ user, activeTab, setActiveTab, isCurrentUser } : pro
       <div className="flex-1">
         {activeTab === "Listens" && (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2 md:gap-4">
-            {mockUser.listens.map((listen, idx) => (
-              <div
+          {listened.map((listen, idx) => (
+            <Link key={listen.song.songId} to={`/song/${listen.song.songId}`}>
+              <figure
                 key={idx}
-                className="aspect-square bg-gray-800 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-gray-700"
+                className="aspect-square bg-gray-800 rounded-lg overflow-hidden border border-gray-700 flex flex-col items-center"
               >
-                <img src={listen.image} alt={listen.label} className="w-10 h-10 mb-1" />
-                <span className="text-xs text-gray-200 text-center px-1 truncate w-full">
-                  {listen.label}
-                </span>
-              </div>
+                <img
+                  src={listen.song.album_cover_url}
+                  alt={`Album cover of ${listen.song.title}`}
+                  className="w-full h-full object-cover"
+                />
+                <figcaption className="w-full px-2 py-1 bg-gray-900 bg-opacity-70 text-xs text-gray-100 text-center truncate">
+                  {listen.song.title}
+                </figcaption>
+              </figure>
+              </Link>
             ))}
-          </div>
+            </div>  
         )}
         {activeTab === "Reviews" && (
           <div className="flex flex-col gap-4">
-            {mockUser.reviews.map((review, idx) => (
+            {reviews.map((review, idx) => (
               <div key={idx} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                <span className="font-medium text-indigo-200">{review.song}</span>
-                <p className="text-gray-200 mt-1">{review.review}</p>
+                <span className="font-medium text-indigo-200">{review.song.title}</span>
+                <p className="text-gray-200 mt-1">{review.text}</p>
               </div>
             ))}
           </div>
         )}
         {activeTab === "Ratings" && (
           <div className="flex flex-col gap-4">
-            {mockUser.ratings.map((rating, idx) => (
+            {raitings.map((rating, idx) => (
               <div key={idx} className="bg-gray-800 rounded-lg p-4 flex items-center gap-4 border border-gray-700">
-                <img src="/assets/icons/star_full.svg" className="w-8 h-8" />
-                <span className="font-medium text-yellow-200">{rating.song}</span>
+                <span className="font-medium text-yellow-200">{rating.song.title}</span>
                 <span className="text-yellow-400 ml-auto">{"★".repeat(rating.rating)}</span>
               </div>
             ))}
@@ -162,6 +169,9 @@ const Profile = () => {
   const { user } = useUserContext();
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("Listens");
+  const [listened, setListened] = useState<Listened[]>([]);
+  const [reviewed, setReviewed] = useState<Review[]>([]);
+  const [rated, setRated] = useState<Rating[]>([]);
 
   // Replace this with your real user/account id logic
   const isCurrentUser = user?.accountId === id;
@@ -170,9 +180,30 @@ const Profile = () => {
     return <div className="text-center text-gray-400">Loading...</div>;
   }
 
+  const loadSongs = async () => {
+      if (user?.accountId) {
+        const newReviews = await getReviewedWithLimit(user.accountId, 2);
+        setReviewed(newReviews);
+        // setLoading1(false);
+  
+  
+        const newRaitings = await getRatedWithLimit(user.accountId, 4);
+        setRated(newRaitings);
+        // setLoading2(false);
+  
+        const newSongs = await getListenedWithLimit(user.accountId, 4);
+        setListened(newSongs);
+        // setLoading3(false);
+      }
+    };
+  
+    useEffect(() => {
+      loadSongs();
+    }, [user])
+
   return (
     <div className="user-container flex">
-      <ProfileComponent user={user} activeTab={activeTab} setActiveTab={setActiveTab} isCurrentUser={isCurrentUser} />
+      <ProfileComponent user={user} activeTab={activeTab} setActiveTab={setActiveTab} isCurrentUser={isCurrentUser} reviews={reviewed} raitings={rated} listened={listened}/>
     </div>
   );
 };
