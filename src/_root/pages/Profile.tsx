@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUserContext } from "@/context/AuthContext";
 import { useParams } from "react-router-dom";
-import { getListenedWithLimit, getRatedWithLimit, getReviewedWithLimit } from "@/lib/appwrite/api";
+import { getListenedWithLimit, getRatedWithLimit, getReviewedWithLimit, getUserById } from "@/lib/appwrite/api";
 import { Listened, Rating, Review } from "@/types";
 import { IUser } from "@/types";
 import { Link } from "react-router-dom";
@@ -172,38 +172,43 @@ const Profile = () => {
   const [listened, setListened] = useState<Listened[]>([]);
   const [reviewed, setReviewed] = useState<Review[]>([]);
   const [rated, setRated] = useState<Rating[]>([]);
+  const [profileUser, setProfileUser] = useState<IUser | null>(null);
 
-  // Replace this with your real user/account id logic
   const isCurrentUser = user?.accountId === id;
 
-  if (!user || !user.accountId) {
+  useEffect(() => {
+    const fetchProfileUser = async () => {
+      if (isCurrentUser) {
+        setProfileUser(user);
+      } else {
+        const otherUser = await getUserById(id);
+        setProfileUser(otherUser);
+      }
+    };
+    fetchProfileUser();
+  }, [id, user, isCurrentUser]);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      if (profileUser?.accountId) {
+        const newReviews = await getReviewedWithLimit(profileUser.accountId, 2);
+        setReviewed(newReviews);
+        const newRaitings = await getRatedWithLimit(profileUser.accountId, 4);
+        setRated(newRaitings);
+        const newSongs = await getListenedWithLimit(profileUser.accountId, 4);
+        setListened(newSongs);
+      }
+    };
+    loadStats();
+  }, [profileUser]);
+
+  if (!profileUser) {
     return <div className="text-center text-gray-400">Loading...</div>;
   }
 
-  const loadSongs = async () => {
-      if (user?.accountId) {
-        const newReviews = await getReviewedWithLimit(user.accountId, 2);
-        setReviewed(newReviews);
-        // setLoading1(false);
-  
-  
-        const newRaitings = await getRatedWithLimit(user.accountId, 4);
-        setRated(newRaitings);
-        // setLoading2(false);
-  
-        const newSongs = await getListenedWithLimit(user.accountId, 4);
-        setListened(newSongs);
-        // setLoading3(false);
-      }
-    };
-  
-    useEffect(() => {
-      loadSongs();
-    }, [user])
-
   return (
     <div className="user-container flex">
-      <ProfileComponent user={user} activeTab={activeTab} setActiveTab={setActiveTab} isCurrentUser={isCurrentUser} reviews={reviewed} raitings={rated} listened={listened}/>
+      <ProfileComponent user={profileUser} activeTab={activeTab} setActiveTab={setActiveTab} isCurrentUser={isCurrentUser} reviews={reviewed} raitings={rated} listened={listened}/>
     </div>
   );
 };

@@ -191,25 +191,26 @@ export async function addReview(songId : string, userId : string, reviewText : s
 
 export async function getUserById(userId: string): Promise<IUser | null> {
     try {
-        const userData = await databases.getDocument(
+        const response = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.usersCollectionID,
-            userId
+            [Query.equal('accountId', userId)]
         );
+
+        const userData = response.documents[0];
 
         if (!userData) {
             throw new Error('User not found');
         }
 
-        // Validate or map the returned songData to a Song type
         const user: IUser = {
             accountId: userData.accountId,
             name: userData.name,
             username: userData.username,
             email: userData.email,
-            imageUrl: userData.imageUrl,
+            imageUrl: userData.imageUrl, // or new URL(userData.imageUrl) if needed
             bio: userData.bio
-            // Add all required fields as per your Song interface
+            // Add all required fields as per your IUser interface
         };
 
         return user;
