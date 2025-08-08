@@ -1,50 +1,12 @@
 import { useState, useEffect } from "react";
 import { useUserContext } from "@/context/AuthContext";
 import { useParams } from "react-router-dom";
-import { getListenedWithLimit, getRatedWithLimit, getReviewedWithLimit, getUserById } from "@/lib/appwrite/api";
+import { getListened, getRated, getReviewed, getUserById } from "@/lib/appwrite/api";
 import { Listened, Rating, Review } from "@/types";
 import { IUser } from "@/types";
 import { Link } from "react-router-dom";
+import TruncatedText from "@/components/shared/TruncatedText"; 
 
-const mockUser = {
-  avatar: "https://randomuser.me/api/portraits/men/51.jpg",
-  name: "alex",
-  displayName: "Musiclover",
-  bio: "Music enthusiast. Always searching for the next great track. Lover of indie, pop, and everything in between!",
-  stats: {
-    posts: 12,
-    followers: 210,
-    following: 79,
-  },
-  highlights: [
-    { label: "Listens", color: "bg-pink-800" },
-    { label: "Reviews", color: "bg-indigo-800" },
-    { label: "Ratings", color: "bg-yellow-800" },
-    { label: "About", color: "bg-gray-800" },
-  ],
-  listens: [
-    { image: "/assets/icons/headphones.svg", label: "Blinding Lights" },
-    { image: "/assets/icons/headphones.svg", label: "Levitating" },
-    { image: "/assets/icons/headphones.svg", label: "Peach" },
-    { image: "/assets/icons/headphones.svg", label: "Blinding Lights" },
-    { image: "/assets/icons/headphones.svg", label: "Levitating" },
-    { image: "/assets/icons/headphones.svg", label: "Peach" },
-    { image: "/assets/icons/headphones.svg", label: "Blinding Lights" },
-    { image: "/assets/icons/headphones.svg", label: "Levitating" },
-    { image: "/assets/icons/headphones.svg", label: "Peach" },
-    { image: "/assets/icons/headphones.svg", label: "Blinding Lights" },
-    { image: "/assets/icons/headphones.svg", label: "Levitating" },
-    { image: "/assets/icons/headphones.svg", label: "Peach" },
-  ],
-  reviews: [
-    { song: "Blinding Lights", review: "Incredible synthwave vibes!" },
-    { song: "Levitating", review: "Super catchy and fun." },
-  ],
-  ratings: [
-    { song: "Peach", rating: 5 },
-    { song: "Levitating", rating: 4 },
-  ],
-};
 
 const TABS = ["Listens", "Reviews", "Ratings"];
 
@@ -57,6 +19,7 @@ type profileProps = {
   reviews: Review[];
   raitings: Rating[];
 }
+
 
 const ProfileComponent = ({ user, activeTab, setActiveTab, isCurrentUser, listened, reviews, raitings } : profileProps) => (
   <div className="w-full max-w-6xl mx-auto shadow rounded-2xl p-4 md:p-8  border border-gray-800 flex flex-col lg:flex-row gap-8">
@@ -142,20 +105,24 @@ const ProfileComponent = ({ user, activeTab, setActiveTab, isCurrentUser, listen
         {activeTab === "Reviews" && (
           <div className="flex flex-col gap-4">
             {reviews.map((review, idx) => (
-              <div key={idx} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                <span className="font-medium text-indigo-200">{review.song.title}</span>
-                <p className="text-gray-200 mt-1">{review.text}</p>
-              </div>
+                <div key={idx} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                  <Link key={review.song.songId} to={`/song/${review.song.songId}`}>
+                    <span className="font-medium text-indigo-200">{review.song.title}</span>
+                  </Link>
+                  <TruncatedText text={review.text} limit={180} />
+                </div> 
             ))}
           </div>
         )}
         {activeTab === "Ratings" && (
           <div className="flex flex-col gap-4">
             {raitings.map((rating, idx) => (
-              <div key={idx} className="bg-gray-800 rounded-lg p-4 flex items-center gap-4 border border-gray-700">
-                <span className="font-medium text-yellow-200">{rating.song.title}</span>
-                <span className="text-yellow-400 ml-auto">{"★".repeat(rating.rating)}</span>
-              </div>
+              <Link key={rating.song.songId} to={`/song/${rating.song.songId}`}>
+                <div key={idx} className="bg-gray-800 rounded-lg p-4 flex items-center gap-4 border border-gray-700">
+                  <span className="font-medium text-yellow-200">{rating.song.title}</span>
+                  <span className="text-yellow-400 ml-auto">{"★".repeat(rating.rating)}</span>
+                </div>
+              </Link>
             ))}
           </div>
         )}
@@ -180,27 +147,42 @@ const Profile = () => {
     const fetchProfileUser = async () => {
       if (isCurrentUser) {
         setProfileUser(user);
-      } else {
+      } else if (id) {
         const otherUser = await getUserById(id);
         setProfileUser(otherUser);
-      }
+      } 
     };
     fetchProfileUser();
   }, [id, user, isCurrentUser]);
 
   useEffect(() => {
-    const loadStats = async () => {
-      if (profileUser?.accountId) {
-        const newReviews = await getReviewedWithLimit(profileUser.accountId, 2);
-        setReviewed(newReviews);
-        const newRaitings = await getRatedWithLimit(profileUser.accountId, 4);
-        setRated(newRaitings);
-        const newSongs = await getListenedWithLimit(profileUser.accountId, 4);
-        setListened(newSongs);
-      }
-    };
-    loadStats();
-  }, [profileUser]);
+  const fetchTabData = async () => {
+    if (!profileUser?.accountId) return;
+
+    switch (activeTab) {
+      case "Listens":
+        if (listened.length === 0) {
+          const newSongs = await getListened(profileUser.accountId);
+          setListened(newSongs);
+        }
+        break;
+      case "Reviews":
+        if (reviewed.length === 0) {
+          const newReviews = await getReviewed(profileUser.accountId);
+          setReviewed(newReviews);
+        }
+        break;
+      case "Ratings":
+        if (rated.length === 0) {
+          const newRatings = await getRated(profileUser.accountId);
+          setRated(newRatings);
+        }
+        break;
+    }
+  };
+
+  fetchTabData();
+}, [activeTab, profileUser]);
 
   if (!profileUser) {
     return <div className="text-center text-gray-400">Loading...</div>;

@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (currentAccount) {
                 setUser({
-                    accountId: currentAccount.$id,
+                    accountId: currentAccount.accountId,
                     name: currentAccount.name,
                     username: currentAccount.username,
                     email: currentAccount.email,

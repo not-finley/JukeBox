@@ -496,11 +496,23 @@ export async function getAllRatingsOfaSong(songId: string): Promise<Rating[]> {
 
 export async function getListenedWithLimit(userId: string, limit: number): Promise<Listened[]> {
     try {
+        const usersResult = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.usersCollectionID,
+            [Query.equal("accountId", [userId])]
+        );
+
+        if (usersResult.total === 0) {
+            console.warn(`No user document found for accountID: ${userId}`);
+            return [];
+        }
+
+        const userDocId = usersResult.documents[0].$id;
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.listenedToCollectionID,
             [
-                Query.equal("user", [userId]),
+                Query.equal("user", [userDocId]),
                 Query.limit(limit),
                 Query.orderDesc('createdAt')
             ]
@@ -518,11 +530,23 @@ export async function getListenedWithLimit(userId: string, limit: number): Promi
 
 export async function getListened(userId: string): Promise<Listened[]> {
     try {
+        const usersResult = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.usersCollectionID,
+            [Query.equal("accountId", [userId])]
+        );
+
+        if (usersResult.total === 0) {
+            console.warn(`No user document found for accountID: ${userId}`);
+            return [];
+        }
+
+        const userDocId = usersResult.documents[0].$id;
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.listenedToCollectionID,
             [
-                Query.equal("user", [userId]),
+                Query.equal("user", [userDocId]),
                 Query.orderDesc('createdAt')
             ]
         );
@@ -539,11 +563,23 @@ export async function getListened(userId: string): Promise<Listened[]> {
 
 export async function getRatedWithLimit(userId: string, limit: number): Promise<Rating[]> {
     try {
+        const usersResult = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.usersCollectionID,
+            [Query.equal("accountId", [userId])]
+        );
+
+        if (usersResult.total === 0) {
+            console.warn(`No user document found for accountID: ${userId}`);
+            return [];
+        }
+
+        const userDocId = usersResult.documents[0].$id;
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.raitingsCollectionID,
             [
-                Query.equal("user", [userId]),
+                Query.equal("user", [userDocId]),
                 Query.limit(limit),
                 Query.orderDesc('createdAt')
             ]
@@ -561,11 +597,24 @@ export async function getRatedWithLimit(userId: string, limit: number): Promise<
 
 export async function getRated(userId: string): Promise<Rating[]> {
     try {
+        const usersResult = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.usersCollectionID,
+            [Query.equal("accountId", [userId])]
+        );
+
+        if (usersResult.total === 0) {
+            console.warn(`No user document found for accountID: ${userId}`);
+            return [];
+        }
+
+        const userDocId = usersResult.documents[0].$id;
+
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.raitingsCollectionID,
             [
-                Query.equal("user", [userId]),
+                Query.equal("user", [userDocId]),
                 Query.orderDesc('createdAt')
             ]
         );
@@ -582,11 +631,23 @@ export async function getRated(userId: string): Promise<Rating[]> {
 
 export async function getReviewedWithLimit(userId: string, limit: number): Promise<Review[]> {
     try {
+        const usersResult = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.usersCollectionID,
+            [Query.equal("accountId", [userId])]
+        );
+
+        if (usersResult.total === 0) {
+            console.warn(`No user document found for accountID: ${userId}`);
+            return [];
+        }
+
+        const userDocId = usersResult.documents[0].$id;
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.reviewsCollectionID,
             [
-                Query.equal("creator", [userId]),
+                Query.equal("creator", [userDocId]),
                 Query.orderDesc('createdAt'),
                 Query.limit(limit)
             ]
@@ -604,21 +665,33 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
 
 export async function getReviewed(userId: string): Promise<Review[]> {
     try {
-        const listened = await databases.listDocuments(
+        // Step 1: Find the user's document in the users collection
+        const usersResult = await databases.listDocuments(
             appwriteConfig.databaseId,
-            appwriteConfig.reviewsCollectionID,
-            [
-                Query.equal("creator", [userId]),
-                Query.orderDesc('createdAt'),
-            ]
+            appwriteConfig.usersCollectionID,
+            [Query.equal("accountId", [userId])]
         );
-        if (listened.total === 0) {
+
+        if (usersResult.total === 0) {
+            console.warn(`No user document found for accountID: ${userId}`);
             return [];
         }
 
-        return listened.documents as unknown as Review[];
+        const userDocId = usersResult.documents[0].$id;
+
+        // Step 2: Find reviews where the creator matches the user document ID
+        const reviewsResult = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.reviewsCollectionID,
+            [
+                Query.equal("creator", [userDocId]),
+                Query.orderDesc("createdAt"),
+            ]
+        );
+
+        return reviewsResult.documents as unknown as Review[];
     } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error("Failed to fetch user reviews:", error);
         return [];
     }
 }
