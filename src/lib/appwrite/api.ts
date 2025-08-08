@@ -3,6 +3,24 @@ import { ID, Query } from 'appwrite';
 import { INewUser, IUser, Listened, Rating, Review, Song, SongDetails } from "@/types";
 import { account, appwriteConfig, avatars, databases } from './config';
 
+
+async function getAccountIdbyUserId(userId: string): Promise<string> {
+    const usersResult = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.usersCollectionID,
+        [Query.equal("accountId", [userId])]
+    );
+
+    if (usersResult.total === 0) {
+        console.warn(`No user document found for accountID: ${userId}`);
+        return '';
+    }
+
+    return usersResult.documents[0].$id;
+}
+
+
+
 export async function createUserAccount(user: INewUser) {
     try{
         const newAccount = await account.create(
@@ -147,29 +165,30 @@ export async function addReview(songId : string, userId : string, reviewText : s
     const id = ID.unique();
     const date = Date.now();
     try {
-      const review = await databases.createDocument(
-        appwriteConfig.databaseId,
-        appwriteConfig.reviewsCollectionID,
-        id, // Auto-generate a unique document ID
-        {
-          reviewId: id,
-          song: songId, // Reference to the song
-          creator: userId, // User submitting the review
-          text: reviewText, // Review text
-          createdAt: date,
-          updatedAt: date
-        }
-      );
-  
-      return review;
-    } catch (error) {
-      console.log(error);
-      return null;
+        const userDocId = await getAccountIdbyUserId(userId);
+        const review = await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.reviewsCollectionID,
+            id, // Auto-generate a unique document ID
+            {
+            reviewId: id,
+            song: songId, // Reference to the song
+            creator: userDocId, // User submitting the review
+            text: reviewText, // Review text
+            createdAt: date,
+            updatedAt: date
+            }
+        );
+    
+        return review;
+        } catch (error) {
+        console.log(error);
+        return null;
     }
 }
 
 
-  export async function fetchReviews(songId : string, limit = 20): Promise<Review[]> {
+export async function fetchReviews(songId : string, limit = 20): Promise<Review[]> {
     try {
         const response = await databases.listDocuments(
             appwriteConfig.databaseId,
@@ -324,6 +343,7 @@ export async function addListened(songId : string, userId : string) {
     const id = ID.unique();
     const date = Date.now();
     try {
+        const userDocId = await getAccountIdbyUserId(userId);
         await databases.createDocument(
         appwriteConfig.databaseId,
         appwriteConfig.listenedToCollectionID,
@@ -331,22 +351,25 @@ export async function addListened(songId : string, userId : string) {
             {
             listenedId: id,
             song: songId, // Reference to the song
-            user: userId, 
+            user: userDocId, 
             createdAt: date,
             }
         );
     } catch (error) {
-      console.log(error);
+        console.log(error);
     }
 }
 
 export async function hasListened(userId: string, songId: string): Promise<Boolean> {
     try {
+
+        const userDocId = await getAccountIdbyUserId(userId);
+        
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.listenedToCollectionID,
             [
-                Query.equal("user", [userId]),
+                Query.equal("user", [userDocId]),
                 Query.equal("song", [songId]),
             ]
         );
@@ -363,11 +386,12 @@ export async function hasListened(userId: string, songId: string): Promise<Boole
 
 export async function removeListened(songId: string, userId: string){
     try {
+        const userDocId = await getAccountIdbyUserId(userId);
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.listenedToCollectionID,
             [
-                Query.equal("user", [userId]),
+                Query.equal("user", [userDocId]),
                 Query.equal("song", [songId]),
             ]
         );
@@ -387,6 +411,7 @@ export async function addRating(songId : string, userId : string, rating: number
     const id = ID.unique();
     const date = Date.now();
     try {
+        const userDocId = await getAccountIdbyUserId(userId);
         await databases.createDocument(
         appwriteConfig.databaseId,
         appwriteConfig.raitingsCollectionID,
@@ -394,7 +419,7 @@ export async function addRating(songId : string, userId : string, rating: number
             {
             ratingId: id,
             song: songId,
-            user: userId, 
+            user: userDocId, 
             rating: rating,
             createdAt: date,
             }
@@ -406,11 +431,12 @@ export async function addRating(songId : string, userId : string, rating: number
 
 export async function hasRating(songId: string, userId: string,): Promise<Boolean> {
     try {
+        const userDocId = await getAccountIdbyUserId(userId);
         const rating = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.raitingsCollectionID,
             [
-                Query.equal("user", [userId]),
+                Query.equal("user", [userDocId]),
                 Query.equal("song", [songId]),
             ]
         );
@@ -427,12 +453,13 @@ export async function hasRating(songId: string, userId: string,): Promise<Boolea
 
 export async function getRating(songId: string, userId: string): Promise<number> {
     try {
+        const userDocId = await getAccountIdbyUserId(userId);
         const rating = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.raitingsCollectionID,
             [
                 Query.equal("song", songId),
-                Query.equal("user", userId),
+                Query.equal("user", userDocId),
             ]
         );
         if (rating.total === 0) {
@@ -448,13 +475,14 @@ export async function getRating(songId: string, userId: string): Promise<number>
 
 export async function updateRating(songId: string, userId: string, value: number){
     try {
+        const userDocId = await getAccountIdbyUserId(userId);
         const date = Date.now();
         const rating = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.raitingsCollectionID,
             [
                 Query.equal("song", songId),
-                Query.equal("user", userId),
+                Query.equal("user", userDocId),
             ]
         );
 
@@ -496,18 +524,8 @@ export async function getAllRatingsOfaSong(songId: string): Promise<Rating[]> {
 
 export async function getListenedWithLimit(userId: string, limit: number): Promise<Listened[]> {
     try {
-        const usersResult = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            [Query.equal("accountId", [userId])]
-        );
+        const userDocId = await getAccountIdbyUserId(userId);
 
-        if (usersResult.total === 0) {
-            console.warn(`No user document found for accountID: ${userId}`);
-            return [];
-        }
-
-        const userDocId = usersResult.documents[0].$id;
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.listenedToCollectionID,
@@ -530,18 +548,8 @@ export async function getListenedWithLimit(userId: string, limit: number): Promi
 
 export async function getListened(userId: string): Promise<Listened[]> {
     try {
-        const usersResult = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            [Query.equal("accountId", [userId])]
-        );
+        const userDocId = await getAccountIdbyUserId(userId);
 
-        if (usersResult.total === 0) {
-            console.warn(`No user document found for accountID: ${userId}`);
-            return [];
-        }
-
-        const userDocId = usersResult.documents[0].$id;
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.listenedToCollectionID,
@@ -563,18 +571,8 @@ export async function getListened(userId: string): Promise<Listened[]> {
 
 export async function getRatedWithLimit(userId: string, limit: number): Promise<Rating[]> {
     try {
-        const usersResult = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            [Query.equal("accountId", [userId])]
-        );
+        const userDocId = await getAccountIdbyUserId(userId);
 
-        if (usersResult.total === 0) {
-            console.warn(`No user document found for accountID: ${userId}`);
-            return [];
-        }
-
-        const userDocId = usersResult.documents[0].$id;
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.raitingsCollectionID,
@@ -597,18 +595,7 @@ export async function getRatedWithLimit(userId: string, limit: number): Promise<
 
 export async function getRated(userId: string): Promise<Rating[]> {
     try {
-        const usersResult = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            [Query.equal("accountId", [userId])]
-        );
-
-        if (usersResult.total === 0) {
-            console.warn(`No user document found for accountID: ${userId}`);
-            return [];
-        }
-
-        const userDocId = usersResult.documents[0].$id;
+        const userDocId = await getAccountIdbyUserId(userId);
 
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
@@ -631,18 +618,8 @@ export async function getRated(userId: string): Promise<Rating[]> {
 
 export async function getReviewedWithLimit(userId: string, limit: number): Promise<Review[]> {
     try {
-        const usersResult = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            [Query.equal("accountId", [userId])]
-        );
+        const userDocId = await getAccountIdbyUserId(userId);
 
-        if (usersResult.total === 0) {
-            console.warn(`No user document found for accountID: ${userId}`);
-            return [];
-        }
-
-        const userDocId = usersResult.documents[0].$id;
         const listened = await databases.listDocuments(
             appwriteConfig.databaseId,
             appwriteConfig.reviewsCollectionID,
@@ -665,19 +642,7 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
 
 export async function getReviewed(userId: string): Promise<Review[]> {
     try {
-        // Step 1: Find the user's document in the users collection
-        const usersResult = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            [Query.equal("accountId", [userId])]
-        );
-
-        if (usersResult.total === 0) {
-            console.warn(`No user document found for accountID: ${userId}`);
-            return [];
-        }
-
-        const userDocId = usersResult.documents[0].$id;
+        const userDocId = await getAccountIdbyUserId(userId);
 
         // Step 2: Find reviews where the creator matches the user document ID
         const reviewsResult = await databases.listDocuments(
