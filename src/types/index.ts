@@ -54,6 +54,7 @@ export type INavLink = {
     isAuthenticated: boolean;
     setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
     checkAuthUser: () => Promise<boolean>;
+    logout: () => Promise<void>;
   };
 
   export type Song = {
@@ -66,6 +67,103 @@ export type INavLink = {
     popularity: number
   }
 
+  export type Album = {
+    albumId: string; 
+    title: string; 
+    spotify_url: string; 
+    album_cover_url: string; 
+    release_date: string
+  }
+
+  export type AlbumDetails = {
+    albumId: string; 
+    title: string; 
+    spotify_url: string; 
+    album_cover_url: string; 
+    release_date: string; 
+    tracks: Song[]; 
+    artists: any[];
+
+  }
+
+  export interface SpotifyArtist {
+    id: string;
+    name: string;
+    href: string;
+    external_urls: {
+      spotify: string;
+    };
+    type: string;
+    uri: string;
+  }
+
+  export interface SpotifyArtistDetailed {
+    id: string;
+    name: string;
+    followers: {total: number};
+    genres: string[];
+    external_urls: {
+      spotify: string;
+    };
+    images: {url:string, height: number, width: number}[]
+    albums: SpotifyAlbum[];
+  }
+
+  export interface SpotifyAlbum {
+    id: string;
+    name: string;
+    album_type: string;
+    href: string;
+    external_urls: {
+      spotify: string;
+    };
+    images: Array<{
+      url: string;
+      height: number;
+      width: number;
+    }>;
+    release_date: string;
+    release_date_precision: string;
+    total_tracks: number;
+    type: string;
+    uri: string;
+    available_markets?: string[];
+  }
+
+  export interface SpotifyAlbumWithTracks {
+    id: string;
+    name: string;
+    album_type: string;
+    href: string;
+    external_urls: {
+      spotify: string;
+    };
+    images: Array<{
+      url: string;
+      height: number;
+      width: number;
+    }>;
+    release_date: string;
+    release_date_precision: string;
+    total_tracks: number;
+    type: string;
+    uri: string;
+    available_markets?: string[];
+    tracks: SpotifySong[]; 
+    artists: SpotifyArtist[];
+  }
+
+  export interface SpotifySong {
+    songId: string;
+    title: string;
+    spotify_url: string;
+    album_name: string;
+    album_cover_url: string;
+    album: SpotifyAlbum;
+    artists: SpotifyArtist[];
+    release_date: string;
+    popularity: number;
+  }
 
   export type Rating = {
     user: IUser,
@@ -79,12 +177,24 @@ export type INavLink = {
     songId: string;
     title: string;
     album: string;
+    album_id: string;
     spotify_url: string;
     album_cover_url: string;
-    release_date: string,
-    popularity: number,
-    review: Review[],
-    ratings: Rating[],
+    release_date: string;
+    popularity: number;
+    review: Review[];
+    ratings: Rating[];
+    artists: any[];
+  }
+
+  export type ArtistDetails = {
+    artistId: string;
+    name: string;
+    spotify_url: string;
+    image_url: string;
+    followers: number;
+    genres: string[]; 
+    albums: Album[];
   }
 
   export type Review = {

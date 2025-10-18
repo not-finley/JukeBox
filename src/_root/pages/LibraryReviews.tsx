@@ -1,6 +1,6 @@
 import ReviewItemLibrary from "@/components/ReviewItemLibrary";
 import LoaderMusic from "@/components/shared/loaderMusic";
-import { useUserContext } from "@/context/AuthContext";
+import { useUserContext } from "@/lib/AuthContext";
 import { getReviewed } from "@/lib/appwrite/api";
 import { Review } from "@/types";
 import { useEffect, useState } from "react";

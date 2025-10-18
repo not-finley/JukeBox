@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useUserContext } from "@/context/AuthContext";
+import { useUserContext } from "@/lib/AuthContext";
 import { addReview, getSongById } from "@/lib/appwrite/api";
 import { Song } from "@/types";
 import { useEffect, useState } from "react";

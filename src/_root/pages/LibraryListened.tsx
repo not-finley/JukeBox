@@ -1,5 +1,5 @@
 import LoaderMusic from "@/components/shared/loaderMusic";
-import { useUserContext } from "@/context/AuthContext";
+import { useUserContext } from "@/lib/AuthContext";
 import { getListened} from "@/lib/appwrite/api";
 import { Listened } from "@/types";
 import { useEffect, useState } from "react";

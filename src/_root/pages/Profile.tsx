@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useUserContext } from "@/context/AuthContext";
+import { useUserContext } from "@/lib/AuthContext";
 import { useParams } from "react-router-dom";
 import { getListened, getRated, getReviewed, getUserById } from "@/lib/appwrite/api";
 import { Listened, Rating, Review } from "@/types";

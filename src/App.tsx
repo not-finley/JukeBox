@@ -6,7 +6,7 @@ import AuthLayout from './_auth/AuthLayout';
 import RootLayout from './_root/RootLayout';
 import SigninForm from './_auth/forms/SigninForm';
 import SignupForm from './_auth/forms/SignupForm';
-import { Home, Songs, Library, AllUsers, Profile, UpdateProfile, AddReview } from './_root/pages';
+import { Home, Songs, Library, AllUsers, Profile, UpdateProfile, AddReview, Artist, Album } from './_root/pages';
 import { Toaster } from "@/components/ui/toaster"
 import Search from './_root/pages/Search';
 import { Helmet } from 'react-helmet';
@@ -41,6 +41,8 @@ const App = () => {
                 <Route path="/update-profile/:id" element={<UpdateProfile />}/>
                 <Route path="/song/:id" element={<SongDetailsSection />}/>
                 <Route path="/song/:id/add-review" element={<AddReview />}/>
+                <Route path="/artist/:id" element={<Artist />}/>
+                <Route path="/album/:id" element={<Album />}/>
                 <Route path="/search" element={<Search  />}/>
                 <Route path="/toptracks" element={<TopTracks />}/>
             </Route>

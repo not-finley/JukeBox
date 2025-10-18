@@ -4,8 +4,8 @@ import { addListened, addRating, addSongToDatabase, getAllRatingsOfaSong, getRat
 import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
-import { getSpotifyToken, SpotifyById } from "@/lib/appwrite/spotify";
-import { useUserContext } from "@/context/AuthContext";
+import { getSpotifyToken, SpotifyAlbumById, SpotifyTrackById } from "@/lib/appwrite/spotify";
+import { useUserContext } from "@/lib/AuthContext";
 import ReviewItem from "@/components/ReviewItem";
 
 
@@ -20,19 +20,19 @@ const SongDetailsSection = () => {
   const [rating, setRating] = useState(0); // Selected rating
   const [hover, setHover] = useState(0); // Hovered rating
   const [GlobalNumRatings, setGlobalNumRatings] = useState(0);
-  const [GlobalRaiting, setGlobalRating] = useState(0); 
-  const [counts, setCounts] = useState<number[]>([]); 
+  const [GlobalRaiting, setGlobalRating] = useState(0);
+  const [counts, setCounts] = useState<number[]>([]);
 
 
   const songGlobalRating = async () => {
-    const GlobalRaitings = await getAllRatingsOfaSong(id?id: '');
+    const GlobalRaitings = await getAllRatingsOfaSong(id ? id : '');
     setGlobalNumRatings(GlobalRaitings.length);
 
     const raitings = GlobalRaitings.map(a => a.rating);
 
     let countslocal = [0, 0, 0, 0, 0];
     let raitingG = 0;
-    for(let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i++) {
       let count = 0;
       if (raitings[i]) {
         raitingG += raitings[i];
@@ -41,42 +41,43 @@ const SongDetailsSection = () => {
       countslocal[i] = count;
     }
     setCounts(countslocal);
-    
-    setGlobalRating(Number((raitingG/GlobalRaitings.length).toFixed(1)));
+
+    setGlobalRating(Number((raitingG / GlobalRaitings.length).toFixed(1)));
     setLoading(false);
   }
 
-  const handleRating = async (value : number) => {
+  const handleRating = async (value: number) => {
     setRating(value);
-    const doesHaveRating = await hasRating(id? id: '', user.accountId);
+    const doesHaveRating = await hasRating(id ? id : '', user.accountId);
     if (doesHaveRating) {
-      await updateRating(id? id: '', user.accountId, value);
+      await updateRating(id ? id : '', user.accountId, value);
     } else {
-      await addRating(id? id: '', user.accountId, value);
+      await addRating(id ? id : '', user.accountId, value);
     }
     songGlobalRating();
   };
 
-  const handleHover = async (value : number ) => {
+  const handleHover = async (value: number) => {
     setHover(value);
   };
 
   const updateRatinglocal = async () => {
-    const num = await getRating(id? id: '', user.accountId);
+    const num = await getRating(id ? id : '', user.accountId);
     setRating(num);
   }
 
-  const getSong = async () => {
+  const addSong = async () => {
     try {
       const spotifyToken: string = await getSpotifyToken();
-      const spotifySong = await SpotifyById(id? id : "", spotifyToken);
+      const spotifySong = await SpotifyTrackById(id ? id : "", spotifyToken);
       if (!spotifySong) {
         return;
       }
+
       await addSongToDatabase(spotifySong);
       const fetchedSong = await getSongDetailsById(id || "");
       setSong(fetchedSong);
-    } 
+    }
     catch (error) {
       setNotFound(true);
     }
@@ -86,19 +87,19 @@ const SongDetailsSection = () => {
     try {
       const fetchedSong = await getSongDetailsById(id || "");
       if (!fetchedSong) {
-        await getSong(); // Only call getSong if the song is not in the database
+        await addSong(); // Only call getSong if the song is not in the database
       } else {
         fetchedSong.review.sort((a, b) => b.createdAt - a.createdAt);
         setSong(fetchedSong);
       }
     } catch (error) {
       console.error("Error fetching song or reviews:", error);
-    } 
+    }
   };
-  
+
   const fetchListened = async () => {
     try {
-      const listenedtemp = await hasListened(user.accountId, id || "") 
+      const listenedtemp = await hasListened(user.accountId, id || "")
       if (listenedtemp) {
         setListened(true);
       } else {
@@ -110,12 +111,13 @@ const SongDetailsSection = () => {
   }
 
   useEffect(() => {
-    if (id && user?.accountId) {
+    if (id && user?.id) {
       fetchSongAndReviews();
       fetchListened();
       updateRatinglocal();
       songGlobalRating();
     }
+
   }, [user?.accountId, id]);
 
   if (loading) {
@@ -128,7 +130,7 @@ const SongDetailsSection = () => {
   if (!song) {
     /*add to database if exists in spotify*/
     //getSong();
-    if(songNotFound) {
+    if (songNotFound) {
       return (
         <div className="common-container">
           <p>Song not found</p>
@@ -139,14 +141,14 @@ const SongDetailsSection = () => {
 
   const listenedClick = async () => {
     if (listened) {
-      await removeListened(song?song.songId: '', user.accountId)
+      await removeListened(song ? song.songId : '', user.accountId)
       setListened(false);
     } else {
-      await addListened(song?song.songId: '', user.accountId)
+      await addListened(song ? song.songId : '', user.accountId)
       setListened(true);
     }
   }
- 
+
   return (
     <div className="common-container">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
@@ -198,7 +200,7 @@ const SongDetailsSection = () => {
                     <img
                       //src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
                       //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
-                      src={hover > 0? (hover >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg') : rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg' }
+                      src={hover > 0 ? (hover >= value ? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg') : rating >= value ? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
                       className="h-4/6 w-10"
                     />
                   </button>
@@ -210,11 +212,18 @@ const SongDetailsSection = () => {
 
         {/* Right Section: Details */}
         <div className="lg:w-2/3 lg:ml-8">
-          <h1 className="lg:text-4xl md:text-2xl sm:text-3xl xs:text-2xl mb-4">
-            <p className="font-bold">{song?.title}</p> {song?.album}
+          <h1 className="lg:text-4xl md:text-2xl sm:text-3xl xs:text-2xl">
+            <p className="font-bold">{song?.title}</p>
           </h1>
+          <Link to={`/album/${song?.album_id}`} className=" lg:text-3xl md:text-xl sm:text-2xl xs:text-xl hover:text-white text-gray-300">{song?.album}</Link>
           <p className="text-lg text-gray-300 mb-4">
-            <span>{song?.release_date.slice(0, 4)}</span> | By <span className="text-white"></span>
+            <span>{song?.release_date.slice(0, 4)}</span> | By{" "}
+            {song?.artists.map((a, i) => (
+              <Link to={`/artist/${a.artist_id}`} key={a.id} className="hover:text-white">
+                {a.name}
+                {i < song.artists.length - 1 ? ", " : ""}
+              </Link>
+            ))}
           </p>
 
           {/* Ratings */}
@@ -222,36 +231,36 @@ const SongDetailsSection = () => {
             <p className="text-xl font-semibold text-left ">Ratings</p>
             <p className="text-gray-400 text-md text-right">{GlobalNumRatings} listeners</p>
           </div>
-          {GlobalNumRatings == 0?(<p className="text-center text-gray-300 mb-5">No ratings yet. Be the first to rate this track!</p>):(
+          {GlobalNumRatings == 0 ? (<p className="text-center text-gray-300 mb-5">No ratings yet. Be the first to rate this track!</p>) : (
             <div className="flex items-center w-full h-48 justify-center">
-            <div>
-              <p className="text-2xl text-gray-300 mr-2 text-center">{GlobalRaiting}</p>
-              <p className="text-2xl text-gray-300 mr-2 text-center"> Stars</p>
+              <div>
+                <p className="text-2xl text-gray-300 mr-2 text-center">{GlobalRaiting}</p>
+                <p className="text-2xl text-gray-300 mr-2 text-center"> Stars</p>
+              </div>
+
+              <div className=" flex justify-between items-end h-4/5 w-4/5">
+                {counts.map((c, index) => {
+                  const percentage = GlobalNumRatings > 0 ? (c / GlobalNumRatings) * 100 : 0;
+                  return (
+                    <div key={index + 1} className="flex flex-col items-center w-1/5">
+                      <span className="text-sm mt-2 text-gray-400">{Math.round(percentage)}%</span>
+                      {/* Bar */}
+                      <div
+                        className="bg-emerald-600 rounded-t-lg max-w-14 w-full"
+                        style={{ height: `${percentage}px` }}
+                        title={`Count: ${c}`}
+                      ></div>
+                      {/* Label */}
+                      <span className="text-sm mt-2 text-gray-400">{index + 1}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
             </div>
-            
-            <div className=" flex justify-between items-end h-4/5 w-4/5">
-              {counts.map((c, index) => {
-                const percentage = GlobalNumRatings > 0 ? (c / GlobalNumRatings) * 100 : 0;
-                return (
-                  <div key={index + 1} className="flex flex-col items-center w-1/5">
-                    <span className="text-sm mt-2 text-gray-400">{Math.round(percentage)}%</span>
-                    {/* Bar */}
-                    <div
-                      className="bg-emerald-600 rounded-t-lg max-w-14 w-full"
-                      style={{ height: `${percentage}px` }}
-                      title={`Count: ${c}`}
-                    ></div>
-                    {/* Label */}
-                    <span className="text-sm mt-2 text-gray-400">{index + 1}</span>
-                  </div>
-                );
-              })}
-            </div>
-            
-            </div>    
           )}
-          
-          
+
+
 
           {/* Where to Listen */}
           <div className="mb-6">
@@ -272,9 +281,9 @@ const SongDetailsSection = () => {
                 <p className="text-xl font-semibold text-left ">Recent Reviews</p>
                 <p className="text-gray-400 text-md text-right">see more</p>
               </div>
-              {song?.review.length == 0?(<p className="text-center text-gray-300">No reviews yet. Be the first to review this track!</p>):''}
+              {song?.review.length == 0 ? (<p className="text-center text-gray-300">No reviews yet. Be the first to review this track!</p>) : ''}
               {song?.review.map((r) => (
-                <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} song={r.song} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId}/>
+                <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} song={r.song} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
               )
               )}
             </ul>
