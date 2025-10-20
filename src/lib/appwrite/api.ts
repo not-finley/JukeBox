@@ -1,10 +1,24 @@
 import { ID, Query } from 'appwrite';
 
-import { AlbumDetails, ArtistDetails, INewUser, IUser, Listened, Rating, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong } from "@/types";
-import { account, appwriteConfig, avatars, databases } from './config';
+import { AlbumDetails, ArtistDetails, INewUser, IUser, Listened, Rating, SongReview, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong } from "@/types";
+import { account, appwriteConfig, databases } from './config';
 import { supabase } from "@/lib/supabaseClient";
 
+function normalizeReleaseDate(dateStr: string): string | null {
+    if (!dateStr) return null;
 
+    // year only
+    if (/^\d{4}$/.test(dateStr)) return `${dateStr}-01-01`;
+    // year-month
+    if (/^\d{4}-\d{2}$/.test(dateStr)) return `${dateStr}-01`;
+    // already full
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+
+    return null; // fallback
+}
+
+
+//Old function
 async function getAccountIdbyUserId(userId: string): Promise<string> {
     const usersResult = await databases.listDocuments(
         appwriteConfig.databaseId,
@@ -20,33 +34,52 @@ async function getAccountIdbyUserId(userId: string): Promise<string> {
     return usersResult.documents[0].$id;
 }
 
+export async function getCurrentUser() {
+    const {
+        data: { session },
+        error,
+    } = await supabase.auth.getSession();
+    if (error) throw error;
+    return session?.user || null;
+}
+
 
 
 export async function createUserAccount(user: INewUser) {
     try {
-        const newAccount = await account.create(
-            ID.unique(),
-            user.email,
-            user.password,
-            user.name
-        );
-
-        if (!newAccount) throw Error;
-
-        const avatarUrl = avatars.getInitials(user.name);
-
-        const newUser = await saveUserToDB({
-            accountId: newAccount.$id,
-            name: newAccount.name,
-            email: newAccount.email,
-            username: user.username,
-            imageUrl: new URL(avatarUrl),
+        // Create auth user in Supabase
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: user.email,
+            password: user.password,
+            options: {
+                data: {
+                    name: user.name,
+                    username: user.username,
+                },
+            },
         });
+
+        if (authError) throw authError;
+        if (!authData.user) throw new Error("Failed to create user");
+
+        // Save to users table
+        const { data: newUser, error: dbError } = await supabase
+            .from("users")
+            .insert({
+                user_id: authData.user.id,
+                name: user.name,
+                email: user.email,
+                username: user.username,
+            })
+            .select()
+            .single();
+
+        if (dbError) throw dbError;
 
         return newUser;
     } catch (error) {
-        console.log(error);
-        return error;
+        console.error("createUserAccount error:", error);
+        return null;
     }
 }
 
@@ -54,16 +87,15 @@ export async function saveUserToDB(user: {
     accountId: string;
     email: string;
     name: string;
-    imageUrl: URL;
     username?: string;
 }) {
     try {
-        const newUser = await databases.createDocument(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            ID.unique(),
-            user,
-        )
+
+        console.log("adding user to data:", user);
+        const { data: newUser } = await supabase
+            .from("users")
+            .insert(user)
+
         return newUser
     } catch (error) {
         console.log(error);
@@ -81,25 +113,7 @@ export const signInAccount = async ({ email, password }: { email: string; passwo
     }
 };
 
-export async function getCurrentUser() {
-    try {
-        const currentAccount = await account.get();
 
-        if (!currentAccount) throw Error;
-
-        const currentUser = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            [Query.equal('accountId', currentAccount.$id)]
-        )
-
-        if (!currentUser) throw Error;
-
-        return currentUser.documents[0];
-    } catch (error) {
-        console.log(error);
-    }
-}
 
 export async function signOutAccount() {
     try {
@@ -114,26 +128,36 @@ export async function signOutAccount() {
 
 export async function getSongById(songId: string): Promise<Song | null> {
     try {
-        const songData = await databases.getDocument(
-            appwriteConfig.databaseId,
-            appwriteConfig.songsCollectionID,
-            songId
-        );
+        const { data: songData, error: songError } = await supabase
+            .from("songs")
+            .select("*")
+            .eq("song_id", songId)
+            .single();
 
-        if (!songData) {
-            throw new Error('Song not found');
-        }
+
+
+        if (songError) throw songError;
+        if (!songData) throw new Error("Song not found");
+
+
+        const { data: albumData, error: albumError } = await supabase
+            .from("albums")
+            .select("*")
+            .eq("album_id", songData.album_id)
+            .single();
+
+        if (albumError) throw albumError;
+        if (!albumData) throw new Error("Album not found");
 
         // Validate or map the returned songData to a Song type
         const song: Song = {
-            songId: songData.songId,
+            songId: songData.song_id,
             title: songData.title,
-            album: songData.album,
-            release_date: songData.release_date,
+            album: albumData.titel,
+            release_date: albumData.release_date,
             spotify_url: songData.spotify_url,
-            album_cover_url: songData.album_cover_url,
+            album_cover_url: albumData.album_cover_url,
             popularity: songData.popularity
-            // Add all required fields as per your Song interface
         };
 
         return song;
@@ -145,16 +169,28 @@ export async function getSongById(songId: string): Promise<Song | null> {
 
 export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
     try {
-        const response = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.songsCollectionID,
-            [
-                Query.limit(limit),
-                Query.offset((page - 1) * limit),
-                Query.orderAsc("title")
-            ]
-        );
-        return response.documents as unknown as Song[];
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        const { data: songData, error: songError } = await supabase
+            .from("songs")
+            .select("*, albums:songs_album_id_fkey(album_cover_url)")
+            .range(from, to);
+
+
+
+        if (songError) throw songError;
+        if (!songData) throw new Error("Song not found");
+
+        console.log(songData);
+
+
+
+        return songData.map((song: any) => ({
+            ...song,
+            songId: song.song_id,
+            album_cover_url: song.albums?.album_cover_url ?? null,
+        }));
     }
     catch (error) {
         console.log(error);
@@ -163,24 +199,26 @@ export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
 }
 
 
-export async function addReview(songId: string, userId: string, reviewText: string) {
+export async function addReviewSong(songId: string, userId: string, reviewText: string) {
     const id = ID.unique();
-    const date = Date.now();
+    const now = new Date();
+    const isoString = now.toISOString();
     try {
-        const userDocId = await getAccountIdbyUserId(userId);
-        const review = await databases.createDocument(
-            appwriteConfig.databaseId,
-            appwriteConfig.reviewsCollectionID,
-            id, // Auto-generate a unique document ID
-            {
-                reviewId: id,
-                song: songId, // Reference to the song
-                creator: userDocId, // User submitting the review
-                text: reviewText, // Review text
-                createdAt: date,
-                updatedAt: date
-            }
-        );
+
+        const { data: review, error: addReview } = await supabase
+            .from("reviews")
+            .insert({
+                review_id: id,
+                song_id: songId,
+                user_id: userId,
+                review_type: "song",
+                review_text: reviewText,
+                created_at: isoString,
+            })
+            .select()
+            .single();
+
+        if (addReview) throw addReview;
 
         return review;
     } catch (error) {
@@ -190,48 +228,57 @@ export async function addReview(songId: string, userId: string, reviewText: stri
 }
 
 
-export async function fetchReviews(songId: string, limit = 20): Promise<Review[]> {
+export async function addReviewAlbum(albumId: string, userId: string, reviewText: string) {
+    const id = ID.unique();
+    const now = new Date();
+    const isoString = now.toISOString();
     try {
-        const response = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.reviewsCollectionID,
-            [
-                Query.equal('song', songId),
-                Query.limit(limit),
-                Query.orderAsc("createdAt"),
-            ]
-        );
-        return response.documents as unknown as Review[];
-    }
-    catch (error) {
+
+        const { data: review, error: addReview } = await supabase
+            .from("reviews")
+            .insert({
+                review_id: id,
+                album_id: albumId,
+                user_id: userId,
+                review_type: "album",
+                review_text: reviewText,
+                created_at: isoString,
+            })
+            .select()
+            .single();
+
+        if (addReview) throw addReview;
+
+        return review;
+    } catch (error) {
         console.log(error);
-        return []
+        return null;
     }
 }
 
 
+
+
 export async function getUserById(userId: string): Promise<IUser | null> {
     try {
-        const response = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.usersCollectionID,
-            [Query.equal('accountId', userId)]
-        );
 
-        const userData = response.documents[0];
+        const { data: userData, error: userError } = await supabase
+            .from("users")
+            .select("*")
+            .eq("user_id", userId)
+            .single();
 
-        if (!userData) {
-            throw new Error('User not found');
-        }
+        if (userError) throw userError;
+        if (!userData) throw new Error("User not found")
+
 
         const user: IUser = {
             accountId: userData.accountId,
             name: userData.name,
             username: userData.username,
             email: userData.email,
-            imageUrl: userData.imageUrl, // or new URL(userData.imageUrl) if needed
+            imageUrl: userData.imageUrl,
             bio: userData.bio
-            // Add all required fields as per your IUser interface
         };
 
         return user;
@@ -281,11 +328,13 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
         // Fetch related reviews
         const { data: reviews, error: reviewError } = await supabase
             .from("reviews")
-            .select("*")
+            .select("*, creator:users(*)")
             .eq("song_id", songId)
             .order("created_at", { ascending: false });
 
         if (reviewError) throw reviewError;
+
+        console.log(reviews)
 
 
 
@@ -298,7 +347,22 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
             spotify_url: songData.spotify_url,
             album_cover_url: albumData.album_cover_url,
             popularity: songData.popularity,
-            review: reviews || [],
+            reviews: reviews.map((r: any) => ({
+                reviewId: r.review_id,
+                text: r.review_text,
+                creator: {
+                    accountId: r.creator.user_id,
+                    name: r.creator.name,
+                    username: r.creator.username,
+                    email: r.creator.email,
+                    imageUrl: "",
+                    bio: ""
+                },
+                song: songData,
+                likes: [],
+                createdAt: r.created_at,
+                updatedAt: r.created_at,
+            })),
             ratings: [],
             artists: artistList
         };
@@ -316,7 +380,7 @@ export async function getArtistDetailsById(artistId: string): Promise<ArtistDeta
         // Fetch the Artist
         const { data: artistData, error: artistError } = await supabase
             .from("artists")
-            .select("*")
+            .select("*, albums:artistalbum(album:albums(*))")
             .eq("artist_id", artistId)
             .single();
 
@@ -331,8 +395,19 @@ export async function getArtistDetailsById(artistId: string): Promise<ArtistDeta
             spotify_url: artistData.spotify_url,
             image_url: artistData.image_url,
             followers: artistData.followers,
-            genres: []
+            genres: [],
+            albums: artistData.albums.map((a: any) => ({
+                albumId: a.album.album_id,
+                title: a.album.title,
+                spotify_url: a.album.spotify_url,
+                album_cover_url: a.album.album_cover_url,
+                release_date: a.album.release_date,
+                tracks: [],
+                artists: []
+            }))
         };
+
+        console.log("fetched artist", artist)
 
         return artist;
     } catch (error) {
@@ -386,6 +461,13 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
 
 
         // fetch album reviews
+        const { data: reviews, error: reviewError } = await supabase
+            .from("reviews")
+            .select("*, creator:users(*)")
+            .eq("album_id", albumId)
+            .order("created_at", { ascending: false });
+
+        if (reviewError) throw reviewError;
 
         const album: AlbumDetails = {
             albumId: albumData.album_id,
@@ -393,8 +475,32 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
             spotify_url: albumData.spotify_url,
             album_cover_url: albumData.album_cover_url,
             release_date: albumData.release_date,
-            tracks: songData.map(s => s),
-            artists: artistList
+            tracks: songData.map((s: any) => ({
+                songId: s.song_id,
+                title: s.title, 
+                album: albumData.title, 
+                spotify_url: s.spotify_url, 
+                album_cover_url: albumData.album_cover_url,
+                release_date: albumData.release_date,
+                popularity: s.pop
+            })),
+            artists: artistList,
+            reviews: reviews.map((r: any) => ({
+                reviewId: r.review_id,
+                text: r.review_text,
+                creator: {
+                    accountId: r.creator.user_id,
+                    name: r.creator.name,
+                    username: r.creator.username,
+                    email: r.creator.email,
+                    imageUrl: "",
+                    bio: ""
+                },
+                album: albumData,
+                likes: [],
+                createdAt: r.created_at,
+                updatedAt: r.created_at,
+            })),
         };
 
         return album;
@@ -405,58 +511,31 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
 }
 
 
+export async function getAlbumTrackRatings(
+    albumId: string,
+    userId: string
+): Promise<{ songId: string; rating: number }[]> {
+    const { data, error } = await supabase
+        .from("song_raiting")
+        .select("song_id, rating, songs!inner(album_id)")
+        .eq("songs.album_id", albumId)
+        .eq("user_id", userId);
 
-
-
-export async function searchSongInDatabase(query: string) {
-    try {
-        const response = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.songsCollectionID,
-            [
-                Query.search("title", query), // Full-text search
-            ]
-        );
-
-        if (response.documents.length > 0) {
-            // Prioritize exact match
-            const exactMatch = response.documents.find(
-                (doc) => doc.title.toLowerCase() === query.toLowerCase()
-            );
-
-            return exactMatch
-                ? (exactMatch as unknown as Song)
-                : (response.documents[0] as unknown as Song); // Return the first match as fallback
-        }
-
-        return null; // No matches found
-    } catch (error) {
-        console.error("Error searching for song in database:", error);
-        return null;
+    if (error) {
+        console.error("Error fetching user track ratings:", error);
+        return [];
     }
+
+    if (!data) return [];
+
+    // Simplify the structure to just song_id and rating
+    return data.map((t) => ({
+        songId: t.song_id,
+        rating: t.rating,
+    }));
 }
 
 
-export async function getSearchSuggestions(query: string) {
-    try {
-        const response = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.songsCollectionID,
-            [
-                Query.search("title", query), // Full-text search
-            ]
-        );
-
-        if (response.documents.length > 0) {
-            return response.documents as unknown as Song[]
-        }
-
-        return [];
-    } catch (error) {
-        console.error("Error searching for song in database:", error);
-        return [];
-    }
-}
 
 // add song, album artist into the relevant tables depending if they are there or not 
 export async function addSongToDatabase(song: SpotifySong) {
@@ -488,7 +567,7 @@ export async function addSongToDatabase(song: SpotifySong) {
                     title: song.album.name,
                     spotify_url: song.album.external_urls.spotify,
                     album_cover_url: song.album_cover_url,
-                    release_date: song.album.release_date,
+                    release_date: normalizeReleaseDate(song.album.release_date),
                     total_tracks: song.album.total_tracks,
                 }]);
 
@@ -556,16 +635,11 @@ export async function addSongToDatabase(song: SpotifySong) {
 export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
     try {
         // --- Check if song exists ---
-        const { data: existingArtist, error: selectArtistError } = await supabase
+        const { data: existingArtist } = await supabase
             .from("artists")
             .select("*")
             .eq("artist_id", artist.id)
             .single();
-
-        if (selectArtistError && selectArtistError.code !== "PGRST116") {
-            // PGRST116 = no rows found
-            throw selectArtistError;
-        }
 
 
 
@@ -600,6 +674,41 @@ export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
 
         // -- Add albums if not there 
 
+        const { data: existingAlbums, error: fetchError } = await supabase
+            .from("albums")
+            .select("album_id, fully_loaded")
+            .in("album_id", artist.albums.map(a => a.id));
+
+        if (fetchError) throw fetchError;
+
+        const existingMap = new Map(existingAlbums?.map(a => [a.album_id, a.fully_loaded]) ?? []);
+
+        const albumInserts = artist.albums.map(a => {
+            const isFullyLoaded = existingMap.get(a.id) === true;
+
+            return {
+                album_id: a.id,
+                title: a.name,
+                album_cover_url: a.images[0].url,
+                release_date: normalizeReleaseDate(a.release_date),
+                total_tracks: a.total_tracks,
+                spotify_url: a.external_urls.spotify,
+                // keep fully_loaded true if it already is
+                fully_loaded: isFullyLoaded ? true : false
+            };
+        });
+
+        const { error: addingAlbums } = await supabase.from("albums").upsert(albumInserts);
+
+        if (addingAlbums) throw addingAlbums
+
+        const albumArtistLinks = artist.albums.map(a =>
+            ({ album_id: a.id, artist_id: artist.id })
+        );
+
+        await supabase
+            .from("artistalbum")
+            .upsert(albumArtistLinks);
 
 
         return true;
@@ -611,89 +720,48 @@ export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
 
 
 // add album without adding all tracks
-export async function addAlbumSimple(album: SpotifyAlbum) {
+export async function addAlbumSimple(album: SpotifyAlbum, artist_id: string) {
     try {
-
-        // --- Insert album if it doesn't exist ---
+        // --- Check album ---
         const { data: existingAlbum } = await supabase
             .from("albums")
             .select("*")
-            .eq("album_id", song.album.id)
+            .eq("album_id", album.id)
             .single();
 
         if (!existingAlbum) {
             const { error: albumError } = await supabase
                 .from("albums")
                 .insert([{
-                    album_id: song.album.id,
-                    title: song.album.name,
-                    spotify_url: song.album.external_urls.spotify,
-                    album_cover_url: song.album_cover_url,
-                    release_date: song.album.release_date,
-                    total_tracks: song.album.total_tracks,
+                    album_id: album.id,
+                    title: album.name,
+                    spotify_url: album.external_urls.spotify,
+                    album_cover_url: album.images[0]?.url,
+                    release_date: normalizeReleaseDate(album.release_date),
+                    total_tracks: album.total_tracks,
+                    fully_loaded: false
                 }]);
-
             if (albumError) throw albumError;
         }
 
-        // --- Insert song if it doesn't exist ---
-        if (!existingSong) {
-            const { error: songInsertError } = await supabase
-                .from("songs")
-                .insert([{
-                    song_id: song.songId,
-                    title: song.title,
-                    album_id: song.album.id,
-                    spotify_url: song.spotify_url,
-                    pop: song.popularity,
-                }]);
-            if (songInsertError) throw songInsertError;
-        }
-
-        // --- Insert artists for song if they don't exist ---
-        for (const artist of song.artists) {
-            const { data: existingArtist } = await supabase
-                .from("artists")
-                .select("*")
-                .eq("artist_id", artist.id)
-                .single();
-
-            if (!existingArtist) {
-                const { error: artistError } = await supabase
-                    .from("artists")
-                    .insert([{
-                        artist_id: artist.id,
-                        name: artist.name,
-                        spotify_url: artist.external_urls.spotify,
-                    }]);
-                if (artistError) throw artistError;
-            }
-
-            // --- Link song and artist ---
-            const { data: existingLink } = await supabase
-                .from("artistsongs")
-                .select("*")
-                .eq("song_id", song.songId)
-                .eq("artist_id", artist.id)
-                .single();
-
-            if (!existingLink) {
-                const { error: linkError } = await supabase
-                    .from("artistsongs")
-                    .insert([{ song_id: song.songId, artist_id: artist.id }]);
-                if (linkError) throw linkError;
-            }
+        if (existingAlbum) {
+            return;
         }
 
 
 
-        return true;
+        const { error: artistError } = await supabase
+            .from("artistalbum")
+            .upsert([{ album_id: album.id, artist_id: artist_id }]);
+
+        if (artistError) throw artistError
+
+
     } catch (error) {
-        console.error("Error adding song to database:", error);
+        console.error("Error adding Album to database:", error);
         throw error;
     }
 }
-
 
 // add album with tracks 
 export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
@@ -713,7 +781,7 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
                     title: album.name,
                     spotify_url: album.external_urls.spotify,
                     album_cover_url: album.images[0]?.url,
-                    release_date: album.release_date,
+                    release_date: normalizeReleaseDate(album.release_date),
                     total_tracks: album.total_tracks,
                     fully_loaded: true
                 }]);
@@ -727,7 +795,7 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
                     title: album.name,
                     spotify_url: album.external_urls.spotify,
                     album_cover_url: album.images[0]?.url,
-                    release_date: album.release_date,
+                    release_date: normalizeReleaseDate(album.release_date),
                     total_tracks: album.total_tracks,
                     fully_loaded: true
                 }])
@@ -790,67 +858,52 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
 
 
 
-export async function addListened(songId: string, userId: string) {
-    const id = ID.unique();
-    const date = Date.now();
+export async function addListenedSong(songId: string, userId: string) {
+    const now = new Date();
+    const isoString = now.toISOString();
     try {
-        const userDocId = await getAccountIdbyUserId(userId);
-        await databases.createDocument(
-            appwriteConfig.databaseId,
-            appwriteConfig.listenedToCollectionID,
-            id, // Auto-generate a unique document ID
-            {
-                listenedId: id,
-                song: songId, // Reference to the song
-                user: userDocId,
-                createdAt: date,
-            }
-        );
+        const { error: addListen } = await supabase
+            .from("song_listens")
+            .insert({
+                song_id: songId,
+                user_id: userId,
+                listen_date: isoString,
+            });
+
+        if (addListen) throw addListen;
+
     } catch (error) {
         console.log(error);
     }
 }
 
-export async function hasListened(userId: string, songId: string): Promise<Boolean> {
+export async function hasListenedSong(userId: string, songId: string): Promise<Boolean> {
     try {
 
-        const userDocId = await getAccountIdbyUserId(userId);
+        const { data: listened } = await supabase
+            .from("song_listens")
+            .select("*")
+            .eq("song_id", songId)
+            .eq("user_id", userId)
+            .single();
 
-        const listened = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.listenedToCollectionID,
-            [
-                Query.equal("user", [userDocId]),
-                Query.equal("song", [songId]),
-            ]
-        );
-        if (listened.total === 0) {
-            return false;
-        }
+        if (!listened) return false;
 
         return true;
     } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error('Failed to fetch listened:', error);
         return false;
     }
 }
 
-export async function removeListened(songId: string, userId: string) {
+export async function removeListenedSong(songId: string, userId: string) {
     try {
-        const userDocId = await getAccountIdbyUserId(userId);
-        const listened = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.listenedToCollectionID,
-            [
-                Query.equal("user", [userDocId]),
-                Query.equal("song", [songId]),
-            ]
-        );
-        await databases.deleteDocument(
-            appwriteConfig.databaseId,
-            appwriteConfig.listenedToCollectionID,
-            listened.documents[0].$id
-        )
+        await supabase
+            .from("song_listens")
+            .delete()
+            .eq("song_id", songId)
+            .eq("user_id", userId);
+
     } catch (error) {
         console.error('Failed to delete listen:', error);
         return false;
@@ -858,113 +911,72 @@ export async function removeListened(songId: string, userId: string) {
 }
 
 
-export async function addRating(songId: string, userId: string, rating: number) {
-    const id = ID.unique();
-    const date = Date.now();
+export async function addUpdateRatingSong(songId: string, userId: string, rating: number) {
+    const now = new Date();
+    const isoString = now.toISOString();
     try {
-        const userDocId = await getAccountIdbyUserId(userId);
-        await databases.createDocument(
-            appwriteConfig.databaseId,
-            appwriteConfig.raitingsCollectionID,
-            id, // Auto-generate a unique document ID
-            {
-                ratingId: id,
-                song: songId,
-                user: userDocId,
-                rating: rating,
-                createdAt: date,
-            }
-        );
+        const { error: addListen } = await supabase
+            .from("song_raiting")
+            .upsert({
+                song_id: songId,
+                user_id: userId,
+                raiting_date: isoString,
+                rating: rating
+            })
+
+        if (addListen) throw addListen;
+
     } catch (error) {
         console.log(error);
     }
 }
 
-export async function hasRating(songId: string, userId: string,): Promise<Boolean> {
+export async function deleteRaitingSong(songId: string, userId: string) {
     try {
-        const userDocId = await getAccountIdbyUserId(userId);
-        const rating = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.raitingsCollectionID,
-            [
-                Query.equal("user", [userDocId]),
-                Query.equal("song", [songId]),
-            ]
-        );
-        if (rating.total === 0) {
-            return false;
-        }
+        const { error: deleteRating } = await supabase
+            .from("song_raiting")
+            .delete()
+            .eq("user_id", userId)
+            .eq("song_id", songId);
 
-        return true;
+        if (deleteRating) throw deleteRating;
+
     } catch (error) {
-        console.error('Failed to fetch user:', error);
-        return false;
+        console.log(error);
     }
 }
 
-export async function getRating(songId: string, userId: string): Promise<number> {
+export async function getRatingSong(songId: string, userId: string): Promise<number> {
     try {
-        const userDocId = await getAccountIdbyUserId(userId);
-        const rating = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.raitingsCollectionID,
-            [
-                Query.equal("song", songId),
-                Query.equal("user", userDocId),
-            ]
-        );
-        if (rating.total === 0) {
-            return 0;
-        }
+        const { data: rating } = await supabase
+            .from("song_raiting")
+            .select("*")
+            .eq("song_id", songId)
+            .eq("user_id", userId)
+            .single();
 
-        return rating.documents[0].rating;
+        if (!rating) return 0;
+
+
+        return rating.rating;
     } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error('Failed to fetch raiting:', error);
         return 0;
     }
 }
 
-export async function updateRating(songId: string, userId: string, value: number) {
-    try {
-        const userDocId = await getAccountIdbyUserId(userId);
-        const date = Date.now();
-        const rating = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.raitingsCollectionID,
-            [
-                Query.equal("song", songId),
-                Query.equal("user", userDocId),
-            ]
-        );
-
-        await databases.updateDocument(
-            appwriteConfig.databaseId,
-            appwriteConfig.raitingsCollectionID,
-            rating.documents[0].$id,
-            {
-                rating: value,
-                createdAt: date
-            }
-        );
-    } catch (error) {
-        console.error('Failed to fetch raitings:', error);
-    }
-}
 
 export async function getAllRatingsOfaSong(songId: string): Promise<Rating[]> {
     try {
-        const listened = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.raitingsCollectionID,
-            [
-                Query.equal("song", [songId]),
-            ]
-        );
-        if (listened.total === 0) {
-            return [];
-        }
+        const { data: ratings } = await supabase
+            .from("song_raiting")
+            .select("*")
+            .eq("song_id", songId)
 
-        return listened.documents as unknown as Rating[];
+        if (!ratings) return [];
+
+
+        return ratings;
     } catch (error) {
         console.error('Failed to fetch raitings:', error);
         return [];
@@ -973,49 +985,226 @@ export async function getAllRatingsOfaSong(songId: string): Promise<Rating[]> {
 
 
 
-export async function getListenedWithLimit(userId: string, limit: number): Promise<Listened[]> {
+export async function addUpdateRatingAlbum(albumId: string, userId: string, rating: number) {
+    const now = new Date();
+    const isoString = now.toISOString();
     try {
-        const userDocId = await getAccountIdbyUserId(userId);
+        const { error: addListen } = await supabase
+            .from("album_raiting")
+            .upsert({
+                album_id: albumId,
+                user_id: userId,
+                raiting_date: isoString,
+                rating: rating
+            })
 
-        const listened = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.listenedToCollectionID,
-            [
-                Query.equal("user", [userDocId]),
-                Query.limit(limit),
-                Query.orderDesc('createdAt')
-            ]
-        );
-        if (listened.total === 0) {
-            return [];
-        }
+        if (addListen) throw addListen;
 
-        return listened.documents as unknown as Listened[];
     } catch (error) {
-        console.error('Failed to fetch listened:', error);
+        console.log(error);
+    }
+}
+
+export async function deleteRaitingAlbum(albumId: string, userId: string) {
+    try {
+        const { error: deleteRating } = await supabase
+            .from("album_raiting")
+            .delete()
+            .eq("user_id", userId)
+            .eq("album_id", albumId);
+
+        if (deleteRating) throw deleteRating;
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+
+export async function getRatingAlbum(albumId: string, userId: string): Promise<number> {
+    try {
+        const { data: rating } = await supabase
+            .from("album_raiting")
+            .select("*")
+            .eq("album_id", albumId)
+            .eq("user_id", userId)
+            .single();
+
+        if (!rating) return 0;
+
+
+        return rating.rating;
+    } catch (error) {
+        console.error('Failed to fetch raiting:', error);
+        return 0;
+    }
+}
+
+
+export async function getAllRatingsOfAlbum(albumId: string): Promise<{
+    counts: { rating: number; count: number }[];
+    average: number;
+    total: number;
+}> {
+    try {
+        const { data: ratings, error } = await supabase
+            .from("album_raiting")
+            .select("rating")
+            .eq("album_id", albumId);
+
+        if (error) throw error;
+        if (!ratings) return { counts: [], average: 0, total: 0 };
+
+        // Initialize count map
+        const counts = [1, 2, 3, 4, 5].map((r) => ({ rating: r, count: 0 }));
+
+        // Count each rating
+        ratings.forEach((r) => {
+            if (r.rating >= 1 && r.rating <= 5) {
+                counts[r.rating - 1].count++;
+            }
+        });
+
+        // Total count
+        const total = ratings.length;
+
+        // Average rating
+        const sum = counts.reduce((acc, c) => acc + c.rating * c.count, 0);
+        const average = total > 0 ? sum / total : 0;
+
+        return { counts, average, total };
+    } catch (error) {
+        console.error("Failed to fetch ratings:", error);
+        return { counts: [], average: 0, total: 0 };
+    }
+}
+
+
+export async function getListenedWithLimit(
+    userId: string,
+    limit: number
+): Promise<Listened[]> {
+    try {
+        // fetch songs listened with join to albums
+        const { data: songsListened, error: songsError } = await supabase
+            .from("song_listens")
+            .select(`
+        listen_date,
+        song_id,
+        songs (
+          title,
+          albums:songs_album_id_fkey (
+            album_cover_url
+          )
+        )
+      `)
+            .eq("user_id", userId);
+
+        if (songsError) throw songsError;
+
+        // fetch albums listened
+        const { data: albumsListened, error: albumsError } = await supabase
+            .from("album_listens")
+            .select(`
+        listen_date,
+        album_id,
+        albums (
+          title,
+          album_cover_url
+        )
+      `)
+            .eq("user_id", userId);
+
+        if (albumsError) throw albumsError;
+
+        // normalize both into one array
+        const combined: Listened[] = [
+            ...(songsListened?.map((s: any) => ({
+                type: "song" as const,
+                id: s.song_id,
+                name: s.songs?.title ?? "Unknown Song",
+                album_cover_url: s.songs?.albums?.album_cover_url ?? null,
+                listen_date: s.listen_date,
+            })) ?? []),
+            ...(albumsListened?.map((a: any) => ({
+                type: "album" as const,
+                id: a.album_id,
+                name: a.albums?.title ?? "Unknown Album",
+                album_cover_url: a.albums?.album_cover_url ?? null,
+                listen_date: a.listen_date,
+            })) ?? []),
+        ];
+
+        // sort DESC and apply limit
+        return combined
+            .sort(
+                (a, b) =>
+                    new Date(b.listen_date).getTime() -
+                    new Date(a.listen_date).getTime()
+            )
+            .slice(0, limit);
+    } catch (error) {
+        console.error("Failed to fetch listened:", error);
         return [];
     }
 }
 
+// Fetch all (no limit)
 export async function getListened(userId: string): Promise<Listened[]> {
     try {
-        const userDocId = await getAccountIdbyUserId(userId);
+        const { data: songsListened, error: songsError } = await supabase
+            .from("song_listens")
+            .select(`
+        listen_date,
+        song_id,
+        songs (
+          title,
+          albums:songs_album_id_fkey (
+            album_cover_url
+          )
+        )
+      `)
+            .eq("user_id", userId);
 
-        const listened = await databases.listDocuments(
-            appwriteConfig.databaseId,
-            appwriteConfig.listenedToCollectionID,
-            [
-                Query.equal("user", [userDocId]),
-                Query.orderDesc('createdAt')
-            ]
+        if (songsError) throw songsError;
+
+        const { data: albumsListened, error: albumsError } = await supabase
+            .from("album_listens")
+            .select(`
+        listen_date,
+        album_id,
+        albums (
+          title,
+          album_cover_url
+        )
+      `)
+            .eq("user_id", userId);
+
+        if (albumsError) throw albumsError;
+
+        const combined: Listened[] = [
+            ...(songsListened?.map((s: any) => ({
+                type: "song" as const,
+                id: s.song_id,
+                name: s.songs?.title ?? "Unknown Song",
+                album_cover_url: s.songs?.albums?.album_cover_url ?? null,
+                listen_date: s.listen_date,
+            })) ?? []),
+            ...(albumsListened?.map((a: any) => ({
+                type: "album" as const,
+                id: a.album_id,
+                name: a.albums?.title ?? "Unknown Album",
+                album_cover_url: a.albums?.album_cover_url ?? null,
+                listen_date: a.listen_date,
+            })) ?? []),
+        ];
+
+        return combined.sort(
+            (a, b) =>
+                new Date(b.listen_date).getTime() - new Date(a.listen_date).getTime()
         );
-        if (listened.total === 0) {
-            return [];
-        }
-
-        return listened.documents as unknown as Listened[];
     } catch (error) {
-        console.error('Failed to fetch listened:', error);
+        console.error("Failed to fetch listened:", error);
         return [];
     }
 }
@@ -1067,7 +1256,7 @@ export async function getRated(userId: string): Promise<Rating[]> {
     }
 }
 
-export async function getReviewedWithLimit(userId: string, limit: number): Promise<Review[]> {
+export async function getReviewedWithLimit(userId: string, limit: number): Promise<SongReview[]> {
     try {
         const userDocId = await getAccountIdbyUserId(userId);
 
@@ -1084,14 +1273,14 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
             return [];
         }
 
-        return listened.documents as unknown as Review[];
+        return listened.documents as unknown as SongReview[];
     } catch (error) {
         console.error('Failed to fetch user:', error);
         return [];
     }
 }
 
-export async function getReviewed(userId: string): Promise<Review[]> {
+export async function getReviewed(userId: string): Promise<SongReview[]> {
     try {
         const userDocId = await getAccountIdbyUserId(userId);
 
@@ -1105,7 +1294,7 @@ export async function getReviewed(userId: string): Promise<Review[]> {
             ]
         );
 
-        return reviewsResult.documents as unknown as Review[];
+        return reviewsResult.documents as unknown as SongReview[];
     } catch (error) {
         console.error("Failed to fetch user reviews:", error);
         return [];

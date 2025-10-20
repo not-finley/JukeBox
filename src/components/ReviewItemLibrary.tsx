@@ -1,8 +1,8 @@
-import { Review } from '@/types';
+import { SongReview } from '@/types';
 import { useState } from 'react'
 import { Link } from 'react-router-dom';
 
-const ReviewItemLibrary = (review : Review ) => {
+const ReviewItemLibrary = (review : SongReview ) => {
     const [longVis, setLongVis] = useState(false);
     const toggleLongVis = () => setLongVis(!longVis);
 

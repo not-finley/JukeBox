@@ -1,18 +1,18 @@
-import { Review } from '@/types';
+import { AlbumReview, SongReview } from '@/types';
 import { useState } from 'react'
 import { Link } from 'react-router-dom';
 
-const ReviewItem = (review : Review ) => {
+const ReviewItem = (review : SongReview | AlbumReview ) => {
     const [longVis, setLongVis] = useState(false);
     const toggleLongVis = () => setLongVis(!longVis);
 
     return (
         <li className="review-container flex items-start gap-4 mb-6">
-        <img
+        {/* <img
             src={review.creator.imageUrl}
             alt={review.creator.username}
             className="h-10 w-10 rounded-full"
-        />
+        /> */}
         <div>
             <p>
             Reviewed by{" "}
@@ -37,5 +37,6 @@ const ReviewItem = (review : Review ) => {
         </li>
     );
 };
+
 
 export default ReviewItem

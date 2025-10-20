@@ -16,7 +16,8 @@ import { useForm } from "react-hook-form";
 import { SignupValidation } from "@/lib/validation";
 import { z } from "zod";
 import Loader from "@/components/shared/loader";
-import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/queriesAndMutations";
+import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
+import { createUserAccount } from "@/lib/appwrite/api";
 
 const SignupForm = () => {
   const { toast } = useToast();
@@ -32,7 +33,6 @@ const SignupForm = () => {
     },
   });
 
-  const { mutateAsync: createUserAccount, isPending: isCreating } = useCreateUserAccount();
   const { mutateAsync: signInAccount, isPending: isSigningIn } = useSignInAccount();
 
   async function onSubmit(values: z.infer<typeof SignupValidation>) {
@@ -42,9 +42,7 @@ const SignupForm = () => {
         email: values.email,
         password: values.password,
         name: values.name,
-        username: values.username,
-        bio: "", // optional
-        imageUrl: "", // optional
+        username: values.username
       });
       console.log("Account created:", data);
 
@@ -74,7 +72,7 @@ const SignupForm = () => {
 
         <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">Create a new account</h2>
         <p className="text-light-3 small-medium md:base-regular">
-          Enter your details to share your voice.
+          Enter your details to start reviewing.
         </p>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
@@ -100,7 +98,7 @@ const SignupForm = () => {
           ))}
 
           <Button type="submit" className="shad-button_primary">
-            {isCreating || isSigningIn ? (
+            { isSigningIn ? (
               <div className="flex-center gap-2">
                 <Loader /> Loading...
               </div>

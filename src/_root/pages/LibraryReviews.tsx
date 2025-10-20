@@ -2,12 +2,12 @@ import ReviewItemLibrary from "@/components/ReviewItemLibrary";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { useUserContext } from "@/lib/AuthContext";
 import { getReviewed } from "@/lib/appwrite/api";
-import { Review } from "@/types";
+import { SongReview } from "@/types";
 import { useEffect, useState } from "react";
 
 const LibraryReviews = () => {
     const { user } = useUserContext();
-    const [reviewed, setReviewed] = useState<Review[]>([]);
+    const [reviewed, setReviewed] = useState<SongReview[]>([]);
     const [loading, setLoading] = useState(true);
 
 

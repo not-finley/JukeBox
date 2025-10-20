@@ -1,17 +1,28 @@
-import { addAlbumComplex, getAlbumDetailsById } from '@/lib/appwrite/api';
+import { addAlbumComplex, addUpdateRatingAlbum, addUpdateRatingSong, deleteRaitingAlbum, deleteRaitingSong, getAlbumDetailsById, getAlbumTrackRatings, getAllRatingsOfAlbum, getRatingAlbum } from '@/lib/appwrite/api';
 import { AlbumDetails } from '@/types';
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
 import { BarChart, Bar, XAxis } from 'recharts';
-import { IoMenu } from "react-icons/io5";
 import { Button, buttonVariants } from '@/components/ui/button';
 import { getSpotifyToken, SpotifyAlbumById } from '@/lib/appwrite/spotify';
+import LoaderMusic from '@/components/shared/loaderMusic';
+import { useUserContext } from '@/lib/AuthContext';
+import { FaSpotify } from "react-icons/fa";
+import ReviewItem from '@/components/ReviewItem';
 
 
 const Album = () => {
     const { id } = useParams();
+    const { user } = useUserContext();
     const [album, setAlbum] = useState<AlbumDetails | null>(null);
     const [notFound, setNotFound] = useState<boolean>(false);
+    const [loading, setLoading] = useState(true);
+    const [rating, setRating] = useState(0);
+    const [hover, setHover] = useState(0);
+    const [globalRatings, setGlobalRatings] = useState<{ rating: number; count: number }[]>([]);
+    const [globalAverage, setGlobalAverage] = useState(0);
+    const [globalTotal, setGlobalTotal] = useState(0);
+    const [songRaitings, setSongRaitings] = useState<number[]>([]);
 
 
     const addAlbum = async () => {
@@ -19,6 +30,7 @@ const Album = () => {
             const spotifyToken: string = await getSpotifyToken();
             const spotifyAlbum = await SpotifyAlbumById(id || "", spotifyToken);
             if (!spotifyAlbum) {
+                setNotFound(true);
                 return;
             }
 
@@ -32,13 +44,52 @@ const Album = () => {
         }
     }
 
-    const raitingdata = [
-        { rating: "1", count: 3 },
-        { rating: "2", count: 5 },
-        { rating: "3", count: 12 },
-        { rating: "4", count: 20 },
-        { rating: "5", count: 7 },
-    ];
+    const handleHover = async (value: number) => {
+        setHover(value);
+    };
+
+    const handleRating = async (value: number) => {
+        if (value == rating) {
+            setRating(0);
+            await deleteRaitingAlbum(id ? id : '', user.accountId)
+        } else {
+            setRating(value);
+            await addUpdateRatingAlbum(id ? id : '', user.accountId, value);
+        }
+
+        fetchGlobalRaiting();
+    };
+
+    const addUpdateRatingAlbumlocal = async () => {
+        const num = await getRatingAlbum(id ? id : '', user.accountId);
+        setRating(num);
+    }
+
+
+    const handleSongRating = async (value: number, trackIndex: number) => {
+        if (value === songRaitings[trackIndex]) {
+            value = 0;
+        }
+        const newRatings = [...songRaitings];
+        newRatings[trackIndex] = value;
+        setSongRaitings(newRatings);
+
+        if (value == 0) {
+            await deleteRaitingSong(album?.tracks[trackIndex].songId || "", user.accountId);
+
+        } else {
+            await addUpdateRatingSong(album?.tracks[trackIndex].songId || "", user.accountId, value);
+        }
+
+    };
+
+    const fetchGlobalRaiting = async () => {
+        const { counts, average, total } = await getAllRatingsOfAlbum(id || '');
+
+        setGlobalRatings(counts);
+        setGlobalAverage(average);
+        setGlobalTotal(total);
+    };
 
 
     const fetchAlbum = async () => {
@@ -46,24 +97,44 @@ const Album = () => {
             const fetchedAlbum = await getAlbumDetailsById(id || "");
             if (!fetchedAlbum) {
                 await addAlbum();
+
             } else {
                 setAlbum(fetchedAlbum);
+                const raitings = await getAllRatingsOfAlbum(id || "");
+                console.log(raitings)
             }
+            const ratings = await getAlbumTrackRatings(id || "", user.accountId);
+
+            const ratingsArray = fetchedAlbum?.tracks.map((t) => {
+                const match = ratings?.find((r) => r.songId === t.songId);
+                return match ? match.rating : 0;
+            }
+            );
+            setSongRaitings(ratingsArray || []);
+
+
         } catch (error) {
             console.error("Error fetching Album or reviews:", error);
         }
+
+
+        setLoading(false);
     };
 
     useEffect(() => {
         if (id) {
             fetchAlbum();
+            addUpdateRatingAlbumlocal();
+            fetchGlobalRaiting();
         }
 
     }, [id]);
 
     return (
         <div className="common-container">
-            {album &&
+            {notFound && <h1 className='text-2xl text-gray-300'>Album not found</h1>}
+            {loading && (<LoaderMusic />)}
+            {album && !loading &&
                 (
                     <div className='w-full max-w-6xl'>
                         <div className="sticky top-0 h-[35vh] z-0">
@@ -83,7 +154,7 @@ const Album = () => {
                                     <img
                                         src={album.album_cover_url}
                                         alt={album.title}
-                                        className="w-32 h-32 object-cover rounded shadow-lg"
+                                        className="w-40 h-40 object-cover rounded shadow-lg"
                                     />
                                     <div className="flex flex-col">
                                         <h3 className="text-gray-300 text-sm uppercase">Album</h3>
@@ -91,13 +162,24 @@ const Album = () => {
                                             {album.title}
                                         </h1>
                                         {album.artists && (
-                                            <p className="text-lg text-gray-300">By{" "}
+                                            <p className="text-lg text-gray-300">{album?.release_date.slice(0, 4)} | By{" "}
                                                 {album?.artists.map((a, i) => (
-                                                    <Link to={`/artist/${a.artist_id}`} key={a.id} className="hover:text-white">
+                                                    <Link to={`/artist/${a.artist_id}`} key={a.id} className="hover:text-emerald-400">
                                                         {a.name}
                                                         {i < album.artists.length - 1 ? ", " : ""}
                                                     </Link>
                                                 ))}</p>
+                                        )}
+                                        {album.spotify_url && (
+                                            <a
+                                                href={album.spotify_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="mt-3 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-black font-semibold py-2 px-4 rounded-lg shadow-md transition w-fit"
+                                            >
+                                                <FaSpotify className="text-xl" />
+                                                <span>Listen on Spotify</span>
+                                            </a>
                                         )}
                                     </div>
                                 </div>
@@ -108,17 +190,42 @@ const Album = () => {
                             {/* Tracks */}
                             <section className="relative bg-black px-4 py-12 lg:w-3/5">
                                 <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Tracks</h2>
-                                <ul>
+                                <ul className="divide-y divide-gray-700">
                                     {album.tracks.map((track, index) => (
                                         <li
                                             key={index}
-                                            className="flex justify-between items-center bg-gray-800 rounded p-3 mb-2 hover:bg-gray-700 transition"
+                                            className="grid grid-cols-[40px_1fr_auto_5px] items-center bg-gray-800 p-3 hover:bg-gray-700 transition rounded-md mt-1 mb-1"
                                         >
-                                            <div className="flex gap-3 items-center">
-                                                <span className="text-gray-400">{index + 1}</span>
-                                                <Link to={`/song/${track.song_id}`} className="text-white">{track.title}</Link>
+                                            {/* Track number */}
+                                            <span className="text-gray-400">{index + 1}</span>
+
+                                            {/* Title */}
+                                            <Link to={`/song/${track.songId}`} className="text-white truncate">
+                                                {track.title}
+                                            </Link>
+
+                                            {/* Stars */}
+                                            <div className="flex gap-1 justify-center">
+                                                {[...Array(5)].map((_, starIndex) => {
+                                                    const value = starIndex + 1;
+                                                    return (
+                                                        <button
+                                                            key={value}
+                                                            type="button"
+                                                            onClick={() => handleSongRating(value, index)}
+                                                        >
+                                                            <img
+                                                                src={
+                                                                    songRaitings[index] >= value
+                                                                        ? "/assets/icons/cute-star_full.svg"
+                                                                        : "/assets/icons/cute-star.svg"
+                                                                }
+                                                                className="h-4/6 w-7"
+                                                            />
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
-                                            <button><IoMenu /></button>
                                         </li>
                                     ))}
                                 </ul>
@@ -162,14 +269,14 @@ const Album = () => {
                                                         key={value}
                                                         type="button"
                                                         className="text-2xl text-black hover:text-gray-50"
-                                                    // onClick={() => handleRating(value)}
-                                                    // onMouseEnter={() => handleHover(value)}
-                                                    // onMouseLeave={() => setHover(0)}
+                                                        onClick={() => handleRating(value)}
+                                                        onMouseEnter={() => handleHover(value)}
+                                                        onMouseLeave={() => setHover(0)}
                                                     >
                                                         <img
                                                             //src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
                                                             //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
-                                                            // src={hover > 0 ? (hover >= value ? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg') : rating >= value ? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
+                                                            src={hover > 0 ? (hover >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg') : rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
                                                             className="h-4/6 w-10"
                                                         />
                                                     </button>
@@ -182,29 +289,42 @@ const Album = () => {
                                 {/* Ratings Summary */}
                                 <div className="w-full flex items-center justify-between mb-6">
                                     <p className="text-2xl font-bold text-white">Ratings</p>
-                                    <p className="text-gray-400 text-md">1k listeners</p>
+
+                                    {globalTotal > 0 && (<p className="text-gray-400 text-md">{globalTotal} listeners</p>)}
                                 </div>
 
+                                {globalTotal <= 0 && (<p className='text-lg text-gray-300'>No ratings yet  -  be the first!</p>)}
+
+
                                 {/* Histogram */}
-                                <div className="flex items-center justify-center w-full">
-                                    <div className="mr-9">
-                                        <p className="text-2xl text-gray-200 text-center">3.9</p>
-                                        <p className="text-sm text-gray-400 text-center">Stars</p>
-                                    </div>
-                                    <BarChart width={250} height={200} data={raitingdata}>
-                                        <XAxis dataKey="rating" />
-                                        <Bar dataKey="count" fill="#82ca9d" />
-                                    </BarChart>
-                                </div>
+                                {globalTotal > 0 &&
+                                    (
+                                        <div className="flex items-center justify-center w-full">
+                                            <div className="mr-9">
+                                                <p className="text-2xl text-gray-200 text-center">{globalAverage}</p>
+                                                <p className="text-sm text-gray-400 text-center">Stars</p>
+                                            </div>
+                                            <BarChart width={250} height={200} data={globalRatings}>
+                                                <XAxis dataKey="rating" />
+                                                <Bar dataKey="count" fill="#82ca9d" />
+                                            </BarChart>
+                                        </div>
+                                    )}
+
                             </section>
                         </div>
 
                         <section className="relative h-96 bg-black px-4 py-12">
                             <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Reviews</h2>
-                            <div className="bg-gray-900 rounded-lg p-4 mb-4">
+                            {/* <div className="bg-gray-900 rounded-lg p-4 mb-4">
                                 <p className="text-white">"Loved the production quality!"</p>
                                 <span className="text-sm text-gray-400">– User123</span>
-                            </div>
+                            </div> */}
+                            {album?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet - be the first to start the conversation!</p>) : ''}
+                            {album?.reviews.map((r) => (
+                                <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} album={r.album} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
+                            )
+                            )}
                         </section>
                     </div>)
             }

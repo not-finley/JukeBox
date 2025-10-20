@@ -83,6 +83,7 @@ export type INavLink = {
     release_date: string; 
     tracks: Song[]; 
     artists: any[];
+    reviews: AlbumReview[];
 
   }
 
@@ -182,7 +183,7 @@ export type INavLink = {
     album_cover_url: string;
     release_date: string;
     popularity: number;
-    review: Review[];
+    reviews: SongReview[];
     ratings: Rating[];
     artists: any[];
   }
@@ -197,7 +198,7 @@ export type INavLink = {
     albums: Album[];
   }
 
-  export type Review = {
+  export type SongReview = {
     reviewId: string;
     text : string;
     creator : IUser;
@@ -207,10 +208,20 @@ export type INavLink = {
     updatedAt: number;
   }
 
-  export type Listened = {
+  export type AlbumReview = {
+    reviewId: string;
+    text : string;
+    creator : IUser;
+    album: Album;
+    likes: string[];
     createdAt: number;
-    listenedId: string;
-    song: Song;
-    user: IUser
+    updatedAt: number;
   }
- 
+
+  export interface Listened {
+    type: "song" | "album";
+    id: string;
+    name: string;
+    album_cover_url: string | null;
+    listen_date: string;
+  }

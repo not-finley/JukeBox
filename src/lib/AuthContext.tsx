@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { IUser, IContextType } from '@/types';
 
 export const INITIAL_USER: IUser = {
-  id: '',
+  accountId: '',
   name: '',
   username: '',
   email: '',
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         const u = session.user;
         setUser({
-          id: u.id,
+          accountId: u.id,
           name: u.user_metadata?.name ?? '',
           username: u.user_metadata?.username ?? '',
           email: u.email ?? '',

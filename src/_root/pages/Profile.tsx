@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useUserContext } from "@/lib/AuthContext";
 import { useParams } from "react-router-dom";
 import { getListened, getRated, getReviewed, getUserById } from "@/lib/appwrite/api";
-import { Listened, Rating, Review } from "@/types";
+import { Listened, Rating, SongReview } from "@/types";
 import { IUser } from "@/types";
 import { Link } from "react-router-dom";
 import TruncatedText from "@/components/shared/TruncatedText"; 
@@ -16,7 +16,7 @@ type profileProps = {
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
   isCurrentUser: boolean;
   listened: Listened[];
-  reviews: Review[];
+  reviews: SongReview[];
   raitings: Rating[];
 }
 
@@ -83,22 +83,23 @@ const ProfileComponent = ({ user, activeTab, setActiveTab, isCurrentUser, listen
       <div className="flex-1">
         {activeTab === "Listens" && (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-2 md:gap-4">
-          {listened.map((listen, idx) => (
-            <Link key={listen.song.songId} to={`/song/${listen.song.songId}`}>
-              <figure
-                key={idx}
-                className="aspect-square bg-gray-800 rounded-lg overflow-hidden border border-gray-700 flex flex-col items-center"
-              >
-                <img
-                  src={listen.song.album_cover_url}
-                  alt={`Album cover of ${listen.song.title}`}
-                  className="w-full h-full object-cover"
-                />
-                <figcaption className="w-full px-2 py-1 bg-gray-900 bg-opacity-70 text-xs text-gray-100 text-center truncate">
-                  {listen.song.title}
-                </figcaption>
-              </figure>
-              </Link>
+          {listened.map((listen) => (
+            // <Link key={listen.name} to={`/song/${listen.song.songId}`}>
+            //   <figure
+            //     key={idx}
+            //     className="aspect-square bg-gray-800 rounded-lg overflow-hidden border border-gray-700 flex flex-col items-center"
+            //   >
+            //     <img
+            //       src={listen.song.album_cover_url}
+            //       alt={`Album cover of ${listen.song.title}`}
+            //       className="w-full h-full object-cover"
+            //     />
+            //     <figcaption className="w-full px-2 py-1 bg-gray-900 bg-opacity-70 text-xs text-gray-100 text-center truncate">
+            //       {listen.song.title}
+            //     </figcaption>
+            //   </figure>
+            //   </Link>
+            <p>{listen.name}</p>
             ))}
             </div>  
         )}
@@ -137,7 +138,7 @@ const Profile = () => {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("Listens");
   const [listened, setListened] = useState<Listened[]>([]);
-  const [reviewed, setReviewed] = useState<Review[]>([]);
+  const [reviewed, setReviewed] = useState<SongReview[]>([]);
   const [rated, setRated] = useState<Rating[]>([]);
   const [profileUser, setProfileUser] = useState<IUser | null>(null);
 

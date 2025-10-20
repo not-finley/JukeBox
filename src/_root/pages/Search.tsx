@@ -14,25 +14,6 @@ const trending = [
   "SZA",
 ];
 
-function SearchRow({ image, title, subtitle, type, link }: any) {
-  return (
-    <Link to={link}>
-      <div className="flex items-center gap-4 p-3 rounded hover:bg-gray-800 transition">
-        <img
-          src={image}
-          alt={title}
-          className={`w-14 h-14 object-cover ${type === "Artist" ? "rounded-full" : "rounded"
-            }`}
-        />
-        <div className="flex flex-col">
-          <p className="text-white font-medium">{title}</p>
-          {subtitle && <p className="text-gray-400 text-sm">{subtitle}</p>}
-        </div>
-        <span className="ml-auto text-xs text-gray-500 uppercase">{type}</span>
-      </div>
-    </Link>
-  );
-}
 
 
 const Search = () => {
@@ -74,9 +55,9 @@ const Search = () => {
   };
 
   return (
-    <div className="song-container">
-      <div className=" max-w-6xl">
-        <div className="w-full max-w-6xl flex flex-col items-center">
+    <div className="common-container overflow-x-hidden">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex flex-col items-center">
           <h1 className="text-3xl font-bold mb-2 text-center">Search for Music</h1>
           <p className="text-gray-400 mb-6 text-center">
             Find your favorite songs, artists, and albums powered by Spotify.
@@ -138,28 +119,29 @@ const Search = () => {
         </div>
 
         {/* Results */}
-        <div className="w-full mt-8 flex flex-col gap-6">
-
+        <div className=" mt-8 flex flex-col gap-6">
           {/* Songs Row */}
           {songs.length > 0 && (
             <section>
               <h2 className="text-xl font-bold text-white mb-2">Songs</h2>
-              <div className="flex gap-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-                {songs.map((song) => (
-                  <Link key={song.id} to={`/song/${song.id}`} className="flex-none w-36">
-                    <div className="flex flex-col items-center gap-2 hover:scale-105 transition">
-                      <img
-                        src={song.album_cover_url}
-                        alt={song.title}
-                        className="w-32 h-32 object-cover rounded"
-                      />
-                      <p className="text-white text-sm text-center">{song.title}</p>
-                      <p className="text-gray-400 text-xs text-center">
-                        {song.artists?.map((a: any) => a.name).join(", ")}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+              <div className="overflow-x-auto">
+                <div className="flex gap-4">
+                  {songs.map((song) => (
+                    <Link key={song.id} to={`/song/${song.id}`} className="flex-none w-36">
+                      <div className="flex flex-col items-center gap-2 hover:scale-105 transition">
+                        <img
+                          src={song.album_cover_url}
+                          alt={song.title}
+                          className="w-32 h-32 object-cover rounded"
+                        />
+                        <p className="text-white text-sm text-center">{song.title}</p>
+                        <p className="text-gray-400 text-xs text-center">
+                          {song.artists?.map((a: any) => a.name).join(", ")}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </section>
           )}
@@ -168,22 +150,24 @@ const Search = () => {
           {albums.length > 0 && (
             <section>
               <h2 className="text-xl font-bold text-white mb-2">Albums</h2>
-              <div className="flex gap-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-                {albums.map((album) => (
-                  <Link key={album.id} to={`/album/${album.id}`} className="flex-none w-36">
-                    <div className="flex flex-col items-center gap-2 hover:scale-105 transition">
-                      <img
-                        src={album.album_cover_url}
-                        alt={album.title}
-                        className="w-32 h-32 object-cover rounded"
-                      />
-                      <p className="text-white text-sm text-center">{album.title}</p>
-                      <p className="text-gray-400 text-xs text-center">
-                        {album.artists?.map((a: any) => a.name).join(", ")}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+              <div className="overflow-x-auto">
+                <div className="flex gap-4">
+                  {albums.map((album) => (
+                    <Link key={album.id} to={`/album/${album.id}`} className="flex-none w-36">
+                      <div className="flex flex-col items-center gap-2 hover:scale-105 transition">
+                        <img
+                          src={album.album_cover_url}
+                          alt={album.title}
+                          className="w-32 h-32 object-cover rounded"
+                        />
+                        <p className="text-white text-sm text-center">{album.title}</p>
+                        <p className="text-gray-400 text-xs text-center">
+                          {album.artists?.map((a: any) => a.name).join(", ")}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </section>
           )}
@@ -192,19 +176,21 @@ const Search = () => {
           {artists.length > 0 && (
             <section>
               <h2 className="text-xl font-bold text-white mb-2">Artists</h2>
-              <div className="flex gap-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-                {artists.map((artist) => (
-                  <Link key={artist.id} to={`/artist/${artist.id}`} className="flex-none w-36">
-                    <div className="flex flex-col items-center gap-2 hover:scale-105 transition">
-                      <img
-                        src={artist.image_url}
-                        alt={artist.name}
-                        className="w-32 h-32 object-cover rounded-full"
-                      />
-                      <p className="text-white text-sm text-center">{artist.name}</p>
-                    </div>
-                  </Link>
-                ))}
+              <div className=" overflow-x-auto">
+                <div className="flex gap-4">
+                  {artists.map((artist) => (
+                    <Link key={artist.id} to={`/artist/${artist.id}`} className="flex-none w-36">
+                      <div className="flex flex-col items-center gap-2 hover:scale-105 transition">
+                        <img
+                          src={artist.image_url}
+                          alt={artist.name}
+                          className="w-32 h-32 object-cover rounded-full"
+                        />
+                        <p className="text-white text-sm text-center">{artist.name}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </section>
           )}

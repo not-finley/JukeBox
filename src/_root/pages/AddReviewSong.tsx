@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserContext } from "@/lib/AuthContext";
-import { addReview, getSongById } from "@/lib/appwrite/api";
+import { addReviewSong, getSongById } from "@/lib/appwrite/api";
 import { Song } from "@/types";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -25,7 +25,7 @@ const formSchema = z.object({
   text: z.string().min(1).max(100000),
 })
 
-const AddReview = () => {
+const AddReviewSong = () => {
   const { id } = useParams();
   const [song, setSong] = useState<Song | null>(null);
   const { user } = useUserContext();
@@ -42,7 +42,7 @@ const AddReview = () => {
   
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    const review = await addReview(song?song.songId:'', user.accountId, values.text);
+    const review = await addReviewSong(song?song.songId:'', user.accountId, values.text);
     if (!review) {
       return toast({ title: "Failed to add review. Please try again."})
     }
@@ -56,7 +56,7 @@ const AddReview = () => {
   useEffect(() => {
     const fetchSong = async () => {
       const fetchedSong = await getSongById(id || "");
-      setSong(fetchedSong); // fetchedSong can be null, so it stays consistent
+      setSong(fetchedSong); 
     };
 
     fetchSong();
@@ -116,4 +116,4 @@ const AddReview = () => {
   )
 }
 
-export default AddReview
+export default AddReviewSong

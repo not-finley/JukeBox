@@ -1,7 +1,7 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { INewUser } from '@/types';
-import { QUERY_KEYS } from './queryKeys';
+
 
 // -------------------- MUTATIONS --------------------
 
@@ -15,9 +15,7 @@ export const useCreateUserAccount = () => {
         options: {
           data: {
             name: user.name,
-            username: user.username,
-            bio: user.bio,
-            imageUrl: user.imageUrl,
+            username: user.username
           },
         },
       });
@@ -53,29 +51,3 @@ export const useSignOutAccount = () => {
 };
 
 // -------------------- QUERIES --------------------
-
-// Example: get current user session
-export const useGetCurrentUser = () => {
-  return useQuery([QUERY_KEYS.GET_CURRENT_USER], async () => {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-    if (error) throw error;
-    return session?.user || null;
-  });
-};
-
-// Example placeholder for a song query
-export const useGetSongById = (songId: string) => {
-  return useQuery([QUERY_KEYS.GET_SONG_BY_ID, songId], async () => {
-    // Replace with your Supabase table query
-    const { data, error } = await supabase
-      .from('songs')
-      .select('*')
-      .eq('id', songId)
-      .single();
-    if (error) throw error;
-    return data;
-  });
-};

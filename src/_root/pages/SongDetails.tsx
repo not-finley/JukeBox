@@ -1,10 +1,10 @@
 import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
-import { addListened, addRating, addSongToDatabase, getAllRatingsOfaSong, getRating, getSongDetailsById, hasListened, hasRating, removeListened, updateRating } from "@/lib/appwrite/api";
+import {  addListenedSong, addUpdateRatingSong, addSongToDatabase, getAllRatingsOfaSong, getRatingSong, getSongDetailsById, hasListenedSong, removeListenedSong, deleteRaitingSong } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
-import { getSpotifyToken, SpotifyAlbumById, SpotifyTrackById } from "@/lib/appwrite/spotify";
+import { getSpotifyToken, SpotifyTrackById } from "@/lib/appwrite/spotify";
 import { useUserContext } from "@/lib/AuthContext";
 import ReviewItem from "@/components/ReviewItem";
 
@@ -47,13 +47,15 @@ const SongDetailsSection = () => {
   }
 
   const handleRating = async (value: number) => {
-    setRating(value);
-    const doesHaveRating = await hasRating(id ? id : '', user.accountId);
-    if (doesHaveRating) {
-      await updateRating(id ? id : '', user.accountId, value);
+
+    if (rating == value) {
+      setRating(0);
+      await deleteRaitingSong(id? id : "",user.accountId );
     } else {
-      await addRating(id ? id : '', user.accountId, value);
+      setRating(value);
+      await addUpdateRatingSong(id ? id : '', user.accountId, value);
     }
+    
     songGlobalRating();
   };
 
@@ -61,8 +63,8 @@ const SongDetailsSection = () => {
     setHover(value);
   };
 
-  const updateRatinglocal = async () => {
-    const num = await getRating(id ? id : '', user.accountId);
+  const addUpdateRatingSonglocal = async () => {
+    const num = await getRatingSong(id ? id : '', user.accountId);
     setRating(num);
   }
 
@@ -89,7 +91,7 @@ const SongDetailsSection = () => {
       if (!fetchedSong) {
         await addSong(); // Only call getSong if the song is not in the database
       } else {
-        fetchedSong.review.sort((a, b) => b.createdAt - a.createdAt);
+        fetchedSong.reviews.sort((a, b) => b.createdAt - a.createdAt);
         setSong(fetchedSong);
       }
     } catch (error) {
@@ -99,7 +101,7 @@ const SongDetailsSection = () => {
 
   const fetchListened = async () => {
     try {
-      const listenedtemp = await hasListened(user.accountId, id || "")
+      const listenedtemp = await hasListenedSong(user.accountId, id || "")
       if (listenedtemp) {
         setListened(true);
       } else {
@@ -111,25 +113,19 @@ const SongDetailsSection = () => {
   }
 
   useEffect(() => {
-    if (id && user?.id) {
+    if (id && user?.accountId) {
       fetchSongAndReviews();
       fetchListened();
-      updateRatinglocal();
+      addUpdateRatingSonglocal();
       songGlobalRating();
     }
 
   }, [user?.accountId, id]);
 
-  if (loading) {
-    return (
-      <div className="common-container">
-        <LoaderMusic />
-      </div>
-    );
-  }
+
   if (!song) {
     /*add to database if exists in spotify*/
-    //getSong();
+    // getSong();
     if (songNotFound) {
       return (
         <div className="common-container">
@@ -141,17 +137,20 @@ const SongDetailsSection = () => {
 
   const listenedClick = async () => {
     if (listened) {
-      await removeListened(song ? song.songId : '', user.accountId)
+      await removeListenedSong(song ? song.songId : '', user.accountId)
       setListened(false);
     } else {
-      await addListened(song ? song.songId : '', user.accountId)
+      await addListenedSong(song ? song.songId : '', user.accountId)
       setListened(true);
     }
   }
 
   return (
     <div className="common-container">
-      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
+      {loading && <LoaderMusic/> }
+      {/* {notFound && <h1 className='text-2xl text-gray-300'>Arist not found</h1>} */}
+      {song && (
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
         {/* Left Section: Album Cover */}
         <div className="lg:w-1/3 flex-shrink-0 mb-8 lg:mb-0">
           <img
@@ -198,9 +197,9 @@ const SongDetailsSection = () => {
                     onMouseLeave={() => setHover(0)}
                   >
                     <img
-                      //src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
+                      // src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
                       //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
-                      src={hover > 0 ? (hover >= value ? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg') : rating >= value ? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
+                      src={hover > 0 ? (hover >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg') : rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
                       className="h-4/6 w-10"
                     />
                   </button>
@@ -281,8 +280,8 @@ const SongDetailsSection = () => {
                 <p className="text-xl font-semibold text-left ">Recent Reviews</p>
                 <p className="text-gray-400 text-md text-right">see more</p>
               </div>
-              {song?.review.length == 0 ? (<p className="text-center text-gray-300">No reviews yet. Be the first to review this track!</p>) : ''}
-              {song?.review.map((r) => (
+              {song?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet. Be the first to review this track!</p>) : ''}
+              {song?.reviews.map((r) => (
                 <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} song={r.song} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
               )
               )}
@@ -290,6 +289,7 @@ const SongDetailsSection = () => {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };
