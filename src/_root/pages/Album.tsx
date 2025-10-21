@@ -301,7 +301,7 @@ const Album = () => {
                                     (
                                         <div className="flex items-center justify-center w-full">
                                             <div className="mr-9">
-                                                <p className="text-2xl text-gray-200 text-center">{globalAverage}</p>
+                                                <p className="text-2xl text-gray-200 text-center">{globalAverage.toFixed(1)}</p>
                                                 <p className="text-sm text-gray-400 text-center">Stars</p>
                                             </div>
                                             <BarChart width={250} height={200} data={globalRatings}>
