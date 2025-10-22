@@ -102,6 +102,85 @@ export async function saveUserToDB(user: {
     }
 }
 
+function processProfileImage(file: File, maxSize = 500): Promise<Blob> {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => {
+            // Determine new dimensions
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > maxSize) {
+                    height = (height * maxSize) / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width = (width * maxSize) / height;
+                    height = maxSize;
+                }
+            }
+
+            // Draw to canvas
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d")!;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Convert to JPEG
+            canvas.toBlob((blob) => {
+                resolve(blob!);
+            }, "image/jpeg", 0.9); // 0.9 quality to save some space
+        };
+    });
+}
+export async function updateUser({
+    accountId,
+    bio,
+    imageFile,
+}: {
+    accountId: string;
+    bio: string;
+    imageFile?: File | null;
+}) {
+    try {
+
+        // Upload profile image if provided
+        if (imageFile) {
+            const processedImage = await processProfileImage(imageFile);
+
+            const fileName = `profile.jpg`; // normalized name
+            const filePath = `${accountId}/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from("profiles")
+                .upload(filePath, processedImage, { upsert: true });
+
+            if (uploadError) throw uploadError;
+        }
+
+        // Update user info in the database
+        const { data, error } = await supabase
+            .from("users")
+            .update({
+                bio,
+            })
+            .eq("user_id", accountId)
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        return data;
+    } catch (err) {
+        console.error("Error updating user:", err);
+        throw err;
+    }
+}
+
 export const signInAccount = async ({ email, password }: { email: string; password: string }) => {
     try {
         const session = await account.createEmailPasswordSession(email, password);
@@ -289,89 +368,99 @@ export async function getUserById(userId: string): Promise<IUser | null> {
 }
 
 export async function getSongDetailsById(songId: string): Promise<SongDetails | null> {
-    try {
-        // Fetch the song
-        const { data: songData, error: songError } = await supabase
-            .from("songs")
-            .select("*")
-            .eq("song_id", songId)
-            .single();
+  try {
+    // Fetch the song
+    const { data: songData, error: songError } = await supabase
+      .from("songs")
+      .select("*")
+      .eq("song_id", songId)
+      .single();
 
+    if (songError) throw songError;
+    if (!songData) throw new Error("Song not found");
 
+    // Fetch the album
+    const { data: albumData, error: albumError } = await supabase
+      .from("albums")
+      .select("*")
+      .eq("album_id", songData.album_id)
+      .single();
 
-        if (songError) throw songError;
-        if (!songData) throw new Error("Song not found");
+    if (albumError) throw albumError;
+    if (!albumData) throw new Error("Album not found");
 
+    // Fetch artists
+    const { data: artists, error: artistError } = await supabase
+      .from("artistsongs")
+      .select(`artist:artists(*)`)
+      .eq("song_id", songData.song_id);
 
-        const { data: albumData, error: albumError } = await supabase
-            .from("albums")
-            .select("*")
-            .eq("album_id", songData.album_id)
-            .single();
+    if (artistError) throw artistError;
+    if (!artists || artists.length === 0) throw new Error("Artist(s) not found");
 
-        if (albumError) throw albumError;
-        if (!albumData) throw new Error("Album not found");
+    const artistList = artists.map((a) => a.artist);
 
-        const { data: artists, error: artistError } = await supabase
-            .from("artistsongs")
-            .select(`
-        artist:artists(*)  
-    `)
-            .eq("song_id", songData.song_id);
+    // Fetch reviews
+    const { data: reviews, error: reviewError } = await supabase
+      .from("reviews")
+      .select("*, creator:users(*)")
+      .eq("song_id", songId)
+      .order("created_at", { ascending: false });
 
-        if (artistError) throw artistError;
-        if (!artists || artists.length === 0) throw new Error("Artist(s) not found");
+    if (reviewError) throw reviewError;
 
-        // Extract the artist info
-        const artistList = artists.map(a => a.artist);
+    // Helper function to get signed URL for user profile
+    const getProfileUrl = async (userId: string): Promise<string> => {
+      const possibleExts = ["jpg", "jpeg", "png", "webp"];
+      for (const ext of possibleExts) {
+        const { data: signedData, error } = await supabase.storage
+          .from("profiles")
+          .createSignedUrl(`${userId}/profile.${ext}`, 60 * 60); // 1 hour
+        if (!error && signedData?.signedUrl) {
+          return signedData.signedUrl;
+        }
+      }
+      // Fallback placeholder
+      return "/assets/default-avatar.png";
+    };
 
-        // Fetch related reviews
-        const { data: reviews, error: reviewError } = await supabase
-            .from("reviews")
-            .select("*, creator:users(*)")
-            .eq("song_id", songId)
-            .order("created_at", { ascending: false });
+    // Build song object
+    const song: SongDetails = {
+      songId: songData.song_id,
+      title: songData.title,
+      album: albumData.title,
+      album_id: albumData.album_id,
+      release_date: albumData.release_date,
+      spotify_url: songData.spotify_url,
+      album_cover_url: albumData.album_cover_url,
+      popularity: songData.popularity,
+      artists: artistList,
+      ratings: [],
+      reviews: await Promise.all(
+        reviews.map(async (r: any) => ({
+          reviewId: r.review_id,
+          text: r.review_text,
+          creator: {
+            accountId: r.creator.user_id,
+            name: r.creator.name,
+            username: r.creator.username,
+            email: r.creator.email,
+            imageUrl: await getProfileUrl(r.creator.user_id),
+            bio: r.creator.bio ?? "",
+          },
+          song: songData,
+          likes: [],
+          createdAt: r.created_at,
+          updatedAt: r.created_at,
+        }))
+      ),
+    };
 
-        if (reviewError) throw reviewError;
-
-        console.log(reviews)
-
-
-
-        const song: SongDetails = {
-            songId: songData.song_id,
-            title: songData.title,
-            album: albumData.title,
-            album_id: albumData.album_id,
-            release_date: albumData.release_date,
-            spotify_url: songData.spotify_url,
-            album_cover_url: albumData.album_cover_url,
-            popularity: songData.popularity,
-            reviews: reviews.map((r: any) => ({
-                reviewId: r.review_id,
-                text: r.review_text,
-                creator: {
-                    accountId: r.creator.user_id,
-                    name: r.creator.name,
-                    username: r.creator.username,
-                    email: r.creator.email,
-                    imageUrl: "",
-                    bio: ""
-                },
-                song: songData,
-                likes: [],
-                createdAt: r.created_at,
-                updatedAt: r.created_at,
-            })),
-            ratings: [],
-            artists: artistList
-        };
-
-        return song;
-    } catch (error) {
-        console.error("Failed to fetch song:", error);
-        return null;
-    }
+    return song;
+  } catch (error) {
+    console.error("Failed to fetch song:", error);
+    return null;
+  }
 }
 
 
@@ -477,33 +566,49 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
             release_date: albumData.release_date,
             tracks: songData.map((s: any) => ({
                 songId: s.song_id,
-                title: s.title, 
-                album: albumData.title, 
-                spotify_url: s.spotify_url, 
+                title: s.title,
+                album: albumData.title,
+                spotify_url: s.spotify_url,
                 album_cover_url: albumData.album_cover_url,
                 release_date: albumData.release_date,
                 popularity: s.pop
             })),
             artists: artistList,
-            reviews: reviews.map((r: any) => ({
-                reviewId: r.review_id,
-                text: r.review_text,
-                creator: {
-                    accountId: r.creator.user_id,
-                    name: r.creator.name,
-                    username: r.creator.username,
-                    email: r.creator.email,
-                    imageUrl: "",
-                    bio: ""
-                },
-                album: albumData,
-                likes: [],
-                createdAt: r.created_at,
-                updatedAt: r.created_at,
-            })),
-        };
+            reviews: await Promise.all(
+                reviews.map(async (r: any) => {
+                    let imageUrl = "";
+                    try {
+                        const { data: signedData, error: signedError } = await supabase.storage
+                            .from("profiles")
+                            .createSignedUrl(`${r.creator.user_id}/profile.jpg`, 60 * 60); // 1 hour
+                        
+                        if (!signedError && signedData?.signedUrl) {
+                            imageUrl = signedData.signedUrl;
+                        }
+                    } catch (err) {
+                        console.error("Failed to generate signed URL:", err);
+                    }
 
-        return album;
+                    return {
+                        reviewId: r.review_id,
+                        text: r.review_text,
+                        creator: {
+                            accountId: r.creator.user_id,
+                            name: r.creator.name,
+                            username: r.creator.username,
+                            email: r.creator.email,
+                            imageUrl,
+                            bio: r.creator.bio ?? ""
+                        },
+                        album: albumData,
+                        likes: [],
+                        createdAt: r.created_at,
+                        updatedAt: r.created_at,
+                    };
+                })
+            ),
+        };
+        return album
     } catch (error) {
         console.error("Failed to fetch Album:", error);
         return null;

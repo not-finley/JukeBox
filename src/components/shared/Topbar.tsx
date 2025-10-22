@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { useSignOutAccount } from '@/lib/react-query/queriesAndMutations';
+import defaultAvatar from "/assets/icons/profile-placeholder.svg"; 
 import { useUserContext } from '@/lib/AuthContext';
 
 const Topbar = () => {
@@ -35,9 +36,9 @@ const Topbar = () => {
                     </Button>
                     <Link to={`/profile/${user.accountId}`} className="flex-center gap-3">
                         <img
-                            src={user.imageUrl || '/assets/images/profile-placeholder.svg'}
+                            src={user.imageUrl || defaultAvatar}
                             alt="profile"
-                            className="h-8 w-8 rounded-full"
+                            className="h-8 w-8 rounded-full object-cover"
                         />
                     </Link>
                 </div>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { IUser, IContextType } from '@/types';
+import LoaderMusic from '@/components/shared/loaderMusic';
 
 export const INITIAL_USER: IUser = {
   accountId: '',
@@ -16,10 +17,10 @@ const INITIAL_STATE: IContextType = {
   user: INITIAL_USER,
   isLoading: true,
   isAuthenticated: false,
-  setUser: () => {},
-  setIsAuthenticated: () => {},
+  setUser: () => { },
+  setIsAuthenticated: () => { },
   checkAuthUser: async () => false,
-  logout: async () => {},
+  logout: async () => { },
 };
 
 const AuthContext = createContext<IContextType>(INITIAL_STATE);
@@ -41,14 +42,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (session?.user) {
         const u = session.user;
+
+        // Fetch additional info from users table
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("bio")
+          .eq("user_id", u.id)
+          .single();
+
+
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from("profiles")
+          .createSignedUrl(`${u.id}/profile.jpg`, 60 * 60 * 2); // 2 hours
+
+        if (signedError) {
+          console.error("Error creating signed URL:", signedError);
+        }
+
+        if (userError) throw userError;
+
         setUser({
           accountId: u.id,
           name: u.user_metadata?.name ?? '',
           username: u.user_metadata?.username ?? '',
           email: u.email ?? '',
-          imageUrl: u.user_metadata?.imageUrl ?? '',
-          bio: u.user_metadata?.bio ?? '',
+          imageUrl : signedData?.signedUrl ?? u.user_metadata?.imageUrl ?? '',
+          bio: userData?.bio ?? u.user_metadata?.bio ?? '',
         });
+
         setIsAuthenticated(true);
         return true;
       }
@@ -93,7 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className='flex-center'><LoaderMusic /></div>;
   }
 
   return (

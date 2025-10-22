@@ -4,11 +4,12 @@ import Topbar from '@/components/shared/Topbar'
 
 import { Navigate, Outlet } from 'react-router-dom'
 import { useUserContext } from '@/lib/AuthContext';
+import LoaderMusic from '@/components/shared/loaderMusic';
 
 const RootLayout = () => {
   const { isAuthenticated, isLoading } = useUserContext();
   
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div className='flex-center'><LoaderMusic/></div>;
   if (!isAuthenticated) return <Navigate to="/sign-in" replace />;
   return (
     <div className="w-full h-dvh md:flex">

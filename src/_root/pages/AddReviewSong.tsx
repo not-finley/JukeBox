@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form"
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { toast } from "@/hooks/use-toast";
-import Loader from "@/components/shared/loader";
+
 
 
 const formSchema = z.object({
@@ -104,7 +104,7 @@ const AddReviewSong = () => {
                 <Button className="shad-button_primary" type="submit">
                   {loading? (
                     <div className="flex-center gap-2">
-                      <Loader /> Loading...
+                      <LoaderMusic/>
                     </div>
                   ):'Submit'}
                 </Button>
