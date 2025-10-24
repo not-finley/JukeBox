@@ -26,7 +26,7 @@ const Artist = () => {
 
   // Listen to scroll
   useMotionValueEvent(scrollY, "change", (latest) => {
-    if (latest > heroHeight - 80) setScrolled(true);
+    if (latest > heroHeight * .25) setScrolled(true);
     else setScrolled(false);
   });
 
@@ -83,7 +83,7 @@ const Artist = () => {
       )}
 
       {/* Scrollable content */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-auto common-container -mt-16 px-4 md:px-6 lg:px-0">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto common-container -mt-16 p-10 px-6">
         {loading && <LoaderMusic />}
         {notFound && <h1 className="text-2xl text-gray-300 text-center mt-20">Artist not found</h1>}
 
