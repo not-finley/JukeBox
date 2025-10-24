@@ -63,7 +63,7 @@ const Artist = () => {
   useEffect(() => { if (id) fetchArtist(); }, [id]);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen w-full">
       {/* Sticky header */}
       {artist && (
         <motion.div
