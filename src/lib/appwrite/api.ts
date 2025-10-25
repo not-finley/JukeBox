@@ -1,4 +1,4 @@
-import { ID, Query } from 'appwrite';
+import { ID } from 'appwrite';
 
 import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong } from "@/types";
 import { account, appwriteConfig, databases } from './config';
