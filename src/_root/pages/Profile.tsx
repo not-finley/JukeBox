@@ -439,39 +439,30 @@ const Profile = () => {
   }, [id, user, isCurrentUser]);
 
   useEffect(() => {
-    const fetchTabData = async () => {
-      if (!profileUser?.accountId) return;
+  if (!profileUser?.accountId) return;
 
-      switch (activeTab) {
-        case "Listens":
-          if (listened.length === 0) {
-            setLoadingListens(true);
-            const newSongs = await getListened(profileUser.accountId);
-            setListened(newSongs);
-            setLoadingListens(false);
-          }
-          break;
-        case "Reviews":
-          if (reviewed.length === 0) {
-            setLoadingReviews(true);
-            const newReviews = await getReviewed(profileUser.accountId);
-            setReviewed(newReviews);
-            setLoadingReviews(false);
-          }
-          break;
-        case "Ratings":
-          if (rated.length === 0) {
-            setLoadingRatings(true);
-            const newRatings = await getRated(profileUser.accountId);
-            setRated(newRatings);
-            setLoadingRatings(false);
-          }
-          break;
-      }
-    };
+  const fetchAllData = async () => {
+    setLoadingListens(true);
+    setLoadingReviews(true);
+    setLoadingRatings(true);
 
-    fetchTabData();
-  }, [activeTab, profileUser]);
+    const [newListens, newReviews, newRatings] = await Promise.all([
+      getListened(profileUser.accountId),
+      getReviewed(profileUser.accountId),
+      getRated(profileUser.accountId)
+    ]);
+
+    setListened(newListens);
+    setReviewed(newReviews);
+    setRated(newRatings);
+
+    setLoadingListens(false);
+    setLoadingReviews(false);
+    setLoadingRatings(false);
+  };
+
+  fetchAllData();
+}, [profileUser])
 
 
   if (!profileUser) {
