@@ -22,7 +22,7 @@ const Album = () => {
     const [globalRatings, setGlobalRatings] = useState<{ rating: number; count: number }[]>([]);
     const [globalAverage, setGlobalAverage] = useState(0);
     const [globalTotal, setGlobalTotal] = useState(0);
-    const [songRaitings, setSongRaitings] = useState<number[]>([]);
+    const [songRatings, setSongRatings] = useState<number[]>([]);
 
 
     const addAlbum = async () => {
@@ -67,12 +67,12 @@ const Album = () => {
 
 
     const handleSongRating = async (value: number, trackIndex: number) => {
-        if (value === songRaitings[trackIndex]) {
+        if (value === songRatings[trackIndex]) {
             value = 0;
         }
-        const newRatings = [...songRaitings];
+        const newRatings = [...songRatings];
         newRatings[trackIndex] = value;
-        setSongRaitings(newRatings);
+        setSongRatings(newRatings);
 
         if (value == 0) {
             await deleteRaitingSong(album?.tracks[trackIndex].songId || "", user.accountId);
@@ -100,8 +100,8 @@ const Album = () => {
 
             } else {
                 setAlbum(fetchedAlbum);
-                const raitings = await getAllRatingsOfAlbum(id || "");
-                console.log(raitings)
+                const ratings = await getAllRatingsOfAlbum(id || "");
+                console.log(ratings)
             }
             const ratings = await getAlbumTrackRatings(id || "", user.accountId);
 
@@ -110,7 +110,7 @@ const Album = () => {
                 return match ? match.rating : 0;
             }
             );
-            setSongRaitings(ratingsArray || []);
+            setSongRatings(ratingsArray || []);
 
 
         } catch (error) {
@@ -216,7 +216,7 @@ const Album = () => {
                                                         >
                                                             <img
                                                                 src={
-                                                                    songRaitings[index] >= value
+                                                                    songRatings[index] >= value
                                                                         ? "/assets/icons/cute-star_full.svg"
                                                                         : "/assets/icons/cute-star.svg"
                                                                 }

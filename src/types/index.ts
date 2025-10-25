@@ -39,6 +39,12 @@ export type INavLink = {
     imageUrl: string;
     bio: string;
   };
+
+  export type IFollow = {
+    followerId: string;
+    followingId: string;
+    follow_time: string
+  }
   
   export type INewUser = {
     name: string;
@@ -174,6 +180,15 @@ export type INavLink = {
     createdAt: number
   }
 
+  export type RatingGeneral = {
+    rating: number, 
+    type: "song" | "album",
+    title: string,
+    id: string,
+    rating_date: number, 
+    album_cover_url: string | null;
+  }
+
   export type SongDetails = {
     songId: string;
     title: string;
@@ -217,6 +232,30 @@ export type INavLink = {
     createdAt: number;
     updatedAt: number;
   }
+
+  export type Review = {
+    reviewId: string;
+    text : string;
+    id: string;
+    name: string;
+    album_cover_url: string | null;
+    createdAt: number;
+    type: "song" | "album";
+  }
+  
+  export type Activity = {
+  id: string;            // unique activity ID
+  userId: string;        // who did it
+  username: string;
+  type: "listen" | "review" | "rating";
+  targetType: "song" | "album"; // what was interacted with
+  targetId: string;
+  targetName: string;
+  album_cover_url: string | null;
+  date: string;
+  rating?: number;       // only for ratings
+  text?: string;         // only for reviews
+};
 
   export interface Listened {
     type: "song" | "album";

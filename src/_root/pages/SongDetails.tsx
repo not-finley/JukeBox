@@ -25,24 +25,24 @@ const SongDetailsSection = () => {
 
 
   const songGlobalRating = async () => {
-    const GlobalRaitings = await getAllRatingsOfaSong(id ? id : '');
-    setGlobalNumRatings(GlobalRaitings.length);
+    const GlobalRatings = await getAllRatingsOfaSong(id ? id : '');
+    setGlobalNumRatings(GlobalRatings.length);
 
-    const raitings = GlobalRaitings.map(a => a.rating);
+    const ratings = GlobalRatings.map(a => a.rating);
 
     let countslocal = [0, 0, 0, 0, 0];
     let raitingG = 0;
     for (let i = 0; i < 5; i++) {
       let count = 0;
-      if (raitings[i]) {
-        raitingG += raitings[i];
+      if (ratings[i]) {
+        raitingG += ratings[i];
       }
-      raitings.forEach((v) => v === (i + 1) && count++);
+      ratings.forEach((v) => v === (i + 1) && count++);
       countslocal[i] = count;
     }
     setCounts(countslocal);
 
-    setGlobalRating(Number((raitingG / GlobalRaitings.length).toFixed(1)));
+    setGlobalRating(Number((raitingG / GlobalRatings.length).toFixed(1)));
     setLoading(false);
   }
 

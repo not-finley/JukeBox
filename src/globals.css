@@ -155,7 +155,7 @@
 }
 
 
-.raiting-grid {
+.rating-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr); /* Default: 2 columns */
   gap: 1rem;
@@ -217,13 +217,13 @@
 
 
 @media (min-width: 955px) {
-  .raiting-grid {
+  .rating-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (min-width: 1560px) {
-  .raiting-grid {
+  .rating-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }

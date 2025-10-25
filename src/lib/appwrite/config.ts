@@ -8,7 +8,7 @@ export const appwriteConfig = {
 
     songsCollectionID: import.meta.env.VITE_APPWRITE_SONGS_ID,
     listenedToCollectionID: import.meta.env.VITE_APPWRITE_LISTENEDTO_ID,
-    raitingsCollectionID: import.meta.env.VITE_APPWRITE_RATINGS_ID,
+    ratingsCollectionID: import.meta.env.VITE_APPWRITE_RATINGS_ID,
     usersCollectionID: import.meta.env.VITE_APPWRITE_USERS_ID,
     reviewsCollectionID: import.meta.env.VITE_APPWRITE_REVIEWS_ID,
     artistsCollectionID: import.meta.env.VITE_APPWRITE_ARTISTS_ID,
