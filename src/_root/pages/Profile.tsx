@@ -208,8 +208,8 @@ const ProfileComponent = ({
                 onChange={(e) => setBio(e.target.value)}
                 className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm text-gray-100"
               />
-            ) : (
-              profileuser.bio || "No bio yet."
+            ) : (<p className=" font-bold ">Bio: <span className="font-thin">{profileuser.bio || "No bio yet."}</span></p>
+              
             )}
           </div>
         </div>
@@ -291,7 +291,7 @@ const ProfileComponent = ({
               {reviews.map((review) => (
                 <div
                   key={review.reviewId}
-                  className="flex bg-gray-800 border border-gray-700 rounded-xl p-3 hover:bg-gray-750 transition-colors"
+                  className="flex items-center bg-gray-800 border border-gray-700 rounded-xl p-3 hover:bg-gray-750 transition-colors min-w-0"
                 >
                   {/* Cover */}
                   <Link
@@ -306,11 +306,12 @@ const ProfileComponent = ({
                   </Link>
 
                   {/* Details */}
-                  <div className="ml-4 flex-1 flex flex-col justify-between">
+                  <div className="ml-4 flex-1 min-w-0">
                     <div className="flex justify-between items-center gap-2">
                       <Link
                         to={review.type === "song" ? `/song/${review.id}` : `/album/${review.id}`}
-                        className="text-indigo-200 font-semibold hover:underline truncate max-w-[12rem] sm:max-w-[16rem] md:max-w-[20rem]"
+                        title={review.name} 
+                        className="text-indigo-200 font-semibold hover:underline truncate overflow-hidden whitespace-nowrap max-w-[12rem] sm:max-w-[16rem] md:max-w-[20rem]"
                       >
                         {review.name}
                       </Link>
@@ -365,7 +366,7 @@ const ProfileComponent = ({
                     <div className="flex justify-between items-center gap-2">
                       <Link
                         to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
-                        title={rating.title} // 👈 tooltip for full title
+                        title={rating.title} 
                         className="text-indigo-200 font-semibold hover:underline truncate overflow-hidden whitespace-nowrap max-w-[12rem] sm:max-w-[16rem] md:max-w-[20rem]"
                       >
                         {rating.title}
