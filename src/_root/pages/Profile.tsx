@@ -7,6 +7,7 @@ import { IUser } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import defaultAvatar from "/assets/icons/profile-placeholder.svg";
 import { isMobile, isTablet } from "react-device-detect";
+import { set } from "react-hook-form";
 
 
 
@@ -97,23 +98,28 @@ const ProfileComponent = ({
     }
   };
 
-  const handleFollow = () => {
+
+  const handleFollow = async () => {
     try {
-      console.log("Following user:", profileuser.accountId);
-      addFollow(profileuser.accountId, userid);
+      await addFollow(profileuser.accountId, userid);
       setIsFollowing(true);
+      // Update followers count
+      profileuser.followersCount = (profileuser.followersCount || 0) + 1;
     } catch (err) {
       console.error("Failed to follow user:", err);
     }
-  }
-  const handleUnfollow = () => {
+  };
+
+  const handleUnfollow = async () => {
     try {
-      removeFollow(profileuser.accountId, userid);
+      await removeFollow(profileuser.accountId, userid);
       setIsFollowing(false);
+      // Update followers count
+      profileuser.followersCount = Math.max((profileuser.followersCount || 1) - 1, 0);
     } catch (err) {
-      console.error("Failed to follow user:", err);
+      console.error("Failed to unfollow user:", err);
     }
-  }
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto shadow rounded-2xl p-4 md:p-8 border border-gray-800 flex flex-col lg:flex-row gap-8">
@@ -193,11 +199,11 @@ const ProfileComponent = ({
           </div>
           <div className="flex gap-8 text-center md:text-left mb-2 w-full justify-between">
             <div>
-              <span className="font-bold">__</span>
+              <span className="font-bold">{profileuser.followersCount}</span>
               <div className="text-xs text-gray-400">Followers</div>
             </div>
             <div>
-              <span className="font-bold">__</span>
+              <span className="font-bold">{profileuser.followingCount}</span>
               <div className="text-xs text-gray-400">Following</div>
             </div>
           </div>
@@ -209,7 +215,7 @@ const ProfileComponent = ({
                 className="w-full bg-gray-900 border border-gray-700 rounded p-2 text-sm text-gray-100"
               />
             ) : (<p className=" font-bold ">Bio: <span className="font-thin">{profileuser.bio || "No bio yet."}</span></p>
-              
+
             )}
           </div>
         </div>
@@ -239,169 +245,169 @@ const ProfileComponent = ({
             loadingListens ? (
               <LoaderMusic />
             ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3">
-              {listened.map((listen, idx) => (
-                <Link
-                  key={idx}
-                  to={listen.type === "song" ? `/song/${listen.id}` : `/album/${listen.id}`}
-                  className="group relative block"
-                >
-                  {/* Cover Image */}
-                  <img
-                    src={listen.album_cover_url || "/assets/icons/music-placeholder.svg"}
-                    alt={listen.name}
-                    className="w-full aspect-square object-cover rounded-lg border border-gray-700 transition-transform duration-300 group-hover:scale-[1.03]"
-                  />
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-3">
+                {listened.map((listen, idx) => (
+                  <Link
+                    key={idx}
+                    to={listen.type === "song" ? `/song/${listen.id}` : `/album/${listen.id}`}
+                    className="group relative block"
+                  >
+                    {/* Cover Image */}
+                    <img
+                      src={listen.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                      alt={listen.name}
+                      className="w-full aspect-square object-cover rounded-lg border border-gray-700 transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
 
-                  {/* Conditional rendering based on device */}
-                  {isMobile || isTablet ? (
-                    // 📱 Always visible on touch devices
-                    <div className="mt-2">
-                      <p
-                        className="text-gray-100 text-sm font-medium truncate"
-                        title={listen.name}
-                      >
-                        {listen.name}
-                      </p>
-                      <p className="text-xs text-gray-400 capitalize">{listen.type}</p>
-                    </div>
-                  ) : (
-                    // 🖱️ Hover overlay on desktop
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 rounded-lg">
-                      <p
-                        className="text-white text-sm font-medium truncate"
-                        title={listen.name}
-                      >
-                        {listen.name}
-                      </p>
-                      <p className="text-xs text-gray-300 capitalize">{listen.type}</p>
-                    </div>
-                  )}
-                </Link>
-              ))}
-            </div>
-          ))}
+                    {/* Conditional rendering based on device */}
+                    {isMobile || isTablet ? (
+                      // 📱 Always visible on touch devices
+                      <div className="mt-2">
+                        <p
+                          className="text-gray-100 text-sm font-medium truncate"
+                          title={listen.name}
+                        >
+                          {listen.name}
+                        </p>
+                        <p className="text-xs text-gray-400 capitalize">{listen.type}</p>
+                      </div>
+                    ) : (
+                      // 🖱️ Hover overlay on desktop
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 rounded-lg">
+                        <p
+                          className="text-white text-sm font-medium truncate"
+                          title={listen.name}
+                        >
+                          {listen.name}
+                        </p>
+                        <p className="text-xs text-gray-300 capitalize">{listen.type}</p>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            ))}
 
 
           {activeTab === "Reviews" && (
             loadingReviews ? (
               <LoaderMusic />
             ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {reviews.map((review) => (
-                <div
-                  key={review.reviewId}
-                  className="flex items-center bg-gray-800 border border-gray-700 rounded-xl p-3 hover:bg-gray-750 transition-colors min-w-0"
-                >
-                  {/* Cover */}
-                  <Link
-                    to={review.type === "song" ? `/song/${review.id}` : `/album/${review.id}`}
-                    className="flex-shrink-0"
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {reviews.map((review) => (
+                  <div
+                    key={review.reviewId}
+                    className="flex items-center bg-gray-800 border border-gray-700 rounded-xl p-3 hover:bg-gray-750 transition-colors min-w-0"
                   >
-                    <img
-                      src={review.album_cover_url || "/assets/icons/music-placeholder.svg"}
-                      alt={review.name}
-                      className="w-16 h-16 rounded-md object-cover"
-                    />
-                  </Link>
+                    {/* Cover */}
+                    <Link
+                      to={review.type === "song" ? `/song/${review.id}` : `/album/${review.id}`}
+                      className="flex-shrink-0"
+                    >
+                      <img
+                        src={review.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                        alt={review.name}
+                        className="w-16 h-16 rounded-md object-cover"
+                      />
+                    </Link>
 
-                  {/* Details */}
-                  <div className="ml-4 flex-1 min-w-0">
-                    <div className="flex justify-between items-center gap-2">
-                      <Link
-                        to={review.type === "song" ? `/song/${review.id}` : `/album/${review.id}`}
-                        title={review.name} 
-                        className="text-indigo-200 font-semibold hover:underline truncate overflow-hidden whitespace-nowrap max-w-[12rem] sm:max-w-[16rem] md:max-w-[20rem]"
-                      >
-                        {review.name}
-                      </Link>
-                      <span className="text-xs text-gray-400 capitalize flex-shrink-0">
-                        {review.type}
-                      </span>
+                    {/* Details */}
+                    <div className="ml-4 flex-1 min-w-0">
+                      <div className="flex justify-between items-center gap-2">
+                        <Link
+                          to={review.type === "song" ? `/song/${review.id}` : `/album/${review.id}`}
+                          title={review.name}
+                          className="text-indigo-200 font-semibold hover:underline truncate overflow-hidden whitespace-nowrap max-w-[12rem] sm:max-w-[16rem] md:max-w-[20rem]"
+                        >
+                          {review.name}
+                        </Link>
+                        <span className="text-xs text-gray-400 capitalize flex-shrink-0">
+                          {review.type}
+                        </span>
+                      </div>
+
+                      {/* Optional review snippet */}
+                      <p className="text-sm text-gray-300 mt-1 line-clamp-2">
+                        {review.text}
+                      </p>
+
+                      {/* Date */}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(review.createdAt).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
                     </div>
-
-                    {/* Optional review snippet */}
-                    <p className="text-sm text-gray-300 mt-1 line-clamp-2">
-                      {review.text}
-                    </p>
-
-                    {/* Date */}
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(review.createdAt).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          ))}
+                ))}
+              </div>
+            ))}
 
           {activeTab === "Ratings" && (
             loadingRatings ? (
               <LoaderMusic />
             ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {ratings.map((rating, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center bg-gray-800 border border-gray-700 rounded-xl p-3 hover:bg-gray-750 transition-colors min-w-0"
-                >
-                  {/* Album or song cover */}
-                  <Link
-                    to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
-                    className="flex-shrink-0"
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {ratings.map((rating, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center bg-gray-800 border border-gray-700 rounded-xl p-3 hover:bg-gray-750 transition-colors min-w-0"
                   >
-                    <img
-                      src={rating.album_cover_url || "/assets/icons/music-placeholder.svg"}
-                      alt={rating.title}
-                      className="w-16 h-16 rounded-md object-cover"
-                    />
-                  </Link>
+                    {/* Album or song cover */}
+                    <Link
+                      to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
+                      className="flex-shrink-0"
+                    >
+                      <img
+                        src={rating.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                        alt={rating.title}
+                        className="w-16 h-16 rounded-md object-cover"
+                      />
+                    </Link>
 
-                  {/* Main details */}
-                  <div className="ml-4 flex-1 min-w-0">
-                    <div className="flex justify-between items-center gap-2">
-                      <Link
-                        to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
-                        title={rating.title} 
-                        className="text-indigo-200 font-semibold hover:underline truncate overflow-hidden whitespace-nowrap max-w-[12rem] sm:max-w-[16rem] md:max-w-[20rem]"
-                      >
-                        {rating.title}
-                      </Link>
-                      <span className="text-xs text-gray-400 capitalize flex-shrink-0">
-                        {rating.type}
-                      </span>
-                    </div>
-
-                    {/* Rating stars */}
-                    <div className="flex items-center mt-1">
-                      {[...Array(5)].map((_, i) => (
-                        <span
-                          key={i}
-                          className={`text-sm ${i < rating.rating ? "text-yellow-400" : "text-gray-500"
-                            }`}
+                    {/* Main details */}
+                    <div className="ml-4 flex-1 min-w-0">
+                      <div className="flex justify-between items-center gap-2">
+                        <Link
+                          to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
+                          title={rating.title}
+                          className="text-indigo-200 font-semibold hover:underline truncate overflow-hidden whitespace-nowrap max-w-[12rem] sm:max-w-[16rem] md:max-w-[20rem]"
                         >
-                          ★
+                          {rating.title}
+                        </Link>
+                        <span className="text-xs text-gray-400 capitalize flex-shrink-0">
+                          {rating.type}
                         </span>
-                      ))}
-                    </div>
+                      </div>
 
-                    {/* Date formatted */}
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(rating.rating_date).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
+                      {/* Rating stars */}
+                      <div className="flex items-center mt-1">
+                        {[...Array(5)].map((_, i) => (
+                          <span
+                            key={i}
+                            className={`text-sm ${i < rating.rating ? "text-yellow-400" : "text-gray-500"
+                              }`}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Date formatted */}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(rating.rating_date).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ))}
+                ))}
+              </div>
+            ))}
 
         </div>
       </div>
@@ -416,6 +422,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("Listens");
   const [listened, setListened] = useState<Listened[]>([]);
   const [reviewed, setReviewed] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
   const [loadingListens, setLoadingListens] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [loadingRatings, setLoadingRatings] = useState(false);
@@ -426,48 +433,57 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchProfileUser = async () => {
+      setLoading(true);
+
       if (isCurrentUser) {
-        setProfileUser(user);
+        // Refresh your own user from the server
+        const updatedUser = await getUserById(user.accountId);
+        setProfileUser(updatedUser);
       } else if (id) {
         const otherUser = await getUserById(id);
         const following = await checkIfFollowing(id, user.accountId);
         setProfileUser(otherUser);
         setFollowing(following);
       }
+
+      setLoading(false);
     };
+
     fetchProfileUser();
   }, [id, user, isCurrentUser]);
 
+
   useEffect(() => {
-  if (!profileUser?.accountId) return;
+    if (!profileUser?.accountId) return;
 
-  const fetchAllData = async () => {
-    setLoadingListens(true);
-    setLoadingReviews(true);
-    setLoadingRatings(true);
+    const fetchAllData = async () => {
+      setLoadingListens(true);
+      setLoadingReviews(true);
+      setLoadingRatings(true);
 
-    const [newListens, newReviews, newRatings] = await Promise.all([
-      getListened(profileUser.accountId),
-      getReviewed(profileUser.accountId),
-      getRated(profileUser.accountId)
-    ]);
+      const [newListens, newReviews, newRatings] = await Promise.all([
+        getListened(profileUser.accountId),
+        getReviewed(profileUser.accountId),
+        getRated(profileUser.accountId)
+      ]);
 
-    setListened(newListens);
-    setReviewed(newReviews);
-    setRated(newRatings);
+      setListened(newListens);
+      setReviewed(newReviews);
+      setRated(newRatings);
 
-    setLoadingListens(false);
-    setLoadingReviews(false);
-    setLoadingRatings(false);
-  };
+      setLoadingListens(false);
+      setLoadingReviews(false);
+      setLoadingRatings(false);
+    };
 
-  fetchAllData();
-}, [profileUser])
+    fetchAllData();
+  }, [profileUser])
 
 
-  if (!profileUser) {
+  if (loading || !profileUser) {
     return <div className="common-container"><LoaderMusic /></div>;
   }
+
 
   return (
     <div className="user-container flex">

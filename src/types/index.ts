@@ -38,7 +38,11 @@ export type INavLink = {
     email: string;
     imageUrl: string;
     bio: string;
+    followersCount?: number;
+    followingCount?: number;
   };
+
+  
 
   export type IFollow = {
     followerId: string;

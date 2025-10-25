@@ -17,8 +17,7 @@ const SongDetailsSection = () => {
   const [listened, setListened] = useState(true);
   const [songNotFound, setNotFound] = useState(false);
   const { user } = useUserContext();
-  const [rating, setRating] = useState(0); // Selected rating
-  const [hover, setHover] = useState(0); // Hovered rating
+  const [rating, setRating] = useState(0); 
   const [GlobalNumRatings, setGlobalNumRatings] = useState(0);
   const [GlobalRaiting, setGlobalRating] = useState(0);
   const [counts, setCounts] = useState<number[]>([]);
@@ -59,9 +58,6 @@ const SongDetailsSection = () => {
     songGlobalRating();
   };
 
-  const handleHover = async (value: number) => {
-    setHover(value);
-  };
 
   const addUpdateRatingSonglocal = async () => {
     const num = await getRatingSong(id ? id : '', user.accountId);
@@ -193,13 +189,12 @@ const SongDetailsSection = () => {
                     type="button"
                     className="text-2xl text-black hover:text-gray-50"
                     onClick={() => handleRating(value)}
-                    onMouseEnter={() => handleHover(value)}
-                    onMouseLeave={() => setHover(0)}
+
                   >
                     <img
                       // src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
                       //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
-                      src={hover > 0 ? (hover >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg') : rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
+                      src={rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
                       className="h-4/6 w-10"
                     />
                   </button>

@@ -398,6 +398,21 @@ export async function getUserById(userId: string): Promise<IUser | null> {
         if (userError) throw userError;
         if (!userData) throw new Error("User not found")
 
+        const { data: followersData, error: followersError } = await supabase
+            .from("followers")
+            .select("follower_id", { count: 'exact' })
+            .eq("following_id", userId);
+
+        const { data: followingData, error: followingError } = await supabase
+            .from("followers")
+            .select("following_id", { count: 'exact' })
+            .eq("follower_id", userId);
+        if (followersError) console.error("Error fetching followers count:", followersError);
+        if (followingError) console.error("Error fetching following count:", followingError);
+
+        const followersCount = followersData ? followersData.length : 0;
+        const followingCount = followingData ? followingData.length : 0;
+
 
         const user: IUser = {
             accountId: userData.user_id,
@@ -405,7 +420,9 @@ export async function getUserById(userId: string): Promise<IUser | null> {
             username: userData.username,
             email: userData.email,
             imageUrl: await getProfileUrl(userId),
-            bio: userData.bio
+            bio: userData.bio,
+            followersCount,
+            followingCount
         };
 
         return user;
@@ -1491,7 +1508,7 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
             .range(0, limit - 1);
-            
+
         if (error) throw error;
         if (!reviews) return [];
 

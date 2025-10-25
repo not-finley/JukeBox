@@ -50,6 +50,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq("user_id", u.id)
           .single();
 
+        // follower and following counts 
+        const { data: followersData, error: followersError } = await supabase
+          .from("followers")
+          .select("follower_id", { count: 'exact' })
+          .eq("following_id", u.id);
+          
+        const { data: followingData, error: followingError } = await supabase
+          .from("followers")
+          .select("following_id", { count: 'exact' })
+          .eq("follower_id", u.id);
+        if (followersError) console.error("Error fetching followers count:", followersError);
+        if (followingError) console.error("Error fetching following count:", followingError);
+        
+        const followersCount = followersData ? followersData.length : 0;
+        const followingCount = followingData ? followingData.length : 0;
+
 
         const { data: signedData, error: signedError } = await supabase.storage
           .from("profiles")
@@ -68,6 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: u.email ?? '',
           imageUrl : signedData?.signedUrl ?? u.user_metadata?.imageUrl ?? '',
           bio: userData?.bio ?? u.user_metadata?.bio ?? '',
+          followersCount,
+          followingCount,
         });
 
         setIsAuthenticated(true);

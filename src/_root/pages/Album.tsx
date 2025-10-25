@@ -18,7 +18,6 @@ const Album = () => {
     const [notFound, setNotFound] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
     const [rating, setRating] = useState(0);
-    const [hover, setHover] = useState(0);
     const [globalRatings, setGlobalRatings] = useState<{ rating: number; count: number }[]>([]);
     const [globalAverage, setGlobalAverage] = useState(0);
     const [globalTotal, setGlobalTotal] = useState(0);
@@ -44,9 +43,6 @@ const Album = () => {
         }
     }
 
-    const handleHover = async (value: number) => {
-        setHover(value);
-    };
 
     const handleRating = async (value: number) => {
         if (value == rating) {
@@ -270,13 +266,11 @@ const Album = () => {
                                                         type="button"
                                                         className="text-2xl text-black hover:text-gray-50"
                                                         onClick={() => handleRating(value)}
-                                                        onMouseEnter={() => handleHover(value)}
-                                                        onMouseLeave={() => setHover(0)}
                                                     >
                                                         <img
                                                             //src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
                                                             //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
-                                                            src={hover > 0 ? (hover >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg') : rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
+                                                            src= {rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
                                                             className="h-4/6 w-10"
                                                         />
                                                     </button>
