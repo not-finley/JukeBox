@@ -7,7 +7,6 @@ import { IUser } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import defaultAvatar from "/assets/icons/profile-placeholder.svg";
 import { isMobile, isTablet } from "react-device-detect";
-import { set } from "react-hook-form";
 
 
 
