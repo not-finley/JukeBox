@@ -16,7 +16,7 @@ const AuthLayout = () => {
           <img
             src="/assets/images/side-image-low.png"
             alt="logo"
-            className="hidden xl:block h-screen w-1/2 object-cover bg-no-repeat"
+            className="hidden xl:block min-h-screen w-1/2 object-cover bg-no-repeat"
             loading="lazy"
           />
         </>

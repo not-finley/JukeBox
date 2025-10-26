@@ -21,11 +21,17 @@
 
 @layer base {
   * {
-    @apply box-border list-none p-0 m-0 scroll-smooth;
+    @apply box-border list-none p-0 m-0 scroll-smooth overscroll-auto;
+  }
+
+  /* Ensure root elements don't create horizontal overflow and allow body to be the main scroll container */
+  html, #root, body {
+    height: 100%;
+    overflow-x: hidden;
   }
 
   body {
-    @apply bg-dark-1 text-white min-h-screen font-inter;
+    @apply bg-dark-1 text-white font-inter;
   }
 }
 
@@ -124,12 +130,12 @@
   }
 
   .common-container {
-    @apply flex flex-col flex-1 items-center gap-10 overflow-scroll py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center gap-10 overflow-auto py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   /* All Users */
   .user-container {
-    @apply flex flex-col h-full flex-1 items-center overflow-scroll gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   .user-grid {
@@ -138,12 +144,12 @@
 
   /* Songs */
   .song-container {
-    @apply flex flex-col h-full flex-1 items-center overflow-scroll gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+  }
 
-}
 
 .element-container {
-  height: 100dvh
+  min-height: 100dvh;
 }
 
 .song-grid {
@@ -250,7 +256,7 @@
 
   /* Home */
   .home-container {
-    @apply flex flex-col flex-1 items-center overflow-scroll gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   .home-posts {
@@ -263,7 +269,7 @@
 
   /* Post Details */
   .post_details-container {
-    @apply flex flex-col flex-1 gap-10 overflow-scroll py-10 px-5 md:p-14 custom-scrollbar items-center;
+    @apply flex flex-col flex-1 gap-10 overflow-auto py-10 px-5 md:p-14 custom-scrollbar items-center;
   }
 
   .post_details-card {
@@ -284,7 +290,7 @@
 
   /* Profile */
   .profile-container {
-    @apply flex flex-col items-center flex-1 gap-10 overflow-scroll py-10 px-5 md:p-14 custom-scrollbar;
+    @apply flex flex-col items-center flex-1 gap-10 overflow-auto py-10 px-5 md:p-14 custom-scrollbar;
   }
 
   .profile-inner_container {
@@ -297,7 +303,7 @@
 
   /* Saved */
   .saved-container {
-    @apply flex flex-col flex-1 items-center gap-10 overflow-scroll py-10 px-5 md:p-14 custom-scrollbar;
+    @apply flex flex-col flex-1 items-center gap-10 overflow-auto py-10 px-5 md:p-14 custom-scrollbar;
   }
 
   /* Bottom bar */
