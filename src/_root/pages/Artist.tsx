@@ -17,23 +17,18 @@ const Artist = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
   const [heroHeight, setHeroHeight] = useState(0);
 
-  const { scrollY: containerScrollY } = useScroll({ container: scrollContainerRef });
-  const { scrollY: viewportScrollY } = useScroll();
+  const { scrollY } = useScroll({ container: scrollContainerRef });
 
   // Update hero height
   useEffect(() => {
     if (heroRef.current) setHeroHeight(heroRef.current.offsetHeight);
   }, [artist]);
 
-  // Scroll handler used for both container and viewport as a fallback
-  const handleScrollChange = (latest: number) => {
-    if (latest > heroHeight * 0.25) setScrolled(true);
+  // Listen to scroll
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    if (latest > heroHeight * .25) setScrolled(true);
     else setScrolled(false);
-  };
-
-  // Listen to container scroll (preferred) and viewport scroll as a fallback
-  useMotionValueEvent(containerScrollY, "change", handleScrollChange);
-  useMotionValueEvent(viewportScrollY, "change", handleScrollChange);
+  });
 
   // Fetch artist
   const addArtist = async () => {
@@ -68,11 +63,11 @@ const Artist = () => {
   useEffect(() => { if (id) fetchArtist(); }, [id]);
 
   return (
-  <div className="flex flex-col min-h-0 w-full overflow-hidden">
+    <div className="flex flex-col min-h-screen w-full md:overflow-hidden">
       {/* Sticky header */}
       {artist && (
         <motion.div
-          className={`sticky top-14 md:top-0 z-50 px-4 md:px-6 transition-all duration-300 py-3 ${
+          className={`sticky top-14 md:top-0 z-50 px-4 md:px-6 transition-all duration-300 py-3 bg-black/50 backdrop-blur-md shadow-lg md:bg-transparent ${
             scrolled ? "bg-black/50 backdrop-blur-md shadow-lg" : "bg-transparent"
           }`}
           // animate={{ backgroundColor: scrolled ? "rgba(0,0,0,0.9)" : "rgba(0,0,0,0)" }}
