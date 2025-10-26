@@ -21,17 +21,17 @@
 
 @layer base {
   * {
-    @apply box-border list-none p-0 m-0 scroll-smooth overscroll-auto;
+    @apply box-border list-none p-0 m-0 scroll-smooth overscroll-none;
   }
 
   /* Ensure root elements don't create horizontal overflow and allow body to be the main scroll container */
-  html, #root, body {
+  /* html, #root, body {
     height: 100%;
     overflow-x: hidden;
-  }
+  } */
 
   body {
-    @apply bg-dark-1 text-white font-inter;
+    @apply bg-dark-1 text-white font-inter h-dvh;
   }
 }
 
@@ -130,26 +130,26 @@
   }
 
   .common-container {
-    @apply flex flex-col flex-1 items-center gap-10 overflow-auto py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col min-h-dvh flex-1 items-center gap-10 overflow-auto py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   /* All Users */
   .user-container {
-    @apply flex flex-col flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col min-h-dvh flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   .user-grid {
-    @apply w-full grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-7 max-w-5xl;
+    @apply w-full grid  min-h-dvh grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-7 max-w-5xl;
   }
 
   /* Songs */
   .song-container {
-    @apply flex flex-col flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col  min-h-dvh flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
 
 .element-container {
-  min-height: 100dvh;
+  @apply flex flex-col min-h-0;
 }
 
 .song-grid {
@@ -256,55 +256,19 @@
 
   /* Home */
   .home-container {
-    @apply flex flex-col flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col min-h-dvh flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   .home-posts {
     @apply max-w-screen-sm flex flex-col items-center w-full gap-6 md:gap-9;
   }
 
-  .home-creators {
-    @apply hidden xl:flex flex-col w-72 2xl:w-465 px-6 py-10 gap-10  overflow-scroll custom-scrollbar;
-  }
-
-  /* Post Details */
-  .post_details-container {
-    @apply flex flex-col flex-1 gap-10 overflow-auto py-10 px-5 md:p-14 custom-scrollbar items-center;
-  }
-
-  .post_details-card {
-    @apply bg-dark-2 w-full max-w-5xl rounded-[30px] flex-col flex xl:flex-row border border-dark-4 xl:rounded-l-[24px];
-  }
-
-  .post_details-img {
-    @apply h-80 lg:h-[480px] xl:w-[48%] rounded-t-[30px] xl:rounded-l-[24px] xl:rounded-tr-none object-cover p-5 bg-dark-1;
-  }
-
-  .post_details-info {
-    @apply bg-dark-2 flex flex-col gap-5 lg:gap-7 flex-1 items-start p-8 rounded-[30px];
-  }
-
-  .post_details-delete_btn {
-    @apply p-0 flex gap-3 hover:bg-transparent hover:text-light-1  text-light-1 small-medium lg:base-medium;
-  }
 
   /* Profile */
-  .profile-container {
-    @apply flex flex-col items-center flex-1 gap-10 overflow-auto py-10 px-5 md:p-14 custom-scrollbar;
-  }
-
-  .profile-inner_container {
-    @apply flex items-center md:mb-8 xl:items-start gap-8 flex-col xl:flex-row relative max-w-5xl w-full;
-  }
-
   .profile-tab {
     @apply flex-center gap-3 py-4 w-48 bg-dark-2  transition flex-1 xl:flex-initial;
   }
 
-  /* Saved */
-  .saved-container {
-    @apply flex flex-col flex-1 items-center gap-10 overflow-auto py-10 px-5 md:p-14 custom-scrollbar;
-  }
 
   /* Bottom bar */
   .bottom-bar {

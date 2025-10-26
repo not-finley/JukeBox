@@ -55,7 +55,7 @@ const Search = () => {
   };
 
   return (
-    <div className="common-container overflow-x-hidden">
+    <div className="common-container">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex flex-col items-center">
           <h1 className="text-3xl font-bold mb-2 text-center">Search for Music</h1>

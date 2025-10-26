@@ -18,7 +18,7 @@ import LibraryListened from './_root/pages/LibraryListened';
 
 const App = () => {
   return (
-    <main className="flex flex-col min-h-screen">
+  <main className="flex flex-col min-h-screen">
         <Helmet>
           <meta name="description" content="A place to review and share music!"></meta>
         </Helmet>

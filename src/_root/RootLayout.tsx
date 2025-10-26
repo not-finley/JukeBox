@@ -12,11 +12,11 @@ const RootLayout = () => {
   if (isLoading) return <div className='flex-center'><LoaderMusic/></div>;
   if (!isAuthenticated) return <Navigate to="/sign-in" replace />;
   return (
-    <div className="w-full min-h-screen md:flex">
+    <div className="w-full min-h-screen md:flex md:h-dvh">
       <Topbar />
       <LeftSidebar />
 
-      <section className="flex flex-1 element-container md:h-dvh">
+       <section className="flex flex-1 min-h-0 element-container md:min-h-screen">
         <Outlet />
       </section>
 
