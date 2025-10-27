@@ -17,7 +17,6 @@ import { SignupValidation } from "@/lib/validation";
 import { z } from "zod";
 import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
 import { createUserAccount } from "@/lib/appwrite/api";
-import LoaderMusic from "@/components/shared/loaderMusic";
 
 const SignupForm = () => {
   const { toast } = useToast();
@@ -100,7 +99,7 @@ const SignupForm = () => {
           <Button type="submit" className="shad-button_primary">
             { isSigningIn ? (
               <div className="flex-center gap-2">
-                <LoaderMusic/>
+                Loading...
               </div>
             ) : (
               "Sign up"

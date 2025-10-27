@@ -9,7 +9,7 @@ import LoaderMusic from '@/components/shared/loaderMusic';
 const RootLayout = () => {
   const { isAuthenticated, isLoading } = useUserContext();
   
-  if (isLoading) return <div className='flex-center'><LoaderMusic/></div>;
+  if (isLoading) return <div className='common-container bg-red'><LoaderMusic/></div>;
   if (!isAuthenticated) return <Navigate to="/sign-in" replace />;
   return (
     <div className="w-full min-h-screen md:flex md:h-dvh">

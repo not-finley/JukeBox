@@ -6,7 +6,7 @@ import AuthLayout from './_auth/AuthLayout';
 import RootLayout from './_root/RootLayout';
 import SigninForm from './_auth/forms/SigninForm';
 import SignupForm from './_auth/forms/SignupForm';
-import { Home, Songs, Library, AllUsers, Profile, UpdateProfile, AddReviewSong, AddReviewAlbum, Artist, Album } from './_root/pages';
+import { Home, Songs, Library, AllUsers, Profile, UpdateProfile, AddReviewSong, AddReviewAlbum, Artist, Album, Discography } from './_root/pages';
 import { Toaster } from "@/components/ui/toaster"
 import Search from './_root/pages/Search';
 import { Helmet } from 'react-helmet';
@@ -31,7 +31,7 @@ const App = () => {
             {/* private routes */}
             <Route element={<RootLayout />}>
                 <Route index element={<Home />}/>
-                <Route path="/songs" element={<Songs />}/>
+                <Route path="/trending" element={<Songs />}/>
                 <Route path="/library" element={<Library />}/>
                 <Route path="/library/reviews" element={<LibraryReviews />}/>
                 <Route path="/library/rated" element={<LibraryRatings />}/>
@@ -42,6 +42,7 @@ const App = () => {
                 <Route path="/song/:id" element={<SongDetailsSection />}/>
                 <Route path="/song/:id/add-review" element={<AddReviewSong />}/>
                 <Route path="/artist/:id" element={<Artist />}/>
+                <Route path="/artist/:id/discography" element={<Discography />}/>
                 <Route path="/album/:id" element={<Album />}/>
                 <Route path="/album/:id/add-review" element={<AddReviewAlbum />}/>
                 <Route path="/search" element={<Search  />}/>

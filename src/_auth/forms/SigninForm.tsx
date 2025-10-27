@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { SigninValidation } from "@/lib/validation";
 import { z } from "zod";
 import { useSignInAccount } from "@/lib/react-query/queriesAndMutations"; 
-import LoaderMusic from "@/components/shared/loaderMusic";
+
 
 const SigninForm = () => {
   const { toast } = useToast();
@@ -91,7 +91,7 @@ const SigninForm = () => {
           <Button type="submit" className="shad-button_primary">
             {isPending ? (
               <div className="flex-center gap-2">
-                <LoaderMusic/>
+                Loading...
               </div>
             ) : (
               "Sign in"

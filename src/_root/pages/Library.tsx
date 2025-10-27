@@ -40,11 +40,11 @@ const Library = () => {
 
 
   return (
-    <div className="song-container max-w-6xl">
+    <div className="song-container">
       <h1 className="text-4xl font-bold mb-4">Library</h1>
 
       {/* --- Reviewed Section --- */}
-      <div className="section-header w-full flex items-center justify-between border-b-2 border-gray-500 mb-2 pb-1">
+      <div className="section-header w-full max-w-6xl flex items-center justify-between border-b-2 border-gray-500 mb-2 pb-1">
         <h2 className="text-2xl font-semibold">Reviewed</h2>
         <Link to="/library/reviews" className="text-md text-gray-400 hover:text-gray-200">
           See more
@@ -67,7 +67,7 @@ const Library = () => {
       )}
 
       {/* --- Rated Section --- */}
-      <div className="section-header w-full flex items-center justify-between border-b-2 border-gray-500 mt-6 mb-2 pb-1">
+      <div className="section-header w-full flex max-w-6xl items-center justify-between border-b-2 border-gray-500 mt-6 mb-2 pb-1">
         <h2 className="text-2xl font-semibold">Rated</h2>
         <Link to="/library/rated" className="text-md text-gray-400 hover:text-gray-200">
           See more
@@ -140,7 +140,7 @@ const Library = () => {
       )}
 
       {/* --- Listened Section --- */}
-      <div className="section-header w-full flex items-center justify-between border-b-2 border-gray-500 mt-6 mb-2 pb-1">
+      <div className="section-header w-full flex items-center max-w-6xl justify-between border-b-2 border-gray-500 mt-6 mb-2 pb-1">
         <h2 className="text-2xl font-semibold">Listened To</h2>
         <Link to="/library/listened" className="text-md text-gray-400 hover:text-gray-200">
           See more

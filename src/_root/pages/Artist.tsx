@@ -84,7 +84,7 @@ const Artist = () => {
 
       {/* Scrollable content */}
       <div ref={scrollContainerRef} className="flex-1 overflow-auto common-container -mt-16 p-10 px-6">
-        {loading && <LoaderMusic />}
+        {loading && <div className='mt-20'><LoaderMusic /> </div>}
         {notFound && <h1 className="text-2xl text-gray-300 text-center mt-20">Artist not found</h1>}
 
         {artist && (
@@ -110,14 +110,13 @@ const Artist = () => {
             <section className="mt-6 md:mt-10">
               <div className="flex justify-between items-center mb-4 md:mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold">Albums</h2>
-                {artist.albums.length > 5 && (
+
                   <Link
                     to={`/artist/${artist.artistId}/discography`}
                     className="text-sm md:text-base font-semibold text-gray-400 hover:text-white transition"
                   >
                     See all
                   </Link>
-                )}
               </div>
 
               {artist.albums.length > 0 ? (

@@ -134,7 +134,7 @@ const Album = () => {
                 (
                     <div className='w-full max-w-6xl'>
                         <div className="sticky top-0 h-[35vh] z-0">
-                            <div className="relative w-full h-full">
+                            <div className="relative w-full h-full ">
                                 {/* Background image */}
                                 <img
                                     src={album.album_cover_url}
@@ -146,11 +146,11 @@ const Album = () => {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
 
                                 {/* Bottom-left content */}
-                                <div className="absolute bottom-4 left-4 flex items-end gap-4">
+                                <div className=" absolute bottom-4 left-4 flex items-end gap-4">
                                     <img
                                         src={album.album_cover_url}
                                         alt={album.title}
-                                        className="w-40 h-40 object-cover rounded shadow-lg"
+                                        className="hidden xs:block w-40 h-40  object-cover rounded shadow-lg"
                                     />
                                     <div className="flex flex-col">
                                         <h3 className="text-gray-300 text-sm uppercase">Album</h3>

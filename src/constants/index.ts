@@ -9,15 +9,10 @@ export const sidebarLinks = [
       route: "/search",
       label: "Search",
     },
-    // {
-    //   imgURL: "/assets/icons/add.svg",
-    //   route: "/add",
-    //   label: "Add",
-    // },
     {
       imgURL: "/assets/icons/vinyl.svg",
-      route: "/songs",
-      label: "Songs",
+      route: "/trending",
+      label: "Trending",
     },
     {
       imgURL: "/assets/icons/music.svg",
@@ -44,8 +39,8 @@ export const sidebarLinks = [
     // },
     {
       imgURL: "/assets/icons/vinyl.svg",
-      route: "/songs",
-      label: "Songs",
+      route: "/trending",
+      label: "Trending",
     },
     {
       imgURL: "/assets/icons/music.svg",

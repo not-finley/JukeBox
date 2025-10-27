@@ -247,18 +247,19 @@ export type INavLink = {
     type: "song" | "album";
   }
   
-  export type Activity = {
-  id: string;            // unique activity ID
-  userId: string;        // who did it
+  export type Activity = {      
+    id: string;
+  userId: string;        
   username: string;
+  profileUrl?: string;
   type: "listen" | "review" | "rating";
-  targetType: "song" | "album"; // what was interacted with
+  targetType: "song" | "album"; 
   targetId: string;
   targetName: string;
   album_cover_url: string | null;
   date: string;
-  rating?: number;       // only for ratings
-  text?: string;         // only for reviews
+  rating?: number;       
+  text?: string;        
 };
 
   export interface Listened {
