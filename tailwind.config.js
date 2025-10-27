@@ -1,14 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 import defaultTheme from 'tailwindcss/defaultTheme.js';
-const defaultTheme = -'tailwindcss/defaultTheme.js'
+import tailwindAnimate from 'tailwindcss-animate';
 
-module.exports = {
+export default {
   darkMode: ['class'],
   content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
+    './index.html',
+    './src/**/*.{ts,tsx,js,jsx,html}',
+    './components/**/*.{ts,tsx,js,jsx}',
+    './pages/**/*.{ts,tsx,js,jsx}',
   ],
   theme: {
     container: {
@@ -16,7 +16,6 @@ module.exports = {
       padding: '2rem',
       screens: {
         '2xl': '1400px',
-      
       },
     },
     extend: {
@@ -36,8 +35,7 @@ module.exports = {
         'light-4': '#5C5C7B',
       },
       screens: {
-        'xs': '480px',
-      
+        xs: '480px',
       },
       width: {
         '420': '420px',
@@ -45,7 +43,6 @@ module.exports = {
       },
       fontFamily: {
         inter: ['Inter', 'sans-serif'],
-
       },
       keyframes: {
         'accordion-down': {
@@ -63,5 +60,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [tailwindAnimate],
 };

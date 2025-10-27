@@ -1771,67 +1771,67 @@ export async function getRecentFollowedActivities(
             supabase
                 .from("song_listens")
                 .select(`
-      user_id,
-      song_id,
-      listen_date,
-      songs(title, album_id, albums(album_cover_url)),
-      users(username)
-    `)
+                    user_id,
+                    song_id,
+                    listen_date,
+                    song:songs(title, album_id, albums(album_cover_url)),
+                    user:users(username)
+                    `)
                 .in("user_id", followedIds)
                 .order("listen_date", { ascending: false })
                 .limit(poolSize),
             supabase
                 .from("album_listens")
                 .select(`
-      user_id,
-      album_id,
-      listen_date,
-      albums(title, album_cover_url),
-      users(username)
-    `)
+                    user_id,
+                    album_id,
+                    listen_date,
+                    album:albums(title, album_cover_url),
+                    user:users(username)
+                    `)
                 .in("user_id", followedIds)
                 .order("listen_date", { ascending: false })
                 .limit(poolSize),
             supabase
                 .from("reviews")
                 .select(`
-      review_id,
-      user_id,
-      review_text,
-      review_type,
-      song_id,
-      album_id,
-      created_at,
-      songs(title, albums(album_cover_url)),
-      albums(title, album_cover_url),
-      users(username)
-    `)
+                    review_id,
+                    user_id,
+                    review_text,
+                    review_type,
+                    song_id,
+                    album_id,
+                    created_at,
+                    song:songs(title, albums(album_cover_url)),
+                    album:albums(title, album_cover_url),
+                    user:users(username)
+                    `)
                 .in("user_id", followedIds)
                 .order("created_at", { ascending: false })
                 .limit(poolSize),
             supabase
                 .from("song_rating")
                 .select(`
-      user_id,
-      rating,
-      song_id,
-      rating_date,
-      songs(title, albums(album_cover_url)),
-      users(username)
-    `)
+                    user_id,
+                    rating,
+                    song_id,
+                    rating_date,
+                    song:songs(title, albums(album_cover_url)),
+                    user:users(username)
+                `)
                 .in("user_id", followedIds)
                 .order("rating_date", { ascending: false })
                 .limit(poolSize),
             supabase
                 .from("album_rating")
                 .select(`
-      user_id,
-      rating,
-      album_id,
-      rating_date,
-      albums(title, album_cover_url),
-      users(username)
-    `)
+                    user_id,
+                    rating,
+                    album_id,
+                    rating_date,
+                    album:albums(title, album_cover_url),
+                    user:users(username)
+                    `)
                 .in("user_id", followedIds)
                 .order("rating_date", { ascending: false })
                 .limit(poolSize),
@@ -1845,61 +1845,65 @@ export async function getRecentFollowedActivities(
 
         const activities: Activity[] = [];
 
+        // helper to handle supabase returning nested relations as arrays
+        const first = (v: any) => (Array.isArray(v) ? v[0] : v) as any;
+
         // SONG LISTENS
         for (const l of songListens || []) {
+            const userObj = first(l.user);
+            const songObj = first(l.song);
+            const songAlbum = first(songObj?.albums);
             activities.push({
                 id: `songlisten-${l.user_id}-${l.song_id}-${l.listen_date}`,
                 userId: l.user_id,
-                username: Array.isArray(l.users) ? l.users[0]?.username ?? "Unknown" : l.users?.username ?? "Unknown",
+                username: userObj?.username ?? "Unknown",
                 type: "listen",
                 targetType: "song",
                 targetId: l.song_id,
-                targetName: Array.isArray(l.songs) ? l.songs[0]?.title ?? "Unknown Song" : l.songs?.title ?? "Unknown Song",
-                album_cover_url: Array.isArray(l.songs?.albums)
-                    ? l.songs.albums[0]?.album_cover_url ?? ""
-                    : l.songs?.albums?.album_cover_url ?? "",
+                targetName: songObj?.title ?? "Unknown Song",
+                album_cover_url: songAlbum?.album_cover_url ?? "",
                 date: l.listen_date,
             });
         }
 
         // ALBUM LISTENS
         for (const l of albumListens || []) {
+            const userObj = first(l.user);
+            const albumObj = first(l.album);
             activities.push({
                 id: `albumlisten-${l.user_id}-${l.album_id}-${l.listen_date}`,
                 userId: l.user_id,
-                username: Array.isArray(l.users) ? l.users[0]?.username ?? "Unknown" : l.users?.username ?? "Unknown",
+                username: userObj?.username ?? "Unknown",
                 type: "listen",
                 targetType: "album",
                 targetId: l.album_id,
-                targetName: Array.isArray(l.albums) ? l.albums[0]?.title ?? "Unknown Album" : l.albums?.title ?? "Unknown Album",
-                album_cover_url: Array.isArray(l.albums)
-                    ? l.albums[0]?.album_cover_url ?? ""
-                    : l.albums?.album_cover_url ?? "",
+                targetName: albumObj?.title ?? "Unknown Album",
+                album_cover_url: albumObj?.album_cover_url ?? "",
                 date: l.listen_date,
             });
         }
 
         // REVIEWS
         for (const r of reviews || []) {
-            const username = Array.isArray(r.users) ? r.users[0]?.username ?? "Unknown" : r.users?.username ?? "Unknown";
-            const songTitle = Array.isArray(r.songs) ? r.songs[0]?.title ?? "Unknown Song" : r.songs?.title ?? "Unknown Song";
-            const albumTitle = Array.isArray(r.albums) ? r.albums[0]?.title ?? "Unknown Album" : r.albums?.title ?? "Unknown Album";
-            const songAlbumCover = Array.isArray(r.songs?.albums)
-                ? r.songs.albums[0]?.album_cover_url ?? ""
-                : r.songs?.albums?.album_cover_url ?? "";
-            const albumCover = Array.isArray(r.albums)
-                ? r.albums[0]?.album_cover_url ?? ""
-                : r.albums?.album_cover_url ?? "";
-
+            const userObj = first(r.user);
+            const songObj = first(r.song);
+            const albumObj = first(r.album);
+            const songAlbum = first(songObj?.albums);
             activities.push({
                 id: `review-${r.review_id}`,
                 userId: r.user_id,
-                username,
+                username: userObj?.username ?? "Unknown",
                 type: "review",
                 targetType: r.review_type === "song" ? "song" : "album",
                 targetId: r.review_type === "song" ? r.song_id : r.album_id,
-                targetName: r.review_type === "song" ? songTitle : albumTitle,
-                album_cover_url: r.review_type === "song" ? songAlbumCover : albumCover,
+                targetName:
+                    r.review_type === "song"
+                        ? songObj?.title ?? "Unknown Song"
+                        : albumObj?.title ?? "Unknown Album",
+                album_cover_url:
+                    r.review_type === "song"
+                        ? songAlbum?.album_cover_url ?? ""
+                        : albumObj?.album_cover_url ?? "",
                 date: r.created_at,
                 text: r.review_text,
             });
@@ -1907,17 +1911,18 @@ export async function getRecentFollowedActivities(
 
         // SONG RATINGS
         for (const r of songRatings || []) {
+            const userObj = first(r.user);
+            const songObj = first(r.song);
+            const songAlbum = first(songObj?.albums);
             activities.push({
                 id: `songrating-${r.user_id}-${r.song_id}-${r.rating_date}`,
                 userId: r.user_id,
-                username: Array.isArray(r.users) ? r.users[0]?.username ?? "Unknown" : r.users?.username ?? "Unknown",
+                username: userObj?.username ?? "Unknown",
                 type: "rating",
                 targetType: "song",
                 targetId: r.song_id,
-                targetName: Array.isArray(r.songs) ? r.songs[0]?.title ?? "Unknown Song" : r.songs?.title ?? "Unknown Song",
-                album_cover_url: Array.isArray(r.songs?.albums)
-                    ? r.songs.albums[0]?.album_cover_url ?? ""
-                    : r.songs?.albums?.album_cover_url ?? "",
+                targetName: songObj?.title ?? "Unknown Song",
+                album_cover_url: songAlbum?.album_cover_url ?? "",
                 date: r.rating_date,
                 rating: r.rating,
             });
@@ -1925,17 +1930,17 @@ export async function getRecentFollowedActivities(
 
         // ALBUM RATINGS
         for (const r of albumRatings || []) {
+            const userObj = first(r.user);
+            const albumObj = first(r.album);
             activities.push({
                 id: `albumrating-${r.user_id}-${r.album_id}-${r.rating_date}`,
                 userId: r.user_id,
-                username: Array.isArray(r.users) ? r.users[0]?.username ?? "Unknown" : r.users?.username ?? "Unknown",
+                username: userObj?.username ?? "Unknown",
                 type: "rating",
                 targetType: "album",
                 targetId: r.album_id,
-                targetName: Array.isArray(r.albums) ? r.albums[0]?.title ?? "Unknown Album" : r.albums?.title ?? "Unknown Album",
-                album_cover_url: Array.isArray(r.albums)
-                    ? r.albums[0]?.album_cover_url ?? ""
-                    : r.albums?.album_cover_url ?? "",
+                targetName: albumObj?.title ?? "Unknown Album",
+                album_cover_url: albumObj?.album_cover_url ?? "",
                 date: r.rating_date,
                 rating: r.rating,
             });
