@@ -48,7 +48,7 @@ const AddReviewAlbum = () => {
         return;
       }
 
-      toast({ title: "Review added successfully!" });
+      toast({ title: "Review Added!" });
       form.reset();
       navigate(`/album/${album?.albumId}`);
     } catch (error) {
