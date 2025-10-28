@@ -39,8 +39,8 @@
   /* TYPOGRAPHY */
   .h1-bold {
     @apply text-[36px] font-bold leading-[140%] tracking-tighter;
-  }
-
+  
+}
   .h1-semibold {
     @apply text-[36px] font-semibold leading-[140%] tracking-tighter;
   }
@@ -130,12 +130,12 @@
   }
 
   .common-container {
-    @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center gap-10 overflow-auto py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center gap-10 overflow-auto py-5 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   /* All Users */
   .user-container {
-    @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center overflow-auto gap-10 py-5 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
   .user-grid {
@@ -144,7 +144,7 @@
 
   /* Songs */
   .song-container {
-    @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center overflow-auto gap-10 py-10 px-5 md:px-8 lg:p-14 custom-scrollbar;
+    @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center overflow-auto gap-10 py-5 px-5 md:px-8 lg:p-14 custom-scrollbar;
   }
 
 

@@ -133,58 +133,57 @@ const Album = () => {
             {album && !loading &&
                 (
                     <div className='w-full max-w-6xl'>
-                        <div className="sticky top-0 h-[35vh] z-0">
-                            <div className="relative w-full h-full ">
-                                {/* Background image */}
+                        <div className="h-[35vh] relative w-full">
+                            {/* Background image */}
+                            <img
+                                src={album.album_cover_url}
+                                alt={album.title}
+                                className="inset-0 w-full h-full object-cover brightness-75"
+                            />
+
+                            {/* Gradient overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                            {/* Bottom-left content */}
+                            <div className=" absolute bottom-4 left-4 flex items-end gap-4">
                                 <img
                                     src={album.album_cover_url}
                                     alt={album.title}
-                                    className="inset-0 w-full h-full object-cover brightness-75"
+                                    className="hidden xs:block w-40 h-40  object-cover rounded shadow-lg"
                                 />
+                                <div className="flex flex-col">
+                                    <h3 className="text-gray-300 text-sm uppercase">Album</h3>
+                                    <h1 className="text-4xl md:text-5xl xl:text-6xl font-black text-white">
+                                        {album.title}
+                                    </h1>
+                                    {album.artists && (
+                                        <p className="text-lg text-gray-300">{album?.release_date.slice(0, 4)} | By{" "}
 
-                                {/* Gradient overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-
-                                {/* Bottom-left content */}
-                                <div className=" absolute bottom-4 left-4 flex items-end gap-4">
-                                    <img
-                                        src={album.album_cover_url}
-                                        alt={album.title}
-                                        className="hidden xs:block w-40 h-40  object-cover rounded shadow-lg"
-                                    />
-                                    <div className="flex flex-col">
-                                        <h3 className="text-gray-300 text-sm uppercase">Album</h3>
-                                        <h1 className="text-4xl md:text-5xl xl:text-6xl font-black text-white">
-                                            {album.title}
-                                        </h1>
-                                        {album.artists && (
-                                            <p className="text-lg text-gray-300">{album?.release_date.slice(0, 4)} | By{" "}
-                                                {album?.artists.map((a, i) => (
-                                                    <Link to={`/artist/${a.artist_id}`} key={a.id} className="hover:text-emerald-400">
-                                                        {a.name}
-                                                        {i < album.artists.length - 1 ? ", " : ""}
-                                                    </Link>
-                                                ))}</p>
-                                        )}
-                                        {album.spotify_url && (
-                                            <a
-                                                href={album.spotify_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="mt-3 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-black font-semibold py-2 px-4 rounded-lg shadow-md transition w-fit"
-                                            >
-                                                <FaSpotify className="text-xl" />
-                                                <span>Listen on Spotify</span>
-                                            </a>
-                                        )}
-                                    </div>
+                                            {album?.artists.map((a, i) => (
+                                                <Link to={`/artist/${a.artist_id}`} key={a.id} className="hover:text-emerald-400">
+                                                    {a.name}
+                                                    {i < album.artists.length - 1 ? ", " : ""}
+                                                </Link>
+                                            ))}
+                                        </p>
+                                    )}
+                                    {album.spotify_url && (
+                                        <a
+                                            href={album.spotify_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="mt-3 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-black font-semibold py-2 px-4 rounded-lg shadow-md transition w-fit"
+                                        >
+                                            <FaSpotify className="text-xl" />
+                                            <span>Listen on Spotify</span>
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex flex-col-reverse lg:flex-row">
                             {/* Tracks */}
-                            <section className="relative bg-black px-4 py-12 lg:w-3/5">
+                            <section className="bg-black px-4 py-12 lg:w-3/5">
                                 <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Tracks</h2>
                                 <ul className="divide-y divide-gray-700">
                                     {album.tracks.map((track, index) => (
@@ -226,12 +225,34 @@ const Album = () => {
                                     ))}
                                 </ul>
                             </section>
-
                             {/* Ratings + Actions */}
-                            <section className="relative bg-black px-4 py-12 lg:w-2/5 flex flex-col items-center justify-start">
+                            <section className="bg-black px-4 py-12 lg:w-2/5 flex flex-col items-center justify-start">
+                                {/* Ratings Summary */}
+                                <div className="w-full flex items-center justify-between mb-6">
+                                    <p className="text-2xl font-bold text-white">Ratings</p>
 
+                                    {globalTotal > 0 && (<p className="text-gray-400 text-md">{globalTotal} listeners</p>)}
+                                </div>
+
+                                {globalTotal <= 0 && (<p className='text-lg text-gray-300'>No ratings yet  -  be the first!</p>)}
+
+
+                                {/* Histogram */}
+                                {globalTotal > 0 &&
+                                    (
+                                        <div className="flex items-center justify-center w-full">
+                                            <div className="mr-9">
+                                                <p className="text-2xl text-gray-200 text-center">{globalAverage.toFixed(1)}</p>
+                                                <p className="text-sm text-gray-400 text-center">Stars</p>
+                                            </div>
+                                            <BarChart width={250} height={150} data={globalRatings}>
+                                                <XAxis dataKey="rating" />
+                                                <Bar dataKey="count" fill="#82ca9d" />
+                                            </BarChart>
+                                        </div>
+                                    )}
                                 {/* User Actions */}
-                                <div className="w-full max-w-sm bg-gray-800 rounded-lg p-4 mb-6">
+                                <div className="mt-10 w-full max-w-sm bg-gray-800 rounded-lg p-4 ">
                                     <div className="flex gap-2 mt-2">
                                         <Button className="shad-button_primary w-1/2" >
                                             <div className="flex-col flex-center">
@@ -270,7 +291,7 @@ const Album = () => {
                                                         <img
                                                             //src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
                                                             //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
-                                                            src= {rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
+                                                            src={rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
                                                             className="h-4/6 w-10"
                                                         />
                                                     </button>
@@ -279,50 +300,25 @@ const Album = () => {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Ratings Summary */}
-                                <div className="w-full flex items-center justify-between mb-6">
-                                    <p className="text-2xl font-bold text-white">Ratings</p>
-
-                                    {globalTotal > 0 && (<p className="text-gray-400 text-md">{globalTotal} listeners</p>)}
-                                </div>
-
-                                {globalTotal <= 0 && (<p className='text-lg text-gray-300'>No ratings yet  -  be the first!</p>)}
-
-
-                                {/* Histogram */}
-                                {globalTotal > 0 &&
-                                    (
-                                        <div className="flex items-center justify-center w-full">
-                                            <div className="mr-9">
-                                                <p className="text-2xl text-gray-200 text-center">{globalAverage.toFixed(1)}</p>
-                                                <p className="text-sm text-gray-400 text-center">Stars</p>
-                                            </div>
-                                            <BarChart width={250} height={200} data={globalRatings}>
-                                                <XAxis dataKey="rating" />
-                                                <Bar dataKey="count" fill="#82ca9d" />
-                                            </BarChart>
-                                        </div>
-                                    )}
-
                             </section>
-                        </div>
+                        
 
-                        <section className="relative h-96 bg-black px-4 py-12">
-                            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Reviews</h2>
-                            {/* <div className="bg-gray-900 rounded-lg p-4 mb-4">
-                                <p className="text-white">"Loved the production quality!"</p>
-                                <span className="text-sm text-gray-400">– User123</span>
-                            </div> */}
-                            {album?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet - be the first to start the conversation!</p>) : ''}
-                            {album?.reviews.map((r) => (
-                                <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} album={r.album} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
-                            )
-                            )}
-                        </section>
-                    </div>)
+                            
+                        </div>
+                        <section className=" bg-black px-4 py-12">
+                                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Reviews</h2>
+
+                                {album?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet - be the first to start the conversation!</p>) : ''}
+                                {album?.reviews.map((r) => (
+                                    <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} album={r.album} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
+                                )
+                                )}
+                            </section>
+                    </div>
+
+                )
             }
-        </div >
+        </div>
     )
 }
 

@@ -67,7 +67,7 @@ const Artist = () => {
       {/* Sticky header */}
       {artist && (
         <motion.div
-          className={`sticky top-14 md:top-0 z-50 px-4 md:px-6 transition-all duration-300 py-3 bg-black/50 backdrop-blur-md shadow-lg md:bg-transparent ${
+          className={`sticky top-16 md:top-0 z-50 px-4 md:px-6 transition-all duration-300 py-3 bg-black/50 backdrop-blur-md shadow-lg md:bg-transparent ${
             scrolled ? "bg-black/50 backdrop-blur-md shadow-lg" : "bg-transparent"
           }`}
           // animate={{ backgroundColor: scrolled ? "rgba(0,0,0,0.9)" : "rgba(0,0,0,0)" }}
@@ -83,7 +83,7 @@ const Artist = () => {
       )}
 
       {/* Scrollable content */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-auto common-container -mt-16 p-10 px-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto common-container -mt-10 p-10 px-6">
         {loading && <div className='mt-20'><LoaderMusic /> </div>}
         {notFound && <h1 className="text-2xl text-gray-300 text-center mt-20">Artist not found</h1>}
 
