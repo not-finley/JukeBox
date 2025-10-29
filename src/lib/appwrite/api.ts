@@ -1,6 +1,6 @@
 import { ID } from 'appwrite';
 
-import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong, Activity } from "@/types";
+import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong, Activity, ISearchUser } from "@/types";
 import { account, appwriteConfig, databases } from './config';
 import { supabase } from "@/lib/supabaseClient";
 
@@ -200,6 +200,39 @@ export async function updateUser({
     } catch (err) {
         console.error("Error updating user:", err);
         throw err;
+    }
+}
+
+export async function searchUsers(query: string): Promise<ISearchUser[]> {
+    try {
+        if (!query) return [];
+
+        // Search in username or name columns
+        const { data: usersData, error } = await supabase
+            .from("users")
+            .select("user_id, username, name")
+            .or(`username.ilike.%${query}%,name.ilike.%${query}%`)
+            .limit(20);
+
+        if (error) throw error;
+        if (!usersData) return [];
+
+        // Map to ISearchUser format
+        const results: ISearchUser[] = await Promise.all(
+            usersData.map(async (user: any) => ({
+                id: user.user_id,
+                username: user.username,
+                name: user.name,
+                avatar_url: await getProfileUrl(user.user_id),
+            }))
+        );
+
+        console.log(results);
+
+        return results;
+    } catch (error) {
+        console.error("Failed to search users:", error);
+        return [];
     }
 }
 
@@ -1740,6 +1773,8 @@ export async function getLastWeekPopularSongs(): Promise<Song[]> {
         album_cover_url: item.album_cover_url,
     })) as Song[];
 }
+
+
 
 
 export async function getRecentFollowedActivities(

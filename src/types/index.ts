@@ -269,3 +269,10 @@ export type INavLink = {
     album_cover_url: string | null;
     listen_date: string;
   }
+
+  export interface ISearchUser {
+  id: string;
+  username: string;
+  name: string;
+  avatar_url: string;
+  }
