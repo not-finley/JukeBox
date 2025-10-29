@@ -8,7 +8,7 @@ const AuthLayout = () => {
       {isAuthenticated ? (
         <Navigate to="/" />
       ) : (
-        <>
+        <div className="flex h-dvh">
           <section className="flex flex-1 justify-center items-center flex-col py-10">
             <Outlet />
           </section>
@@ -16,10 +16,10 @@ const AuthLayout = () => {
           <img
             src="/assets/images/side-image-low.png"
             alt="logo"
-            className="hidden xl:block min-h-screen w-1/2 object-cover bg-no-repeat"
+            className="hidden xl:block w-1/2 object-cover bg-no-repeat"
             loading="lazy"
           />
-        </>
+        </div>
       )}
     </>
   )
