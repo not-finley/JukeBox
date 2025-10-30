@@ -4,6 +4,7 @@ import LoaderMusic from "@/components/shared/loaderMusic";
 import { Activity } from "@/types";
 import { useUserContext } from "@/lib/AuthContext";
 import { getRecentFollowedActivities, timeAgo } from "@/lib/appwrite/api";
+import defaultAvatar from "/assets/icons/profile-placeholder.svg";
 
 const PAGE_SIZE = 10;
 
@@ -163,7 +164,7 @@ const Home = () => {
           >
             <Link to={`/profile/${activity.userId}`}>
               <img
-                src={activity.profileUrl}
+                src={activity.profileUrl || defaultAvatar}
                 alt={activity.username}
                 className="w-12 h-12 rounded-full object-cover hover:opacity-90 transition"
               />

@@ -1157,6 +1157,25 @@ export async function addListenedSong(songId: string, userId: string) {
     }
 }
 
+export async function addListenedAlbum(albumId: string, userId: string) {
+    const now = new Date();
+    const isoString = now.toISOString();
+    try {
+        const { error: addListen } = await supabase
+            .from("album_listens")
+            .insert({
+                album_id: albumId,
+                user_id: userId,
+                listen_date: isoString,
+            });
+
+        if (addListen) throw addListen;
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 export async function hasListenedSong(userId: string, songId: string): Promise<Boolean> {
     try {
 
@@ -1176,12 +1195,46 @@ export async function hasListenedSong(userId: string, songId: string): Promise<B
     }
 }
 
+export async function hasListenedAlbum(userId: string, albumId: string): Promise<Boolean> {
+    try {
+
+        const { data: listened } = await supabase
+            .from("album_listens")
+            .select("*")
+            .eq("album_id", albumId)
+            .eq("user_id", userId)
+            .single();
+
+        if (!listened) return false;
+
+        return true;
+    } catch (error) {
+        console.error('Failed to fetch listened:', error);
+        return false;
+    }
+}
+
 export async function removeListenedSong(songId: string, userId: string) {
     try {
         await supabase
             .from("song_listens")
             .delete()
             .eq("song_id", songId)
+            .eq("user_id", userId);
+
+    } catch (error) {
+        console.error('Failed to delete listen:', error);
+        return false;
+    }
+}
+
+
+export async function removeListenedAlbum(albumId: string, userId: string) {
+    try {
+        await supabase
+            .from("album_listens")
+            .delete()
+            .eq("album_id", albumId)
             .eq("user_id", userId);
 
     } catch (error) {

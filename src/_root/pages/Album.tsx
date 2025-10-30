@@ -1,4 +1,4 @@
-import { addAlbumComplex, addUpdateRatingAlbum, addUpdateRatingSong, deleteRaitingAlbum, deleteRaitingSong, getAlbumDetailsById, getAlbumTrackRatings, getAllRatingsOfAlbum, getRatingAlbum } from '@/lib/appwrite/api';
+import { addAlbumComplex, addListenedAlbum, addUpdateRatingAlbum, addUpdateRatingSong, deleteRaitingAlbum, deleteRaitingSong, getAlbumDetailsById, getAlbumTrackRatings, getAllRatingsOfAlbum, getRatingAlbum, hasListenedAlbum, removeListenedAlbum } from '@/lib/appwrite/api';
 import { AlbumDetails } from '@/types';
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
@@ -18,6 +18,7 @@ const Album = () => {
     const [notFound, setNotFound] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
     const [rating, setRating] = useState(0);
+    const [listened, setListened] = useState(true);
     const [globalRatings, setGlobalRatings] = useState<{ rating: number; count: number }[]>([]);
     const [globalAverage, setGlobalAverage] = useState(0);
     const [globalTotal, setGlobalTotal] = useState(0);
@@ -117,9 +118,33 @@ const Album = () => {
         setLoading(false);
     };
 
+    const listenedClick = async () => {
+        if (listened) {
+            await removeListenedAlbum(album ? album.albumId : '', user.accountId)
+            setListened(false);
+        } else {
+            await addListenedAlbum(album ? album.albumId : '', user.accountId)
+            setListened(true);
+        }
+    }
+    const fetchListened = async () => {
+        try {
+            const listenedtemp = await hasListenedAlbum(user.accountId, id || "")
+            if (listenedtemp) {
+                setListened(true);
+            } else {
+                setListened(false);
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+
     useEffect(() => {
         if (id) {
             fetchAlbum();
+            fetchListened();
             addUpdateRatingAlbumlocal();
             fetchGlobalRaiting();
         }
@@ -254,19 +279,21 @@ const Album = () => {
                                 {/* User Actions */}
                                 <div className="mt-10 w-full max-w-sm bg-gray-800 rounded-lg p-4 ">
                                     <div className="flex gap-2 mt-2">
-                                        <Button className="shad-button_primary w-1/2" >
+                                        <Button className="shad-button_primary w-1/2"
+                                            onClick={listenedClick}
+                                        >
                                             <div className="flex-col flex-center">
                                                 <img
                                                     width={25}
-                                                    src={'/assets/icons/headphones-filled.svg'}
+                                                    src={listened ? '/assets/icons/headphones-filled.svg' : '/assets/icons/headphones.svg'}
                                                 />
-                                                <p className="tiny-medium text-black">remove</p>
+                                                <p className="tiny-medium text-black">{listened ? 'remove' : 'Listened'}</p>
                                             </div>
                                         </Button>
 
                                         <Link className={`${buttonVariants({ variant: "default" })} shad-button_primary w-1/2`}
                                             to={`/album/${album?.albumId}/add-review`}
-                                        // key="add-review"
+                                            key="add-review"
                                         >
                                             <div className="flex-col flex-center">
                                                 <img
@@ -301,19 +328,19 @@ const Album = () => {
                                     </div>
                                 </div>
                             </section>
-                        
 
-                            
+
+
                         </div>
                         <section className=" bg-black px-4 py-12">
-                                <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Reviews</h2>
+                            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Reviews</h2>
 
-                                {album?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet - be the first to start the conversation!</p>) : ''}
-                                {album?.reviews.map((r) => (
-                                    <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} album={r.album} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
-                                )
-                                )}
-                            </section>
+                            {album?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet - be the first to start the conversation!</p>) : ''}
+                            {album?.reviews.map((r) => (
+                                <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} album={r.album} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
+                            )
+                            )}
+                        </section>
                     </div>
 
                 )
