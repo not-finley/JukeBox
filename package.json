@@ -18,6 +18,7 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.75.0",
     "@tanstack/react-query": "^5.62.7",
+    "@vercel/analytics": "^1.5.0",
     "appwrite": "^16.0.2",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
