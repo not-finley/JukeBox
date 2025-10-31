@@ -704,7 +704,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
             .upsert(albumRows, { ignoreDuplicates: true });
 
         // ----- BATCH INSERT ARTISTS -----
-        const allArtists = [];
+        const allArtists:any = [];
         albums.forEach(a => {
             a.artists.forEach(ar => {
                 allArtists.push({
@@ -721,7 +721,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
 
         if (artistInsertError) throw artistInsertError;
         // ----- LINK ALBUM ARTISTS -----
-        const albumArtistLinks = [];
+        const albumArtistLinks:any = [];
         albums.forEach(a => {
             a.artists.forEach(ar => {
                 albumArtistLinks.push({
@@ -738,7 +738,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
         if (albumInsertError) throw albumInsertError;
 
         // ----- BATCH INSERT SONGS -----
-        const allSongs = [];
+        const allSongs: any = [];
         albums.forEach(a => {
             a.tracks.forEach(s => {
                 allSongs.push({
@@ -759,7 +759,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
         if (songInsertError) throw songInsertError;
 
         // ----- LINK SONG ARTISTS -----
-        const songArtistLinks = [];
+        const songArtistLinks:any = [];
         albums.forEach(a => {
             a.tracks.forEach(s => {
                 s.artists?.forEach(ar => {
@@ -859,11 +859,16 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                 songId: s.song_id,
                 title: s.title,
                 album: albumData.title,
+                album_id: albumData.album_id,
+                reviews: [], 
+                ratings: [], 
+                artists: [],
                 spotify_url: s.spotify_url,
                 album_cover_url: albumData.album_cover_url,
                 release_date: albumData.release_date,
                 popularity: s.pop
             })),
+            album_type: albumData.album_type,
             artists: artistList,
             reviews: await Promise.all(
                 reviews.map(async (r: any) => {

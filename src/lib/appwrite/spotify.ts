@@ -1,4 +1,4 @@
-import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks } from '@/types';
+import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SongDetails } from '@/types';
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
@@ -349,7 +349,7 @@ export async function getArtistDiscographyFromSpotify(
 
         // Fetch albums (paginated)
         while (nextUrl) {
-            const response = await fetch(nextUrl, {
+            const response: any = await fetch(nextUrl, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await response.json();
@@ -380,13 +380,17 @@ export async function getArtistDiscographyFromSpotify(
 
             const full: SpotifyAlbumWithTracks = await resp.json();
 
-            const formattedTracks: Song[] = full.tracks.items.map((track) => ({
+            const formattedTracks: SongDetails[] = full.tracks.map((track : any) => ({
                 songId: track.id,
                 title: track.name,
                 album: full.name,
+                album_id: full.id,
                 album_cover_url: full.images?.[0]?.url ?? "",
                 release_date: full.release_date,
                 popularity: track.popularity ?? 0,
+                reviews: [],
+                ratings: [],
+                artists: track.artists,
                 spotify_url: track.external_urls.spotify,
             }));
 
@@ -399,6 +403,7 @@ export async function getArtistDiscographyFromSpotify(
                 artists: full.artists, // already typed
                 tracks: formattedTracks,
                 reviews: [], // ready for DB insertion later
+                album_type: full.album_type,
             });
         }
 
