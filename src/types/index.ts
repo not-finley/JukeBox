@@ -82,7 +82,8 @@ export type INavLink = {
     title: string; 
     spotify_url: string; 
     album_cover_url: string; 
-    release_date: string
+    release_date: string;
+    album_type: string;
   }
 
   export type AlbumDetails = {
@@ -94,6 +95,7 @@ export type INavLink = {
     tracks: Song[]; 
     artists: any[];
     reviews: AlbumReview[];
+    album_type: string;
 
   }
 

@@ -1,29 +1,31 @@
+import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks } from '@/types';
+
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
 
 function computeMatchScore(query: string, text: string): number {
-  if (!text) return 0;
+    if (!text) return 0;
 
-  const q = query.toLowerCase();
-  const t = text.toLowerCase();
+    const q = query.toLowerCase();
+    const t = text.toLowerCase();
 
-  // Exact match
-  if (q === t) return 1000;
+    // Exact match
+    if (q === t) return 1000;
 
-  // Starts with query
-  if (t.startsWith(q)) return 600;
+    // Starts with query
+    if (t.startsWith(q)) return 600;
 
-  // Contains query
-  if (t.includes(q)) return 300;
+    // Contains query
+    if (t.includes(q)) return 300;
 
-  // Small similarity bonus for partial overlap
-  let score = 0;
-  const qWords = q.split(" ");
-  qWords.forEach(w => {
-    if (w.length > 2 && t.includes(w)) score += 50;
-  });
+    // Small similarity bonus for partial overlap
+    let score = 0;
+    const qWords = q.split(" ");
+    qWords.forEach(w => {
+        if (w.length > 2 && t.includes(w)) score += 50;
+    });
 
-  return score;
+    return score;
 }
 
 export async function getSpotifyToken(): Promise<string> {
@@ -122,92 +124,92 @@ export async function searchSongsInSpotify(query: string, token: string) {
     }
 }
 
-export async function searchSpotify(query: string, token: string) : Promise<{sorted: any[], unsorted: any[]}> {
-  try {
-    const response = await fetch(
-      `${SPOTIFY_API_BASE_URL}/search?type=track,album,artist&q=${encodeURIComponent(query)}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+export async function searchSpotify(query: string, token: string): Promise<{ sorted: any[], unsorted: any[] }> {
+    try {
+        const response = await fetch(
+            `${SPOTIFY_API_BASE_URL}/search?type=track,album,artist&q=${encodeURIComponent(query)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-    const data = await response.json();
-    const results: any[] = [];
+        const data = await response.json();
+        const results: any[] = [];
 
-    const scoreMatch = (title: string, artistNames: string[] = []) => {
-      let score = computeMatchScore(query, title);
-      artistNames.forEach(name => {
-        score = Math.max(score, computeMatchScore(query, name));
-      });
-      return score;
-    };
+        const scoreMatch = (title: string, artistNames: string[] = []) => {
+            let score = computeMatchScore(query, title);
+            artistNames.forEach(name => {
+                score = Math.max(score, computeMatchScore(query, name));
+            });
+            return score;
+        };
 
-    // Tracks
-    data.tracks?.items?.forEach((track: any) => {
-      const artists = track.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
-      const matchScore = scoreMatch(track.name, artists.map((a: any) => a.name));
+        // Tracks
+        data.tracks?.items?.forEach((track: any) => {
+            const artists = track.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
+            const matchScore = scoreMatch(track.name, artists.map((a: any) => a.name));
 
-      results.push({
-        type: "track",
-        id: track.id,
-        title: track.name || "",
-        album_cover_url: track.album?.images?.[0]?.url || "",
-        spotify_url: track.external_urls?.spotify || "",
-        album: track.album?.name || "",
-        release_date: track.album?.release_date || "",
-        popularity: track.popularity || 0,
-        artists,
-        matchScore,
-      });
-    });
+            results.push({
+                type: "track",
+                id: track.id,
+                title: track.name || "",
+                album_cover_url: track.album?.images?.[0]?.url || "",
+                spotify_url: track.external_urls?.spotify || "",
+                album: track.album?.name || "",
+                release_date: track.album?.release_date || "",
+                popularity: track.popularity || 0,
+                artists,
+                matchScore,
+            });
+        });
 
-    // Albums
-    data.albums?.items?.forEach((album: any) => {
-      const artists = album.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
-      const matchScore = scoreMatch(album.name, artists.map((a: any) => a.name));
+        // Albums
+        data.albums?.items?.forEach((album: any) => {
+            const artists = album.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
+            const matchScore = scoreMatch(album.name, artists.map((a: any) => a.name));
 
-      results.push({
-        type: "album",
-        id: album.id,
-        title: album.name || "",
-        album_cover_url: album.images?.[0]?.url || "",
-        spotify_url: album.external_urls?.spotify || "",
-        release_date: album.release_date || "",
-        total_tracks: album.total_tracks || 0,
-        artists,
-        popularity: album.popularity || 0,
-        matchScore,
-      });
-    });
+            results.push({
+                type: "album",
+                id: album.id,
+                title: album.name || "",
+                album_cover_url: album.images?.[0]?.url || "",
+                spotify_url: album.external_urls?.spotify || "",
+                release_date: album.release_date || "",
+                total_tracks: album.total_tracks || 0,
+                artists,
+                popularity: album.popularity || 0,
+                matchScore,
+            });
+        });
 
-    // Artists
-    data.artists?.items?.forEach((artist: any) => {
-      const matchScore = scoreMatch(artist.name);
+        // Artists
+        data.artists?.items?.forEach((artist: any) => {
+            const matchScore = scoreMatch(artist.name);
 
-      results.push({
-        type: "artist",
-        id: artist.id,
-        name: artist.name || "",
-        image_url: artist.images?.[0]?.url || "",
-        spotify_url: artist.external_urls?.spotify || "",
-        followers: artist.followers?.total || 0,
-        genres: artist.genres || [],
-        popularity: artist.popularity || 0,
-        matchScore,
-      });
-    });
-    
-    const unsorted =  [...results];
+            results.push({
+                type: "artist",
+                id: artist.id,
+                name: artist.name || "",
+                image_url: artist.images?.[0]?.url || "",
+                spotify_url: artist.external_urls?.spotify || "",
+                followers: artist.followers?.total || 0,
+                genres: artist.genres || [],
+                popularity: artist.popularity || 0,
+                matchScore,
+            });
+        });
 
-    results.sort(
-      (a, b) =>
-        (b.matchScore * 0.9 + (b.popularity || 0) * 0.1) -
-        (a.matchScore * 0.9 + (a.popularity || 0) * 0.1)
-    );
+        const unsorted = [...results];
 
-    return {sorted: results, unsorted: unsorted};
-  } catch (err) {
-    console.error("Error searching Spotify:", err);
-    return {sorted: [], unsorted: []};
-  }
+        results.sort(
+            (a, b) =>
+                (b.matchScore * 0.9 + (b.popularity || 0) * 0.1) -
+                (a.matchScore * 0.9 + (a.popularity || 0) * 0.1)
+        );
+
+        return { sorted: results, unsorted: unsorted };
+    } catch (err) {
+        console.error("Error searching Spotify:", err);
+        return { sorted: [], unsorted: [] };
+    }
 }
 
 export async function SpotifyTrackById(songId: string, token: string) {
@@ -333,5 +335,76 @@ export async function SpotifyAlbumById(albumbId: string, token: string) {
     } catch (error) {
         console.error("Error searching song in Spotify:", error);
         return null
+    }
+}
+
+
+export async function getArtistDiscographyFromSpotify(
+    artistId: string,
+    token: string
+): Promise<AlbumDetails[]> {
+    try {
+        const albums: SpotifyAlbum[] = [];
+        let nextUrl: string | null = `${SPOTIFY_API_BASE_URL}/artists/${artistId}/albums?include_groups=album,single&limit=50`;
+
+        // Fetch albums (paginated)
+        while (nextUrl) {
+            const response = await fetch(nextUrl, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+
+            if (data.items?.length) {
+                albums.push(...data.items);
+            }
+
+            nextUrl = data.next;
+        }
+
+        // Remove duplicates by name + release date
+        const uniqueMap: Record<string, SpotifyAlbum> = {};
+        albums.forEach((album) => {
+            const key = `${album.name}-${album.release_date}`;
+            if (!uniqueMap[key]) uniqueMap[key] = album;
+        });
+
+        const uniqueAlbums = Object.values(uniqueMap);
+
+        // Fetch tracks for each album
+        const albumDetails: AlbumDetails[] = [];
+
+        for (const album of uniqueAlbums) {
+            const resp = await fetch(`${SPOTIFY_API_BASE_URL}/albums/${album.id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const full: SpotifyAlbumWithTracks = await resp.json();
+
+            const formattedTracks: Song[] = full.tracks.items.map((track) => ({
+                songId: track.id,
+                title: track.name,
+                album: full.name,
+                album_cover_url: full.images?.[0]?.url ?? "",
+                release_date: full.release_date,
+                popularity: track.popularity ?? 0,
+                spotify_url: track.external_urls.spotify,
+            }));
+
+            albumDetails.push({
+                albumId: full.id,
+                title: full.name,
+                spotify_url: full.external_urls.spotify,
+                album_cover_url: full.images?.[0]?.url ?? "",
+                release_date: full.release_date,
+                artists: full.artists, // already typed
+                tracks: formattedTracks,
+                reviews: [], // ready for DB insertion later
+            });
+        }
+
+        return albumDetails;
+    } catch (error) {
+        console.error("Error fetching full discography:", error);
+        return [];
     }
 }

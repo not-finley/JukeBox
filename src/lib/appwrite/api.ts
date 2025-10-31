@@ -601,7 +601,8 @@ export async function getArtistDetailsById(artistId: string): Promise<ArtistDeta
                 album_cover_url: a.album.album_cover_url,
                 release_date: a.album.release_date,
                 tracks: [],
-                artists: []
+                artists: [],
+                album_type: a.album.album_type
             }))
         };
 
@@ -670,6 +671,7 @@ export async function getArtistDiscographyById(artistId: string): Promise<AlbumD
                 tracks,
                 artists: [],
                 reviews: [],
+                album_type: album.album_type
             };
         });
 
@@ -680,6 +682,120 @@ export async function getArtistDiscographyById(artistId: string): Promise<AlbumD
     }
 }
 
+export async function addFullDiscography(albums: AlbumDetails[]) {
+    console.log("Adding full discography to DB:", albums);
+    try {
+        if (albums.length === 0) return;
+
+        // ----- BATCH INSERT ALBUMS -----
+        const albumRows = albums.map(a => ({
+            album_id: a.albumId,
+            title: a.title,
+            spotify_url: a.spotify_url,
+            album_cover_url: a.album_cover_url,
+            release_date: normalizeReleaseDate(a.release_date),
+            total_tracks: a.tracks.length,
+            album_type: a.album_type,
+            fully_loaded: true
+        }));
+
+        await supabase
+            .from("albums")
+            .upsert(albumRows, { ignoreDuplicates: true });
+
+        // ----- BATCH INSERT ARTISTS -----
+        const allArtists = [];
+        albums.forEach(a => {
+            a.artists.forEach(ar => {
+                allArtists.push({
+                    artist_id: ar.id,
+                    name: ar.name,
+                    spotify_url: ar.external_urls.spotify
+                });
+            });
+        });
+
+        const { error: artistInsertError } = await supabase
+            .from("artists")
+            .upsert(allArtists, { ignoreDuplicates: true });
+
+        if (artistInsertError) throw artistInsertError;
+        // ----- LINK ALBUM ARTISTS -----
+        const albumArtistLinks = [];
+        albums.forEach(a => {
+            a.artists.forEach(ar => {
+                albumArtistLinks.push({
+                    album_id: a.albumId,
+                    artist_id: ar.id
+                });
+            });
+        });
+
+        const { error: albumInsertError } = await supabase
+            .from("artistalbum")
+            .upsert(albumArtistLinks, { ignoreDuplicates: true });
+
+        if (albumInsertError) throw albumInsertError;
+
+        // ----- BATCH INSERT SONGS -----
+        const allSongs = [];
+        albums.forEach(a => {
+            a.tracks.forEach(s => {
+                allSongs.push({
+                    song_id: s.songId,
+                    album_id: a.albumId,
+                    title: s.title,
+                    spotify_url: s.spotify_url,
+                    pop: s.popularity
+                });
+            });
+        });
+
+        const { error: songInsertError } = await supabase
+            .from("songs")
+            .upsert(allSongs, { ignoreDuplicates: true });
+
+
+        if (songInsertError) throw songInsertError;
+
+        // ----- LINK SONG ARTISTS -----
+        const songArtistLinks = [];
+        albums.forEach(a => {
+            a.tracks.forEach(s => {
+                s.artists?.forEach(ar => {
+                    songArtistLinks.push({
+                        song_id: s.songId,
+                        artist_id: ar.id
+                    });
+                });
+            });
+        });
+
+        if (songArtistLinks.length > 0) {
+            const { error: artistLinkInsertError } = await supabase
+                .from("artistsongs")
+                .upsert(songArtistLinks, { ignoreDuplicates: true });
+            if (artistLinkInsertError) throw artistLinkInsertError;
+        }
+
+        console.log(`✅ Added ${albums.length} albums + tracks to DB`);
+    } catch (error) {
+        console.error("❌ Error inserting discography:", error);
+        throw error;
+    }
+}
+
+export async function markDiscographyLoaded(artistId: string) {
+    try {
+        const { error } = await supabase
+            .from("artists")
+            .update({ discography_loaded: true })
+            .eq("artist_id", artistId);
+        if (error) throw error;
+    } catch (error) {
+        console.error("Failed to mark discography as loaded:", error);
+    }
+}
 
 export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails | null> {
     try {
@@ -1063,7 +1179,8 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
                     album_cover_url: album.images[0]?.url,
                     release_date: normalizeReleaseDate(album.release_date),
                     total_tracks: album.total_tracks,
-                    fully_loaded: true
+                    fully_loaded: true,
+                    album_type: album.album_type
                 }]);
             if (albumError) throw albumError;
         } else if (existingAlbum.fully_loaded === true) {
@@ -1077,7 +1194,8 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
                     album_cover_url: album.images[0]?.url,
                     release_date: normalizeReleaseDate(album.release_date),
                     total_tracks: album.total_tracks,
-                    fully_loaded: true
+                    fully_loaded: true, 
+                    album_type: album.album_type
                 }])
                 .eq("album_id", album.id);
             if (albumUpdate) throw albumUpdate;

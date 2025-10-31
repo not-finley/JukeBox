@@ -45,20 +45,24 @@ const Artist = () => {
   };
 
   const fetchArtist = async () => {
-    try {
-      const fetchedArtist = await getArtistDetailsById(id || "");
-      if (!fetchedArtist) await addArtist();
-      else {
-        fetchedArtist.albums.sort((a, b) =>
+  try {
+    const fetchedArtist = await getArtistDetailsById(id || "");
+    if (!fetchedArtist) {
+      await addArtist();
+    } else {
+      fetchedArtist.albums = fetchedArtist.albums
+        .sort((a, b) =>
           new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
-        );
-        setArtist(fetchedArtist);
-      }
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching artist:", error);
+        )
+        .filter(album => album.album_type === "album");
+
+      setArtist(fetchedArtist);
     }
-  };
+    setLoading(false);
+  } catch (error) {
+    console.error("Error fetching artist:", error);
+  }
+};
 
   useEffect(() => { if (id) fetchArtist(); }, [id]);
 

@@ -223,6 +223,35 @@ const Search = () => {
             </section>
           )}
 
+          {/* Users Row */}
+          {users.length === 0 && (
+            <section>
+              <h2 className="text-xl font-bold text-white mb-2">Users</h2>
+              <p className="text-gray-400 text-center">No users found.</p>
+            </section>
+          )}
+          {users.length > 0 && (
+            <section>
+              <h2 className="text-xl font-bold text-white mb-2">Users</h2>
+              <div className=" overflow-x-auto">
+                <div className="flex gap-4">
+                  {users.map((user) => (
+                    <Link key={user.id} to={`/profile/${user.id}`} className="flex-none w-36">
+                      <div className="flex flex-col items-center gap-2 hover:scale-105 transition">
+                        <img
+                          src={user.avatar_url}
+                          alt={user.username}
+                          className="w-32 h-32 object-cover rounded-full"
+                        />
+                        <p className="text-white text-sm text-center">{user.username}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
         </div>
 
         {/* smaller screens */}
@@ -363,6 +392,9 @@ const Search = () => {
                 </Link>
               ))}
             </div>
+          )}
+          {state === "Users" && users.length === 0 && (
+            <p className="text-gray-400 text-center">No users found.</p>
           )}
           {state === "Users" && users.length > 0 && (
             <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
