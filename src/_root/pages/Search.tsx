@@ -224,7 +224,7 @@ const Search = () => {
           )}
 
           {/* Users Row */}
-          {users.length === 0 && (
+          {users.length === 0 && all.length > 0 &&(
             <section>
               <h2 className="text-xl font-bold text-white mb-2">Users</h2>
               <p className="text-gray-400 text-center">No users found.</p>
