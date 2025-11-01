@@ -14,12 +14,15 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { SigninValidation } from "@/lib/validation";
 import { z } from "zod";
-import { useSignInAccount } from "@/lib/react-query/queriesAndMutations"; 
+import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 
 
 const SigninForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof SigninValidation>>({
     resolver: zodResolver(SigninValidation),
@@ -81,9 +84,22 @@ const SigninForm = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" className="shad-input" {...field} />
-                </FormControl>
+                <div className="relative">
+                  <FormControl>
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      className="shad-input pr-10"
+                      {...field}
+                    />
+                  </FormControl>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-light-3 hover:text-light-1"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
