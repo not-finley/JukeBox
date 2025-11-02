@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const u = session.user;
 
         // Fetch additional info from users table
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from("users")
           .select("bio")
           .eq("user_id", u.id)
