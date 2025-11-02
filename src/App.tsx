@@ -15,6 +15,8 @@ import TopTracks from './_root/pages/TopTracks';
 import LibraryReviews from './_root/pages/LibraryReviews';
 import LibraryRatings from './_root/pages/LibraryRatings';
 import LibraryListened from './_root/pages/LibraryListened';
+import ResetPasswordPage from './_auth/ResetPage';
+import ForgotPasswordPage from './_auth/ForgotPasswordPage';
 
 const App = () => {
   return (
@@ -27,6 +29,8 @@ const App = () => {
             <Route element={<AuthLayout />}>
                 <Route path="/sign-up" element={<SignupForm />}/>
                 <Route path="/sign-in" element={<SigninForm />}/>
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
             </Route>
             {/* private routes */}
             <Route element={<RootLayout />}>

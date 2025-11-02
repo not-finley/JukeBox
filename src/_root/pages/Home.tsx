@@ -105,7 +105,7 @@ const Home = () => {
     return (
       <div className="common-container flex flex-col items-center justify-center text-center text-gray-300 min-h-[80vh]">
         <img
-          src="/images/empty-state.svg"
+          src="/assets/icons/empty-state.svg"
           alt="Empty feed"
           className="w-32 h-32 mb-4 opacity-70"
         />

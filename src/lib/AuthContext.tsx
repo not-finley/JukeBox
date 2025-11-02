@@ -55,34 +55,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from("followers")
           .select("follower_id", { count: 'exact' })
           .eq("following_id", u.id);
-          
+
         const { data: followingData, error: followingError } = await supabase
           .from("followers")
           .select("following_id", { count: 'exact' })
           .eq("follower_id", u.id);
         if (followersError) console.error("Error fetching followers count:", followersError);
         if (followingError) console.error("Error fetching following count:", followingError);
-        
+
         const followersCount = followersData ? followersData.length : 0;
         const followingCount = followingData ? followingData.length : 0;
 
 
-        const { data: signedData, error: signedError } = await supabase.storage
-          .from("profiles")
-          .createSignedUrl(`${u.id}/profile.jpg`, 60 * 60 * 2); // 2 hours
+        let imageUrl = u.user_metadata?.imageUrl ?? '';
 
-        if (signedError) {
-          console.error("Error creating signed URL:", signedError);
+        try {
+          const { data: signedData, error: signedError } = await supabase.storage
+            .from("profiles")
+            .createSignedUrl(`${u.id}/profile.jpg`, 60 * 60 * 2);
+
+          if (signedError) {
+            console.warn(`No profile image for user ${u.id}, using default.`);
+          } else {
+            imageUrl = signedData?.signedUrl ?? imageUrl;
+          }
+        } catch (err) {
+          console.warn(`Error creating signed URL for user ${u.id}:`, err);
         }
 
-        if (userError) throw userError;
-
+     
         setUser({
           accountId: u.id,
           name: u.user_metadata?.name ?? '',
           username: u.user_metadata?.username ?? '',
           email: u.email ?? '',
-          imageUrl : signedData?.signedUrl ?? u.user_metadata?.imageUrl ?? '',
+          imageUrl: imageUrl ?? '',
           bio: userData?.bio ?? u.user_metadata?.bio ?? '',
           followersCount,
           followingCount,

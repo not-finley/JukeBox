@@ -114,12 +114,21 @@ const SigninForm = () => {
             )}
           </Button>
           <p className="text-small-regular text-light-2 text-center mt-2">
-            Don't have an account?
+            Don't have an account? 
             <Link
               to="/sign-up"
               className="text-emerald-500 text-small-semibold ml-1 underline hover:text-emerald-400"
             >
               Sign up
+            </Link>
+          </p>
+          <p className="text-small-regular text-light-2 text-center -mt-2">
+            Forgot your password? 
+            <Link
+              to="/forgot-password"
+              className="text-emerald-500 text-small-semibold ml-1 underline hover:text-emerald-400"
+            >
+              Forgot password
             </Link>
           </p>
         </form>
