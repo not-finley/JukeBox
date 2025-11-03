@@ -402,7 +402,23 @@ export async function addReviewSong(songId: string, userId: string, reviewText: 
             .select()
             .single();
 
+        const { data: getListen, error: getListenError } = await supabase
+            .from("song_listens")
+            .select("*")
+            .eq("song_id", songId)
+            .eq("user_id", userId)
+
+        if (getListenError) throw getListenError;
+
+        if (getListen.length === 0) {
+            const { error: listenError } = await supabase
+                .from("song_listens")
+                .insert({ song_id: songId, user_id: userId, listen_date: isoString })
+            if (listenError) throw listenError;
+        }
         if (addReview) throw addReview;
+
+        if (!review) throw new Error("Failed to add review");
 
         return review;
     } catch (error) {
@@ -431,7 +447,24 @@ export async function addReviewAlbum(albumId: string, userId: string, reviewText
             .select()
             .single();
 
+        const { data: getListen, error: getListenError } = await supabase
+            .from("album_listens")
+            .select("*")
+            .eq("album_id", albumId)
+            .eq("user_id", userId)
+
+        if (getListenError) throw getListenError;
+
+        if (getListen.length === 0) {
+            const { error: listenError } = await supabase
+                .from("album_listens")
+                .insert({ album_id: albumId, user_id: userId, listen_date: isoString })
+            if (listenError) throw listenError;
+        }
+
         if (addReview) throw addReview;
+
+        if (!review) throw new Error("Failed to add review");
 
         return review;
     } catch (error) {
@@ -704,7 +737,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
             .upsert(albumRows, { ignoreDuplicates: true });
 
         // ----- BATCH INSERT ARTISTS -----
-        const allArtists:any = [];
+        const allArtists: any = [];
         albums.forEach(a => {
             a.artists.forEach(ar => {
                 allArtists.push({
@@ -721,7 +754,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
 
         if (artistInsertError) throw artistInsertError;
         // ----- LINK ALBUM ARTISTS -----
-        const albumArtistLinks:any = [];
+        const albumArtistLinks: any = [];
         albums.forEach(a => {
             a.artists.forEach(ar => {
                 albumArtistLinks.push({
@@ -759,7 +792,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
         if (songInsertError) throw songInsertError;
 
         // ----- LINK SONG ARTISTS -----
-        const songArtistLinks:any = [];
+        const songArtistLinks: any = [];
         albums.forEach(a => {
             a.tracks.forEach(s => {
                 s.artists?.forEach(ar => {
@@ -860,8 +893,8 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                 title: s.title,
                 album: albumData.title,
                 album_id: albumData.album_id,
-                reviews: [], 
-                ratings: [], 
+                reviews: [],
+                ratings: [],
                 artists: [],
                 spotify_url: s.spotify_url,
                 album_cover_url: albumData.album_cover_url,
@@ -1199,7 +1232,7 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
                     album_cover_url: album.images[0]?.url,
                     release_date: normalizeReleaseDate(album.release_date),
                     total_tracks: album.total_tracks,
-                    fully_loaded: true, 
+                    fully_loaded: true,
                     album_type: album.album_type
                 }])
                 .eq("album_id", album.id);
@@ -1380,6 +1413,21 @@ export async function addUpdateRatingSong(songId: string, userId: string, rating
                 rating: rating
             })
 
+        const { data: getListen, error: getListenError } = await supabase
+            .from("song_listens")
+            .select("*")
+            .eq("song_id", songId)
+            .eq("user_id", userId)
+
+        if (getListenError) throw getListenError;
+
+        if (getListen.length === 0) {
+            const { error: listenError } = await supabase
+                .from("song_listens")
+                .insert({ song_id: songId, user_id: userId, listen_date: isoString })
+            if (listenError) throw listenError;
+        }
+
         if (addListen) throw addListen;
 
     } catch (error) {
@@ -1454,7 +1502,14 @@ export async function addUpdateRatingAlbum(albumId: string, userId: string, rati
                 rating: rating
             })
 
+        const { data: updateListen, error: listenError } = await supabase
+            .from("album_listens")
+            .upsert({ album_id: albumId, user_id: userId, listen_date: isoString })
+
+        if (listenError) throw listenError;
         if (addListen) throw addListen;
+
+        if (!updateListen) throw new Error("Failed to update listen time");
 
     } catch (error) {
         console.log(error);
@@ -1670,6 +1725,7 @@ export async function getRatedWithLimit(userId: string, limit: number): Promise<
         const { data: songsRated, error: songsError } = await supabase
             .from("song_rating")
             .select(`
+        rating,
         rating_date,
         song_id,
         songs (
@@ -1686,13 +1742,14 @@ export async function getRatedWithLimit(userId: string, limit: number): Promise<
         const { data: albumsRated, error: albumsError } = await supabase
             .from("album_rating")
             .select(`
-        rating_date,
-        album_id,
-        albums (
-          title,
-          album_cover_url
-        )
-      `)
+                rating,
+                rating_date,
+                album_id,
+                albums (
+                    title,
+                    album_cover_url
+                )
+            `)
             .eq("user_id", userId);
 
         if (albumsError) throw albumsError;
@@ -1704,7 +1761,7 @@ export async function getRatedWithLimit(userId: string, limit: number): Promise<
                 rating: s.rating,
                 title: s.songs?.title ?? "Unknown Song",
                 album_cover_url: s.songs?.albums?.album_cover_url ?? null,
-                rating_date: s.listen_date,
+                rating_date: s.rating_date,
             })) ?? []),
             ...(albumsRated?.map((a: any) => ({
                 type: "album" as const,
@@ -1712,9 +1769,10 @@ export async function getRatedWithLimit(userId: string, limit: number): Promise<
                 rating: a.rating,
                 title: a.albums?.title ?? "Unknown Album",
                 album_cover_url: a.albums?.album_cover_url ?? null,
-                rating_date: a.listen_date,
+                rating_date: a.rating_date,
             })) ?? []),
         ];
+
 
         return combined.sort(
             (a, b) =>

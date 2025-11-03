@@ -53,6 +53,7 @@ const SongDetailsSection = () => {
     } else {
       setRating(value);
       await addUpdateRatingSong(id ? id : '', user.accountId, value);
+      setListened(true);
     }
     
     songGlobalRating();

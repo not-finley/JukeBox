@@ -52,6 +52,7 @@ const Album = () => {
         } else {
             setRating(value);
             await addUpdateRatingAlbum(id ? id : '', user.accountId, value);
+            setListened(true);
         }
 
         fetchGlobalRaiting();

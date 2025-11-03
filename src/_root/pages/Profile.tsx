@@ -227,8 +227,8 @@ const ProfileComponent = ({
             <button
               key={tab}
               className={`px-4 py-2 rounded-t-md font-semibold text-sm md:text-base transition-colors duration-200 focus:outline-none ${activeTab === tab
-                ? "bg-gray-800 text-indigo-300 border-b-2 border-indigo-400"
-                : "text-gray-400 hover:text-indigo-200"
+                ? "bg-gray-800 text-emerald-300 border-b-2 border-emerald-400"
+                : "text-gray-400 hover:text-emerald-200"
                 }`}
               onClick={() => setActiveTab(tab)}
             >
