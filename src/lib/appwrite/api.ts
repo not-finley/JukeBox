@@ -28,7 +28,7 @@ const getProfileUrl = async (userId: string): Promise<string> => {
         }
     }
     // Fallback placeholder
-    return "/assets/default-avatar.png";
+    return "/assets/icons/profile-placeholder.svg";
 };
 
 

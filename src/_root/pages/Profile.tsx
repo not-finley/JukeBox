@@ -5,7 +5,6 @@ import { getListened, getRated, getReviewed, getUserById, updateUser, addFollow,
 import { Listened, RatingGeneral, Review } from "@/types";
 import { IUser } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
-import defaultAvatar from "/assets/icons/profile-placeholder.svg";
 import { isMobile, isTablet } from "react-device-detect";
 
 
@@ -46,11 +45,11 @@ const ProfileComponent = ({
   const { setUser } = useUserContext();
   const [bio, setBio] = useState(profileuser.bio || "");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState(profileuser.imageUrl || defaultAvatar);
+  const [previewUrl, setPreviewUrl] = useState(profileuser.imageUrl);
   const [isFollowing, setIsFollowing] = useState(following);
 
   useEffect(() => {
-    setPreviewUrl(profileuser.imageUrl || defaultAvatar);
+    setPreviewUrl(profileuser.imageUrl);
     setBio(profileuser.bio || "");
   }, [profileuser]);
 
