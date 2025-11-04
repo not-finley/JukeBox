@@ -277,4 +277,5 @@ export type INavLink = {
   username: string;
   name: string;
   avatar_url: string;
+  mutual_count?: number;
   }

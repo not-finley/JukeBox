@@ -120,7 +120,7 @@ const ProfileComponent = ({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto shadow rounded-2xl p-4 md:p-8 border border-gray-800 flex flex-col lg:flex-row gap-8">
+    <div className="w-full max-w-6xl mx-auto shadow rounded-2xl p-4 md:p-8 border border-gray-800 flex flex-col lg:flex-row gap-8 ">
       {/* Left: Avatar, Stats, Bio */}
       <div className="flex flex-col items-center w-full lg:max-w-xs flex-shrink-0">
         <img

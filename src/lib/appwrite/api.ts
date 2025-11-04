@@ -2243,3 +2243,44 @@ export async function getRecentFollowedActivities(
         return [];
     }
 }
+
+
+export async function getFollowerSuggestions(userId: string) {
+    if (!userId) return [];
+
+    const { data: suggestions, error: sugError } = await supabase
+        .rpc('get_top_mutual_suggestions', { target_user_id: userId });
+
+    if (sugError) throw sugError;
+    if (!suggestions || suggestions.length === 0) return [];
+
+    const ids = suggestions.map((s:any) => s.suggested_user);
+
+    // Fetch profiles in one request
+    const { data: profiles, error: profError } = await supabase
+        .from('users')
+        .select('user_id, username, name')
+        .in('user_id', ids);
+
+    if (profError) throw profError;
+
+    const avatarPromises = await Promise.all(
+        ids.map(async (id : string) => ({
+            id,
+            avatar_url: await getProfileUrl(id),
+        }))
+    );
+    const avatarMap = Object.fromEntries(avatarPromises.map((a) => [a.id, a.avatar_url]));
+
+    const profilesWithAvatars = profiles.map((a) => ({
+        ...a,
+        id: a.user_id,
+        avatar_url: avatarMap[a.user_id] || "/assets/default-avatar.png",
+    }));
+
+    // merge counts with profiles
+    return suggestions.map((s:any) => ({
+        mutual_count: s.mutual_count,
+        ...profilesWithAvatars.find(p => p.user_id === s.suggested_user)
+    }));
+}
