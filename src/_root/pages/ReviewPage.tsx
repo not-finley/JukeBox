@@ -124,7 +124,7 @@ export default function ReviewPage() {
 
           <Link
             to={
-              review.type === "song"
+              review.type == "song"
                 ? `/song/${review.id}`
                 : `/album/${review.id}`
             }
@@ -138,7 +138,7 @@ export default function ReviewPage() {
             <div>
               <p className="text-white font-semibold">{review.name}</p>
               <p className="text-gray-400 text-sm">
-                {review.targetType === "song" ? "Song" : "Album"}
+                {review.type == "song" ? "Song" : "Album"}
               </p>
             </div>
           </Link>

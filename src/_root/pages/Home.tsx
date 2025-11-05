@@ -173,7 +173,7 @@ const Home = () => {
           </div>
 
           {/* Top Navigation */}
-          <div className="flex gap-3 mb-6 w-full max-w-2xl">
+          <div className="flex gap-3 mb-6 max-w-2xl overflow-x-auto no-scrollbar py-2">
             {[
               { key: "all", label: "All" },
               { key: "review", label: "Reviews" },
@@ -216,7 +216,10 @@ const Home = () => {
                   })}
                 >
                   {/* User avatar */}
-                  <Link to={`/profile/${activity.userId}`}>
+                  <Link
+                    to={`/profile/${activity.userId}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <img
                       src={activity.profileUrl}
                       alt={activity.username}
@@ -229,12 +232,15 @@ const Home = () => {
                       <Link
                         to={`/profile/${activity.userId}`}
                         className="font-semibold hover:text-white"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {activity.username}
                       </Link>
+
                       <span className="text-gray-400 flex items-center gap-1">
                         {activityTypeToPastTense(activity.type)}
                       </span>
+
                       <Link
                         to={
                           activity.targetType === "song"
@@ -242,21 +248,18 @@ const Home = () => {
                             : `/album/${activity.targetId}`
                         }
                         className="hover:text-white font-medium"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {activity.targetName}
                       </Link>
                     </div>
 
-                    {/* Review text only if review */}
                     {activity.text && (
-                      <p className="text-gray-400 mt-2 italic">
-                        “{activity.text}”
-                      </p>
+                      <p className="text-gray-400 mt-2 italic">“{activity.text}”</p>
                     )}
 
-                    {/* Rating */}
                     {activity.rating && (
-                      <div className="flex items-center mt-1">
+                      <div className="flex items-center mt-1" onClick={(e) => e.stopPropagation()}>
                         {[...Array(5)].map((_, i) => (
                           <span
                             key={i}
@@ -274,7 +277,6 @@ const Home = () => {
                     </p>
                   </div>
 
-                  {/* Album cover */}
                   {activity.album_cover_url && (
                     <Link
                       to={
@@ -282,6 +284,7 @@ const Home = () => {
                           ? `/song/${activity.targetId}`
                           : `/album/${activity.targetId}`
                       }
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <img
                         src={activity.album_cover_url}

@@ -484,6 +484,7 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
         if (!reviewData) throw new Error("Review not found");
         let coverUrl = "";
         let name = "";
+        const reviewType: "song" | "album" = reviewData.song_id ? "song" : "album";
         if (reviewData.album_id) {
             const { data: album } = await supabase
                 .from("albums")
@@ -507,7 +508,7 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
             reviewId: reviewData.review_id,
             text: reviewData.review_text,
             id: reviewData.song_id ?? reviewData.album_id,
-            type: reviewData.reviewType,
+            type: reviewType,
             createdAt: reviewData.created_at,
             name: name,
             album_cover_url: coverUrl,
