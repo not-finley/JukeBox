@@ -293,6 +293,7 @@ const ProfileComponent = ({
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {reviews.map((review) => (
+                  <Link to={`/review/${review.reviewId}`}>
                   <div
                     key={review.reviewId}
                     className="flex items-center bg-gray-800 border border-gray-700 rounded-xl p-3 hover:bg-gray-750 transition-colors min-w-0"
@@ -339,6 +340,7 @@ const ProfileComponent = ({
                       </p>
                     </div>
                   </div>
+                  </Link>
                 ))}
               </div>
             ))}

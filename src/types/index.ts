@@ -224,7 +224,7 @@ export type INavLink = {
     text : string;
     creator : IUser;
     song: Song;
-    likes: string[];
+    likes: number;
     createdAt: number;
     updatedAt: number;
   }
@@ -234,7 +234,7 @@ export type INavLink = {
     text : string;
     creator : IUser;
     album: Album;
-    likes: string[];
+    likes: number;
     createdAt: number;
     updatedAt: number;
   }
@@ -246,22 +246,24 @@ export type INavLink = {
     name: string;
     album_cover_url: string | null;
     createdAt: number;
+    likes: number;
     type: "song" | "album";
+    creator?: IUser;
   }
   
   export type Activity = {      
     id: string;
-  userId: string;        
-  username: string;
-  profileUrl?: string;
-  type: "listen" | "review" | "rating";
-  targetType: "song" | "album"; 
-  targetId: string;
-  targetName: string;
-  album_cover_url: string | null;
-  date: string;
-  rating?: number;       
-  text?: string;        
+    userId: string;        
+    username: string;
+    profileUrl?: string;
+    type: "listen" | "review" | "rating";
+    targetType: "song" | "album"; 
+    targetId: string;
+    targetName: string;
+    album_cover_url: string | null;
+    date: string;
+    rating?: number;       
+    text?: string;        
 };
 
   export interface Listened {

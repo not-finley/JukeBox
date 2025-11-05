@@ -1,4 +1,4 @@
-import { ID } from 'appwrite';
+import { nanoid } from "nanoid";
 
 import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong, Activity, ISearchUser } from "@/types";
 import { account, appwriteConfig, databases } from './config';
@@ -384,7 +384,7 @@ export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
 
 
 export async function addReviewSong(songId: string, userId: string, reviewText: string) {
-    const id = ID.unique();
+    const id = nanoid();
     const now = new Date();
     const isoString = now.toISOString();
     try {
@@ -429,7 +429,7 @@ export async function addReviewSong(songId: string, userId: string, reviewText: 
 
 
 export async function addReviewAlbum(albumId: string, userId: string, reviewText: string) {
-    const id = ID.unique();
+    const id = nanoid();
     const now = new Date();
     const isoString = now.toISOString();
     try {
@@ -473,7 +473,109 @@ export async function addReviewAlbum(albumId: string, userId: string, reviewText
     }
 }
 
+export async function getReviewById(reviewId: string): Promise<Review | null> {
+    try {
+        const { data: reviewData, error: reviewError } = await supabase
+            .from("reviews")
+            .select("*, likes:reviewlikes(*), creator:users(*)")
+            .eq("review_id", reviewId)
+            .single();
+        if (reviewError) throw reviewError;
+        if (!reviewData) throw new Error("Review not found");
+        let coverUrl = "";
+        let name = "";
+        if (reviewData.album_id) {
+            const { data: album } = await supabase
+                .from("albums")
+                .select("*")
+                .eq("album_id", reviewData.album_id)
+                .single();
+            coverUrl = album?.album_cover_url ?? "";
+            name = album?.title ?? "";
+        } else if (reviewData.song_id) {
+            const { data: song } = await supabase
+                .from("songs")
+                .select("*, album:albums(album_cover_url)")
+                .eq("song_id", reviewData.song_id)
+                .single();
+            coverUrl = song?.album.album_cover_url ?? "";
+            name = song?.title ?? "";
+        }
 
+
+        return {
+            reviewId: reviewData.review_id,
+            text: reviewData.review_text,
+            id: reviewData.song_id ?? reviewData.album_id,
+            type: reviewData.reviewType,
+            createdAt: reviewData.created_at,
+            name: name,
+            album_cover_url: coverUrl,
+            likes: reviewData.likes.length,
+            creator: {
+                accountId: reviewData.creator.user_id,
+                name: reviewData.creator.name,
+                username: reviewData.creator.username,
+                email: reviewData.creator.email,
+                imageUrl: await getProfileUrl(reviewData.creator.user_id),
+                bio: reviewData.creator.bio ?? "",
+            }
+        };
+    } catch (error) {
+        console.error('Failed to fetch review:', error);
+        return null;
+    }
+}
+
+
+export async function addLikeToReview(reviewId: string, userId: string): Promise<boolean> {
+    const now = new Date();
+    const isoString = now.toISOString();
+    try {
+        const { error } = await supabase
+            .from("reviewlikes")
+            .insert({
+                review_id: reviewId,
+                user_id: userId,
+                like_date: isoString
+            });
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+}
+
+export async function removeLikeFromReview(reviewId: string, userId: string): Promise<boolean> {
+    try {
+        const { error } = await supabase
+            .from("reviewlikes")
+            .delete()
+            .eq("review_id", reviewId)
+            .eq("user_id", userId);
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+}
+
+export async function checkIfUserLikedReview(reviewId: string, userId: string): Promise<boolean> {
+    try {
+        const { data, error } = await supabase
+            .from("reviewlikes")
+            .select("*")
+            .eq("review_id", reviewId)
+            .eq("user_id", userId);
+        if (error) throw error;
+        return data.length > 0;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+}
 
 
 export async function getUserById(userId: string): Promise<IUser | null> {
@@ -558,7 +660,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
         // Fetch reviews
         const { data: reviews, error: reviewError } = await supabase
             .from("reviews")
-            .select("*, creator:users(*)")
+            .select("*, creator:users(*), likes:reviewlikes(*)")
             .eq("song_id", songId)
             .order("created_at", { ascending: false });
 
@@ -589,9 +691,10 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
                         email: r.creator.email,
                         imageUrl: await getProfileUrl(r.creator.user_id),
                         bio: r.creator.bio ?? "",
+
                     },
                     song: songData,
-                    likes: [],
+                    likes: r.likes.length,
                     createdAt: r.created_at,
                     updatedAt: r.created_at,
                 }))
@@ -876,7 +979,7 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
         // fetch album reviews
         const { data: reviews, error: reviewError } = await supabase
             .from("reviews")
-            .select("*, creator:users(*)")
+            .select("*, creator:users(*), likes:reviewlikes(*)")
             .eq("album_id", albumId)
             .order("created_at", { ascending: false });
 
@@ -930,7 +1033,7 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                             bio: r.creator.bio ?? ""
                         },
                         album: albumData,
-                        likes: [],
+                        likes: r.likes.length,
                         createdAt: r.created_at,
                         updatedAt: r.created_at,
                     };
@@ -1905,6 +2008,7 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
                     type: reviewType,
                     createdAt: r.created_at,
                     album_cover_url: coverUrl,
+                    likes: 0,
                 };
             })
         );
@@ -1968,6 +2072,7 @@ export async function getReviewed(userId: string): Promise<Review[]> {
                     type: reviewType,
                     createdAt: r.created_at,
                     album_cover_url: coverUrl,
+                    likes: 0
                 };
             })
         );
@@ -2159,7 +2264,7 @@ export async function getRecentFollowedActivities(
             const albumObj = first(r.album);
             const songAlbum = first(songObj?.albums);
             activities.push({
-                id: `review-${r.review_id}`,
+                id: `${r.review_id}`,
                 userId: r.user_id,
                 username: userObj?.username ?? "Unknown",
                 type: "review",
@@ -2254,7 +2359,7 @@ export async function getFollowerSuggestions(userId: string) {
     if (sugError) throw sugError;
     if (!suggestions || suggestions.length === 0) return [];
 
-    const ids = suggestions.map((s:any) => s.suggested_user);
+    const ids = suggestions.map((s: any) => s.suggested_user);
 
     // Fetch profiles in one request
     const { data: profiles, error: profError } = await supabase
@@ -2265,7 +2370,7 @@ export async function getFollowerSuggestions(userId: string) {
     if (profError) throw profError;
 
     const avatarPromises = await Promise.all(
-        ids.map(async (id : string) => ({
+        ids.map(async (id: string) => ({
             id,
             avatar_url: await getProfileUrl(id),
         }))
@@ -2279,7 +2384,7 @@ export async function getFollowerSuggestions(userId: string) {
     }));
 
     // merge counts with profiles
-    return suggestions.map((s:any) => ({
+    return suggestions.map((s: any) => ({
         mutual_count: s.mutual_count,
         ...profilesWithAvatars.find(p => p.user_id === s.suggested_user)
     }));

@@ -14,6 +14,7 @@ const ReviewItemLibrary = ({ review }: ReviewItemProps) => {
     const displayText = !expanded && isLong ? review.text.slice(0, 400) + "..." : review.text;
 
     return (
+        <Link to={`/review/${review.reviewId}`}>
         <li className="review-container flex flex-col sm:flex-row items-start gap-4 w-full max-w-screen-md bg-gray-800 border border-gray-700 rounded-lg p-4 hover:bg-gray-750 transition-colors">
 
             {/* Album/Song cover + title */}
@@ -53,6 +54,7 @@ const ReviewItemLibrary = ({ review }: ReviewItemProps) => {
                 </p>
             </div>
         </li>
+        </Link>
     );
 };
 

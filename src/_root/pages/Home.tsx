@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Activity, ISearchUser } from "@/types";
 import { useUserContext } from "@/lib/AuthContext";
@@ -24,6 +24,7 @@ const Home = () => {
   const loadingRef = useRef(false);
   const hasMoreRef = useRef(hasMore);
   useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+  const navigate = useNavigate();
 
 
   const handleFollow = async (userId: string) => {
@@ -202,84 +203,97 @@ const Home = () => {
 
           {/* Activity Feed */}
           <div className="flex flex-col gap-6 w-full max-w-2xl mt-2">
-            {filteredFeed.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-start gap-4 border-b border-gray-700 pb-4 animate-fadeIn"
-              >
-                <Link to={`/profile/${activity.userId}`}>
-                  <img
-                    src={activity.profileUrl}
-                    alt={activity.username}
-                    className="w-12 h-12 rounded-full object-cover hover:opacity-90 transition"
-                  />
-                </Link>
+            {filteredFeed.map((activity) => {
+              const isReview = activity.type === "review";
 
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-center gap-1 text-gray-300">
-                    <Link
-                      to={`/profile/${activity.userId}`}
-                      className="font-semibold hover:text-white"
-                    >
-                      {activity.username}
-                    </Link>
-                    <span className="text-gray-400 flex items-center gap-1">
-                      {activityTypeToPastTense(activity.type)}
-                    </span>
+              return (
+                <div
+                  key={activity.id}
+                  className={`flex items-start gap-4 border-b border-gray-700 pb-4 animate-fadeIn ${isReview ? "cursor-pointer hover:bg-gray-900/40 transition" : ""
+                    }`}
+                  {...(isReview && {
+                    onClick: () => navigate(`/review/${activity.id}`),
+                  })}
+                >
+                  {/* User avatar */}
+                  <Link to={`/profile/${activity.userId}`}>
+                    <img
+                      src={activity.profileUrl}
+                      alt={activity.username}
+                      className="w-12 h-12 rounded-full object-cover hover:opacity-90 transition"
+                    />
+                  </Link>
+
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-1 text-gray-300">
+                      <Link
+                        to={`/profile/${activity.userId}`}
+                        className="font-semibold hover:text-white"
+                      >
+                        {activity.username}
+                      </Link>
+                      <span className="text-gray-400 flex items-center gap-1">
+                        {activityTypeToPastTense(activity.type)}
+                      </span>
+                      <Link
+                        to={
+                          activity.targetType === "song"
+                            ? `/song/${activity.targetId}`
+                            : `/album/${activity.targetId}`
+                        }
+                        className="hover:text-white font-medium"
+                      >
+                        {activity.targetName}
+                      </Link>
+                    </div>
+
+                    {/* Review text only if review */}
+                    {activity.text && (
+                      <p className="text-gray-400 mt-2 italic">
+                        “{activity.text}”
+                      </p>
+                    )}
+
+                    {/* Rating */}
+                    {activity.rating && (
+                      <div className="flex items-center mt-1">
+                        {[...Array(5)].map((_, i) => (
+                          <span
+                            key={i}
+                            className={`text-sm ${i < (activity.rating || 0) ? "text-yellow-400" : "text-gray-500"
+                              }`}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <p className="text-gray-500 text-sm mt-1">
+                      {timeAgo(activity.date)}
+                    </p>
+                  </div>
+
+                  {/* Album cover */}
+                  {activity.album_cover_url && (
                     <Link
                       to={
                         activity.targetType === "song"
                           ? `/song/${activity.targetId}`
                           : `/album/${activity.targetId}`
                       }
-                      className="hover:text-white font-medium"
                     >
-                      {activity.targetName}
+                      <img
+                        src={activity.album_cover_url}
+                        alt={activity.targetName}
+                        className="w-20 h-20 rounded-md object-cover hover:opacity-90 transition"
+                      />
                     </Link>
-                  </div>
-
-                  {activity.text && (
-                    <p className="text-gray-400 mt-2 italic">“{activity.text}”</p>
                   )}
-                  {activity.rating && (
-                    <div className="flex items-center mt-1">
-                      {[...Array(5)].map((_, i) => (
-                        <span
-                          key={i}
-                          className={`text-sm ${i < (activity.rating || 0)
-                            ? "text-yellow-400"
-                            : "text-gray-500"
-                            }`}
-                        >
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-gray-500 text-sm mt-1">
-                    {timeAgo(activity.date)}
-                  </p>
                 </div>
+              );
+            })}
 
-                {activity.album_cover_url && (
-                  <Link
-                    to={
-                      activity.targetType === "song"
-                        ? `/song/${activity.targetId}`
-                        : `/album/${activity.targetId}`
-                    }
-                  >
-                    <img
-                      src={activity.album_cover_url}
-                      alt={activity.targetName}
-                      className="w-20 h-20 rounded-md object-cover hover:opacity-90 transition"
-                    />
-                  </Link>
-                )}
-              </div>
-            ))}
-
-            {/* Infinite scroll sentinel */}
             <div ref={sentinelRef} className="h-32 flex justify-center items-center">
               {loadingMore && <LoaderMusic />}
               {!hasMore && (
