@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong, Activity, ISearchUser } from "@/types";
+import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong, Activity, ISearchUser } from "@/types";
 import { account, appwriteConfig, databases } from './config';
 import { supabase } from "@/lib/supabaseClient";
 
@@ -477,7 +477,19 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
     try {
         const { data: reviewData, error: reviewError } = await supabase
             .from("reviews")
-            .select("*, likes:reviewlikes(*), creator:users(*)")
+            .select(`
+                *,
+                likes:reviewlikes(*),
+                creator:users(*),
+                comments:reviewcomment(
+                comment_id,
+                parent_id,
+                content,
+                created_at,
+                updated_at,
+                user:users(*)
+                )
+            `)
             .eq("review_id", reviewId)
             .single();
         if (reviewError) throw reviewError;
@@ -503,6 +515,32 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
             name = song?.title ?? "";
         }
 
+        const comments: Comment[] = await Promise.all(
+            (reviewData.comments ?? []).map(async (c: any) => ({
+                commentId: c.comment_id,
+                parentId: c.parent_id,
+                text: c.content,
+                createdAt: c.created_at,
+                updatedAt: c.updated_at,
+                creator: {
+                    accountId: c.user.user_id,
+                    name: c.user.name,
+                    username: c.user.username,
+                    email: c.user.email,
+                    imageUrl: await getProfileUrl(c.user.user_id),
+                    bio: c.user.bio ?? "",
+                }
+            }))
+        );
+
+        comments.sort(
+                (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+            )
+
+        console.log(comments)
+
 
         return {
             reviewId: reviewData.review_id,
@@ -513,6 +551,7 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
             name: name,
             album_cover_url: coverUrl,
             likes: reviewData.likes.length,
+            comments: comments,
             creator: {
                 accountId: reviewData.creator.user_id,
                 name: reviewData.creator.name,
@@ -527,6 +566,7 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
         return null;
     }
 }
+
 
 
 export async function addLikeToReview(reviewId: string, userId: string): Promise<boolean> {
@@ -577,6 +617,31 @@ export async function checkIfUserLikedReview(reviewId: string, userId: string): 
         return false;
     }
 }
+
+export async function addCommentToReview(reviewId: string, userId: string, text: string, parentId?: string): Promise<boolean> {
+    const id = nanoid();
+    const now = new Date();
+    const isoString = now.toISOString();
+    try {
+        const { error } = await supabase
+            .from("reviewcomment")
+            .insert({
+                review_id: reviewId,
+                user_id: userId,
+                comment_id: id,
+                parent_id: parentId,
+                content: text,
+                created_at: isoString
+            })
+        if (error) throw error;
+        return true;
+    }
+    catch (error) {
+        console.log(error);
+        return false;
+    }
+}
+
 
 
 export async function getUserById(userId: string): Promise<IUser | null> {

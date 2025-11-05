@@ -235,8 +235,17 @@ export type INavLink = {
     creator : IUser;
     album: Album;
     likes: number;
-    createdAt: number;
-    updatedAt: number;
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  export type Comment = {
+    commentId: string; 
+    parentId: string; 
+    text: string; 
+    creator: IUser;
+    createdAt: string;
+    updatedAt: string;
   }
 
   export type Review = {
@@ -249,6 +258,7 @@ export type INavLink = {
     likes: number;
     type: "song" | "album";
     creator?: IUser;
+    comments?: Comment[];
   }
   
   export type Activity = {      
