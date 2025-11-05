@@ -205,17 +205,21 @@ export default function ReviewPage() {
                 return (<div>
                   <div key={c.commentId} className="flex items-start gap-3">
                     {/* Avatar */}
-                    <img
-                      src={c.creator?.imageUrl || defaultAvatar}
-                      className="h-9 w-9 rounded-full object-cover border border-gray-700"
-                    />
+                    <Link to={`/profile/${c.creator.accountId}`}>
+                      <img
+                        src={c.creator?.imageUrl || defaultAvatar}
+                        className="h-9 w-9 rounded-full object-cover border border-gray-700"
+                      />
+                    </Link>
 
                     {/* Comment Bubble */}
                     <div className="flex-1 bg-gray-800/40 border border-gray-700 rounded-xl p-3">
                       <p className="text-sm text-gray-200 leading-snug">
-                        <span className="font-semibold text-white hover:underline cursor-pointer">
-                          {c.creator?.username}
-                        </span>{" "}
+                        <Link to={`/profile/${c.creator.accountId}`}>
+                          <span className="font-semibold text-white hover:underline cursor-pointer">
+                            {c.creator?.username}
+                          </span>{" "}
+                        </Link>
                         {c.text}
                       </p>
 
@@ -268,15 +272,19 @@ export default function ReviewPage() {
 
                   {openRepliesFor === c.commentId && replies.map((reply) => (
                     <div key={reply.commentId} className="flex gap-3 mt-3 ml-10">
-                      <img
-                        src={reply.creator?.imageUrl || defaultAvatar}
-                        className="h-7 w-7 rounded-full border border-gray-700"
-                      />
+                      <Link to={`/profile/${c.creator.accountId}`}>
+                        <img
+                          src={reply.creator?.imageUrl || defaultAvatar}
+                          className="h-7 w-7 rounded-full border border-gray-700"
+                        />
+                      </Link>
                       <div className="bg-gray-800/30 border border-gray-700 p-2 rounded-xl">
                         <p className="text-sm text-gray-300">
-                          <span className="font-semibold text-white hover:underline cursor-pointer">
-                            {reply.creator?.username}
-                          </span>{" "}
+                          <Link to={`/profile/${c.creator.accountId}`}>
+                            <span className="font-semibold text-white hover:underline cursor-pointer">
+                              {reply.creator?.username}
+                            </span>
+                          </Link>{" "}
                           {reply.text}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
