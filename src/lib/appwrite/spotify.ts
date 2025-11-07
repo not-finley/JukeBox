@@ -1,4 +1,4 @@
-import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SongDetails } from '@/types';
+import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SongDetails, SpotifyTrack } from '@/types';
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
@@ -257,7 +257,7 @@ export async function SpotifyArtistById(artistId: string, token: string) {
 
         // Fetch top tracks
         const albumsResponse = await fetch(
-            `${SPOTIFY_API_BASE_URL}/artists/${artistId}/albums?include_groups=album&limit=10`,
+            `${SPOTIFY_API_BASE_URL}/artists/${artistId}/albums?include_groups=album&limit=5`,
             {
                 headers: { Authorization: `Bearer ${token}` },
             }
@@ -289,53 +289,66 @@ export async function SpotifyArtistById(artistId: string, token: string) {
     }
 }
 
-export async function SpotifyAlbumById(albumbId: string, token: string) {
-    try {
-        const response = await fetch(
-            `${SPOTIFY_API_BASE_URL}/albums/${albumbId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
-        const data = await response.json();
-        if (data) {
-            const album = data;
 
-            return {
-                id: album.id,
-                name: album.name,
-                album_type: album.album_type,
-                href: album.href,
-                external_urls: album.external_urls,
-                images: album.images,
-                release_date: album.release_date,
-                release_date_precision: album.release_date_precision,
-                total_tracks: album.total_tracks,
-                type: album.type,
-                uri: album.uri,
-                available_markets: album.available_markets,
-                tracks: album.tracks.items.map((s: any) => ({
-                    songId: s.id,
-                    title: s.name,
-                    spotify_url: s.external_urls.spotify,
-                    album_name: album.name,
-                    album_cover_url: album.images[0].url,
-                    album: album,
-                    artists: s.artists,
-                    release_date: album.release_date,
-                    popularity: album.popularity
+export async function SpotifyAlbumById(
+  albumId: string,
+  token: string
+): Promise<SpotifyAlbumWithTracks | null> {
+  try {
+    const response = await fetch(`${SPOTIFY_API_BASE_URL}/albums/${albumId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-                })),
-                artists: album.artists
-            };
-        }
-        return null
-    } catch (error) {
-        console.error("Error searching song in Spotify:", error);
-        return null
+    if (!response.ok) {
+      console.error("Spotify API error:", response.status, response.statusText);
+      return null;
     }
+
+    const album: any = await response.json();
+
+    // Spotify tracks come in a paging object
+    const tracksPaging = album.tracks ?? { items: [], total: 0, limit: 50, next: null, offset: 0, href: "" };
+
+    // Map tracks to SpotifyTrack shape
+    const tracks: SpotifyTrack[] = tracksPaging.items.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      external_urls: {spotify : s.external_urls.spotify},
+      popularity: s.popularity ?? 0,
+      artists: s.artists.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        external_urls: a.external_urls,
+      })),
+    }));
+
+    // Return SpotifyAlbumWithTracks type
+    const result: SpotifyAlbumWithTracks = {
+      id: album.id,
+      name: album.name,
+      album_type: album.album_type,
+      external_urls: album.external_urls,
+      images: album.images ?? [],
+      release_date: album.release_date,
+      total_tracks: album.total_tracks,
+      artists: album.artists.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        external_urls: a.external_urls,
+      })),
+      tracks: {
+        ...tracksPaging,
+        items: tracks, 
+      },
+    };
+
+    return result;
+  } catch (error) {
+    console.error("Error fetching album from Spotify:", error);
+    return null;
+  }
 }
 
 
@@ -345,9 +358,10 @@ export async function getArtistDiscographyFromSpotify(
 ): Promise<AlbumDetails[]> {
     try {
         const albums: SpotifyAlbum[] = [];
-        let nextUrl: string | null = `${SPOTIFY_API_BASE_URL}/artists/${artistId}/albums?include_groups=album,single&limit=50`;
+        let nextUrl: string | null =
+            `${SPOTIFY_API_BASE_URL}/artists/${artistId}/albums?include_groups=album,single&limit=50`;
 
-        // Fetch albums (paginated)
+        // --- Fetch paginated album list ---
         while (nextUrl) {
             const response: any = await fetch(nextUrl, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -361,18 +375,14 @@ export async function getArtistDiscographyFromSpotify(
             nextUrl = data.next;
         }
 
-        // Remove duplicates by name + release date
-        const uniqueMap: Record<string, SpotifyAlbum> = {};
-        albums.forEach((album) => {
-            const key = `${album.name}-${album.release_date}`;
-            if (!uniqueMap[key]) uniqueMap[key] = album;
-        });
+        // --- Deduplicate by ID ---
+        const uniqueAlbums = Array.from(new Map(
+            albums.map(a => [a.id, a])
+        ).values());
 
-        const uniqueAlbums = Object.values(uniqueMap);
-
-        // Fetch tracks for each album
         const albumDetails: AlbumDetails[] = [];
 
+        // --- Fetch full album info + tracks ---
         for (const album of uniqueAlbums) {
             const resp = await fetch(`${SPOTIFY_API_BASE_URL}/albums/${album.id}`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -380,7 +390,10 @@ export async function getArtistDiscographyFromSpotify(
 
             const full: SpotifyAlbumWithTracks = await resp.json();
 
-            const formattedTracks: SongDetails[] = full.tracks.map((track : any) => ({
+            // ✅ tracks always in full.tracks.items
+            const trackItems = full.tracks?.items ?? [];
+
+            const formattedTracks: SongDetails[] = trackItems.map((track) => ({
                 songId: track.id,
                 title: track.name,
                 album: full.name,
@@ -391,18 +404,18 @@ export async function getArtistDiscographyFromSpotify(
                 reviews: [],
                 ratings: [],
                 artists: track.artists,
-                spotify_url: track.external_urls.spotify,
+                spotify_url: track.external_urls?.spotify ?? "",
             }));
 
             albumDetails.push({
                 albumId: full.id,
                 title: full.name,
-                spotify_url: full.external_urls.spotify,
+                spotify_url: full.external_urls?.spotify ?? "",
                 album_cover_url: full.images?.[0]?.url ?? "",
                 release_date: full.release_date,
-                artists: full.artists, // already typed
+                artists: full.artists,
                 tracks: formattedTracks,
-                reviews: [], // ready for DB insertion later
+                reviews: [],
                 album_type: full.album_type,
             });
         }

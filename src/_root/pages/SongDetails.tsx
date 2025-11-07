@@ -42,7 +42,6 @@ const SongDetailsSection = () => {
     setCounts(countslocal);
 
     setGlobalRating(Number((raitingG / GlobalRatings.length).toFixed(1)));
-    setLoading(false);
   }
 
   const handleRating = async (value: number) => {
@@ -94,6 +93,7 @@ const SongDetailsSection = () => {
     } catch (error) {
       console.error("Error fetching song or reviews:", error);
     }
+    setLoading(false);
   };
 
   const fetchListened = async () => {

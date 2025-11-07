@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifyArtistDetailed, SpotifySong, Activity, ISearchUser } from "@/types";
+import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed } from "@/types";
 import { account, appwriteConfig, databases } from './config';
 import { supabase } from "@/lib/supabaseClient";
 
@@ -534,10 +534,10 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
         );
 
         comments.sort(
-                (a, b) =>
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
-            )
+            (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+        )
 
         console.log(comments)
 
@@ -777,40 +777,42 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
 
 export async function getArtistDetailsById(artistId: string): Promise<ArtistDetails | null> {
     try {
-        // Fetch the Artist
         const { data: artistData, error: artistError } = await supabase
             .from("artists")
-            .select("*, albums:artistalbum(album:albums(*))")
+            .select(`
+                *,
+                artistalbum (
+                albums (*)
+                )
+            `)
             .eq("artist_id", artistId)
             .single();
 
         if (artistError) throw artistError;
         if (!artistData) throw new Error("Artist not found");
-
         if (artistData.fully_loaded == false) return null;
 
-        const artist: ArtistDetails = {
+        const albums = (artistData.artistalbum ?? []).map((item: any) => ({
+            albumId: item.albums.album_id,
+            title: item.albums.title,
+            spotify_url: item.albums.spotify_url,
+            album_cover_url: item.albums.album_cover_url,
+            release_date: item.albums.release_date,
+            album_type: item.albums.album_type ?? "",
+        }));
+
+        console.log(albums);
+
+        return {
             artistId: artistData.artist_id,
             name: artistData.name,
             spotify_url: artistData.spotify_url,
             image_url: artistData.image_url,
             followers: artistData.followers,
             genres: [],
-            albums: artistData.albums.map((a: any) => ({
-                albumId: a.album.album_id,
-                title: a.album.title,
-                spotify_url: a.album.spotify_url,
-                album_cover_url: a.album.album_cover_url,
-                release_date: a.album.release_date,
-                tracks: [],
-                artists: [],
-                album_type: a.album.album_type
-            }))
+            albums
         };
 
-        console.log("fetched artist", artist)
-
-        return artist;
     } catch (error) {
         console.error("Failed to fetch Artist:", error);
         return null;
@@ -854,6 +856,7 @@ export async function getArtistDiscographyById(artistId: string): Promise<AlbumD
             });
             return acc;
         }, {});
+
 
         // Build full album objects
         const albums: AlbumDetails[] = artistData.albums.map((a: any) => {
@@ -948,7 +951,8 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
                     album_id: a.albumId,
                     title: s.title,
                     spotify_url: s.spotify_url,
-                    pop: s.popularity
+                    pop: s.popularity,     
+                    release_date: normalizeReleaseDate(s.release_date)
                 });
             });
         });
@@ -1280,13 +1284,13 @@ export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
         const { data: existingAlbums, error: fetchError } = await supabase
             .from("albums")
             .select("album_id, fully_loaded")
-            .in("album_id", artist.albums.map(a => a.id));
+            .in("album_id", artist.albums.map((a : any) => a.id));
 
         if (fetchError) throw fetchError;
 
         const existingMap = new Map(existingAlbums?.map(a => [a.album_id, a.fully_loaded]) ?? []);
 
-        const albumInserts = artist.albums.map(a => {
+        const albumInserts = artist.albums.map((a:any) => {
             const isFullyLoaded = existingMap.get(a.id) === true;
 
             return {
@@ -1296,8 +1300,8 @@ export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
                 release_date: normalizeReleaseDate(a.release_date),
                 total_tracks: a.total_tracks,
                 spotify_url: a.external_urls.spotify,
-                // keep fully_loaded true if it already is
-                fully_loaded: isFullyLoaded ? true : false
+                fully_loaded: isFullyLoaded ? true : false,
+                album_type: a.album_type
             };
         });
 
@@ -1305,15 +1309,16 @@ export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
 
         if (addingAlbums) throw addingAlbums
 
-        const albumArtistLinks = artist.albums.map(a =>
+        const albumArtistLinks = artist.albums.map((a:any) =>
             ({ album_id: a.id, artist_id: artist.id })
         );
 
-        await supabase
+
+        const {error:artistsalbumError} = await supabase
             .from("artistalbum")
             .upsert(albumArtistLinks);
 
-
+        if (artistsalbumError) throw artistsalbumError;
         return true;
     } catch (error) {
         console.error("Error adding artist to database:", error);
@@ -1369,6 +1374,8 @@ export async function addAlbumSimple(album: SpotifyAlbum, artist_id: string) {
 // add album with tracks 
 export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
     try {
+
+        console.log(album)
         // --- Check album ---
         const { data: existingAlbum } = await supabase
             .from("albums")
@@ -1430,11 +1437,11 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
             .upsert(artistAlbumLinks);
 
         // --- Batch insert songs ---
-        const songInserts = album.tracks.map(s => ({
-            song_id: s.songId,
-            title: s.title,
+        const songInserts = album.tracks.items.map((s:SpotifyTrack) => ({
+            song_id: s.id,
+            title: s.name,
             album_id: album.id,
-            spotify_url: s.spotify_url,
+            spotify_url: s.external_urls.spotify,
             pop: s.popularity
         }));
 
@@ -1443,9 +1450,9 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
             .upsert(songInserts);
 
         // --- Link songs & artists ---
-        const songArtistLinks = album.tracks.flatMap(s =>
-            s.artists.map(a => ({
-                song_id: s.songId,
+        const songArtistLinks = album.tracks.items.flatMap((s:any) =>
+            s.artists.map((a:any) => ({
+                song_id: s.id,
                 artist_id: a.id
             }))
         );

@@ -55,7 +55,7 @@ const Artist = () => {
           new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
         )
         .filter(album => album.album_type === "album");
-
+      console.log("fetched artist", fetchedArtist);
       setArtist(fetchedArtist);
     }
     setLoading(false);
