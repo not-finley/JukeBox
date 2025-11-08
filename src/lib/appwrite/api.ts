@@ -910,7 +910,9 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
 
         // ----- BATCH INSERT ARTISTS -----
         const allArtists: any = [];
+
         albums.forEach(a => {
+            // Album-level artists
             a.artists.forEach(ar => {
                 allArtists.push({
                     artist_id: ar.id,
@@ -918,11 +920,27 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
                     spotify_url: ar.external_urls.spotify
                 });
             });
+
+            // Track-level artists → new!
+            a.tracks.forEach(s => {
+                s.artists?.forEach(ar => {
+                    allArtists.push({
+                        artist_id: ar.id,
+                        name: ar.name,
+                        spotify_url: ar.external_urls.spotify
+                    });
+                });
+            });
         });
+
+        // remove duplicate artists
+        const uniqueArtists = Object.values(
+            Object.fromEntries(allArtists.map(ar => [ar.artist_id, ar]))
+        );
 
         const { error: artistInsertError } = await supabase
             .from("artists")
-            .upsert(allArtists, { ignoreDuplicates: true });
+            .upsert(uniqueArtists, { ignoreDuplicates: true });
 
         if (artistInsertError) throw artistInsertError;
         // ----- LINK ALBUM ARTISTS -----
@@ -951,8 +969,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
                     album_id: a.albumId,
                     title: s.title,
                     spotify_url: s.spotify_url,
-                    pop: s.popularity,     
-                    release_date: normalizeReleaseDate(s.release_date)
+                    pop: s.popularity,
                 });
             });
         });
@@ -1284,13 +1301,13 @@ export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
         const { data: existingAlbums, error: fetchError } = await supabase
             .from("albums")
             .select("album_id, fully_loaded")
-            .in("album_id", artist.albums.map((a : any) => a.id));
+            .in("album_id", artist.albums.map((a: any) => a.id));
 
         if (fetchError) throw fetchError;
 
         const existingMap = new Map(existingAlbums?.map(a => [a.album_id, a.fully_loaded]) ?? []);
 
-        const albumInserts = artist.albums.map((a:any) => {
+        const albumInserts = artist.albums.map((a: any) => {
             const isFullyLoaded = existingMap.get(a.id) === true;
 
             return {
@@ -1309,12 +1326,12 @@ export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
 
         if (addingAlbums) throw addingAlbums
 
-        const albumArtistLinks = artist.albums.map((a:any) =>
+        const albumArtistLinks = artist.albums.map((a: any) =>
             ({ album_id: a.id, artist_id: artist.id })
         );
 
 
-        const {error:artistsalbumError} = await supabase
+        const { error: artistsalbumError } = await supabase
             .from("artistalbum")
             .upsert(albumArtistLinks);
 
@@ -1437,7 +1454,7 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
             .upsert(artistAlbumLinks);
 
         // --- Batch insert songs ---
-        const songInserts = album.tracks.items.map((s:SpotifyTrack) => ({
+        const songInserts = album.tracks.items.map((s: SpotifyTrack) => ({
             song_id: s.id,
             title: s.name,
             album_id: album.id,
@@ -1450,8 +1467,8 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
             .upsert(songInserts);
 
         // --- Link songs & artists ---
-        const songArtistLinks = album.tracks.items.flatMap((s:any) =>
-            s.artists.map((a:any) => ({
+        const songArtistLinks = album.tracks.items.flatMap((s: any) =>
+            s.artists.map((a: any) => ({
                 song_id: s.id,
                 artist_id: a.id
             }))

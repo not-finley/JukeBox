@@ -148,14 +148,6 @@ const Artist = () => {
                 Coming soon...
               </div>
             </section>
-
-            {/* Similar Artists */}
-            <section className="mt-10 mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">Similar Artists</h2>
-              <div className="bg-neutral-900/50 rounded-xl p-4 md:p-6 text-gray-400 text-center">
-                Coming soon...
-              </div>
-            </section>
           </div>
         )}
       </div>
