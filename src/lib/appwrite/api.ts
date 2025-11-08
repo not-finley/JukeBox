@@ -935,7 +935,7 @@ export async function addFullDiscography(albums: AlbumDetails[]) {
 
         // remove duplicate artists
         const uniqueArtists = Object.values(
-            Object.fromEntries(allArtists.map(ar => [ar.artist_id, ar]))
+            Object.fromEntries(allArtists.map((ar:any) => [ar.artist_id, ar]))
         );
 
         const { error: artistInsertError } = await supabase
