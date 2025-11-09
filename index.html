@@ -2,11 +2,71 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.ico" />
+
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/png" href="/assets/icons/favicon.png" />
+    <link rel="apple-touch-icon" href="//assets/icons/favicon.png" />
+    <meta name="theme-color" content="#000000">
+
+    <!-- Primary SEO Meta Tags -->
+    <title>JukeBoxd – Discover, Track & Share Music You Love</title>
+    <meta name="title" content="JukeBoxd – Discover, Track & Share Music You Love" />
+    <meta
+      name="description"
+      content="JukeBoxd helps you discover music, track albums, create lists, rate records, and explore what others are listening to. Your personal music diary and recommendation hub."
+    />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="JukeBoxd – Discover, Track & Share Music You Love" />
+    <meta
+      property="og:description"
+      content="Discover new music, track and rate albums, build lists, and share what you're listening to with friends."
+    />
+    <meta property="og:image" content="/assets/preview/jukeboxd-preview.png" />
+    <meta property="og:url" content="https://jukeboxd.ca" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="JukeBoxd – Your Personal Music Diary" />
+    <meta
+      property="twitter:description"
+      content="Explore albums, build your music library, and connect with other listeners."
+    />
+    <meta property="twitter:image" content="/assets/preview/jukeboxd-preview.png" />
+
+    <!-- Sitemap and Canonical URL -->
+    <link rel="canonical" href="https://jukeboxd.ca" />
+
+    <!-- Performance / SEO Hints -->
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="JukeBoxd" />
+
+    <!-- Viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JukeBoxd</title>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "JukeBoxd",
+        "url": "https://jukeboxd.ca",
+        "description": "Discover, track, and share music you love. Rate albums, build lists, and explore other listeners’ collections.",
+        "applicationCategory": "Music",
+        "operatingSystem": "All",
+        "creator": {
+          "@type": "Organization",
+          "name": "JukeBoxd"
+        }
+      }
+    </script>
   </head>
+
   <body>
+    <noscript>
+      JukeBoxd requires JavaScript to function. Please enable JavaScript in your browser.
+    </noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
