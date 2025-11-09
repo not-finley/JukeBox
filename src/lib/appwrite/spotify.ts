@@ -212,6 +212,90 @@ export async function searchSpotify(query: string, token: string): Promise<{ sor
     }
 }
 
+
+export async function spotifySuggestions(query: string, token: string): Promise<{ sorted: any[], unsorted: any[] }> {
+    try {
+        if (!query) return { sorted: [], unsorted: [] };
+
+        const formattedQuery = `${query}*`;
+
+        const response = await fetch(
+            `${SPOTIFY_API_BASE_URL}/search?type=track,album,artist&q=${encodeURIComponent(formattedQuery)}&limit=10`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const data = await response.json();
+        const results: any[] = [];
+
+        const scoreMatch = (title: string, artistNames: string[] = []) => {
+            let score = computeMatchScore(query, title);
+            artistNames.forEach(name => {
+                score = Math.max(score, computeMatchScore(query, name));
+            });
+            return score;
+        };
+
+        data.tracks?.items?.forEach((track: any) => {
+            const artists = track.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
+            const matchScore = scoreMatch(track.name, artists.map((a: any) => a.name));
+
+            results.push({
+                type: "track",
+                id: track.id,
+                title: track.name,
+                album_cover_url: track.album?.images?.[0]?.url || "",
+                artists,
+                matchScore,
+            });
+        });
+
+        data.albums?.items?.forEach((album: any) => {
+            const artists = album.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
+            const matchScore = scoreMatch(album.name, artists.map((a: any) => a.name));
+
+            results.push({
+                type: "album",
+                id: album.id,
+                title: album.name,
+                album_cover_url: album.images?.[0]?.url || "",
+                artists,
+                matchScore,
+            });
+        });
+
+        data.artists?.items?.forEach((artist: any) => {
+            const matchScore = scoreMatch(artist.name);
+            results.push({
+                type: "artist",
+                id: artist.id,
+                name: artist.name,
+                image_url: artist.images?.[0]?.url || "",
+                matchScore,
+            });
+        });
+
+        const unsorted = [...results];
+
+        const isLikelyArtistSearch =
+            results.some(r => r.type === "artist" && r.matchScore > 0.9);
+
+        const filtered = isLikelyArtistSearch
+            ? results.filter(r => r.type !== "track" && r.type !== "album") // hide songs
+            : results;
+
+        // sort after filtering
+        filtered.sort((a, b) =>
+            (b.matchScore * 0.9 + (b.popularity || 0) * 0.1) -
+            (a.matchScore * 0.9 + (a.popularity || 0) * 0.1)
+        );
+
+        return { sorted: filtered, unsorted };
+    } catch (err) {
+        console.error("Error searching Spotify:", err);
+        return { sorted: [], unsorted: [] };
+    }
+}
+
 export async function SpotifyTrackById(songId: string, token: string) {
     try {
         const response = await fetch(
@@ -291,64 +375,64 @@ export async function SpotifyArtistById(artistId: string, token: string) {
 
 
 export async function SpotifyAlbumById(
-  albumId: string,
-  token: string
+    albumId: string,
+    token: string
 ): Promise<SpotifyAlbumWithTracks | null> {
-  try {
-    const response = await fetch(`${SPOTIFY_API_BASE_URL}/albums/${albumId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+        const response = await fetch(`${SPOTIFY_API_BASE_URL}/albums/${albumId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-    if (!response.ok) {
-      console.error("Spotify API error:", response.status, response.statusText);
-      return null;
+        if (!response.ok) {
+            console.error("Spotify API error:", response.status, response.statusText);
+            return null;
+        }
+
+        const album: any = await response.json();
+
+        // Spotify tracks come in a paging object
+        const tracksPaging = album.tracks ?? { items: [], total: 0, limit: 50, next: null, offset: 0, href: "" };
+
+        // Map tracks to SpotifyTrack shape
+        const tracks: SpotifyTrack[] = tracksPaging.items.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            external_urls: { spotify: s.external_urls.spotify },
+            popularity: s.popularity ?? 0,
+            artists: s.artists.map((a: any) => ({
+                id: a.id,
+                name: a.name,
+                external_urls: a.external_urls,
+            })),
+        }));
+
+        // Return SpotifyAlbumWithTracks type
+        const result: SpotifyAlbumWithTracks = {
+            id: album.id,
+            name: album.name,
+            album_type: album.album_type,
+            external_urls: album.external_urls,
+            images: album.images ?? [],
+            release_date: album.release_date,
+            total_tracks: album.total_tracks,
+            artists: album.artists.map((a: any) => ({
+                id: a.id,
+                name: a.name,
+                external_urls: a.external_urls,
+            })),
+            tracks: {
+                ...tracksPaging,
+                items: tracks,
+            },
+        };
+
+        return result;
+    } catch (error) {
+        console.error("Error fetching album from Spotify:", error);
+        return null;
     }
-
-    const album: any = await response.json();
-
-    // Spotify tracks come in a paging object
-    const tracksPaging = album.tracks ?? { items: [], total: 0, limit: 50, next: null, offset: 0, href: "" };
-
-    // Map tracks to SpotifyTrack shape
-    const tracks: SpotifyTrack[] = tracksPaging.items.map((s: any) => ({
-      id: s.id,
-      name: s.name,
-      external_urls: {spotify : s.external_urls.spotify},
-      popularity: s.popularity ?? 0,
-      artists: s.artists.map((a: any) => ({
-        id: a.id,
-        name: a.name,
-        external_urls: a.external_urls,
-      })),
-    }));
-
-    // Return SpotifyAlbumWithTracks type
-    const result: SpotifyAlbumWithTracks = {
-      id: album.id,
-      name: album.name,
-      album_type: album.album_type,
-      external_urls: album.external_urls,
-      images: album.images ?? [],
-      release_date: album.release_date,
-      total_tracks: album.total_tracks,
-      artists: album.artists.map((a: any) => ({
-        id: a.id,
-        name: a.name,
-        external_urls: a.external_urls,
-      })),
-      tracks: {
-        ...tracksPaging,
-        items: tracks, 
-      },
-    };
-
-    return result;
-  } catch (error) {
-    console.error("Error fetching album from Spotify:", error);
-    return null;
-  }
 }
 
 

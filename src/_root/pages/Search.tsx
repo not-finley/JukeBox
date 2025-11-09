@@ -2,7 +2,7 @@ import LoaderMusic from "@/components/shared/loaderMusic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { searchUsers } from "@/lib/appwrite/api";
-import { getSpotifyToken, searchSpotify } from "@/lib/appwrite/spotify";
+import { getSpotifyToken, searchSpotify, spotifySuggestions } from "@/lib/appwrite/spotify";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -34,6 +34,9 @@ const Search = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [state, setState] = useState<"All" | "Songs" | "Albums" | "Artists" | "Users">("All");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  let typingTimeout: NodeJS.Timeout;
 
   const handleSearch = async (): Promise<void> => {
     setSongs([]);
@@ -92,25 +95,81 @@ const Search = () => {
           </p>
 
           {/* Search Bar */}
-          <div className="flex items-center w-full mb-4">
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="shad-input flex-1"
-              placeholder="Search for a user, song, artist, or album..."
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch();
-              }}
-            />
-            <Button
-              onClick={handleSearch}
-              disabled={loading}
-              className="shad-button_primary m-2 h-5/6"
-            >
-              Search
-            </Button>
+          <div className="relative w-full mb-4">
+            <div className="flex items-center w-full">
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchQuery(value);
+
+                  if (value.trim().length === 0) {
+                    setSuggestions([]);
+                    setShowSuggestions(false);
+                    return;
+                  }
+
+                  clearTimeout(typingTimeout);
+                  typingTimeout = setTimeout(async () => {
+                    const spotifyToken = await getSpotifyToken();
+                    const { sorted } = await spotifySuggestions(value, spotifyToken);
+
+                    setSuggestions(sorted.slice(0, 5));
+                    setShowSuggestions(true);
+                  }, 300);
+                }}
+                className="shad-input flex-1"
+                placeholder="Search for a user, song, artist, or album..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setShowSuggestions(false);
+                    handleSearch();
+                  }
+                }}
+              />
+
+              <Button
+                onClick={handleSearch}
+                disabled={loading}
+                className="shad-button_primary m-2 h-5/6"
+              >
+                Search
+              </Button>
+            </div>
+
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 w-full bg-gray-900 border border-gray-700 rounded-lg shadow-lg p-2 z-50">
+                {suggestions.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      setSearchQuery(item.title || item.name);
+                      setShowSuggestions(false);
+                      handleSearch();
+                    }}
+                    className="flex items-center gap-3 p-2 rounded hover:bg-gray-800 cursor-pointer transition"
+                  >
+                    <img
+                      src={item.image_url || item.album_cover_url}
+                      className={`object-cover ${item.type === "artist" ? "rounded-full" : "rounded"
+                        } w-10 h-10`}
+                    />
+
+                    <div className="flex flex-col">
+                      <p className="text-sm text-white font-medium">
+                        {item.title || item.name}
+                      </p>
+                      <p className="text-xs text-gray-400 capitalize">
+                        {item.type}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
 
           {/* Empty / Trending */}
           {songs.length === 0 &&
@@ -224,7 +283,7 @@ const Search = () => {
           )}
 
           {/* Users Row */}
-          {users.length === 0 && all.length > 0 &&(
+          {users.length === 0 && all.length > 0 && (
             <section>
               <h2 className="text-xl font-bold text-white mb-2">Users</h2>
               <p className="text-gray-400 text-center">No users found.</p>

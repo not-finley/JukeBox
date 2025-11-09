@@ -334,7 +334,7 @@ const Home = () => {
           {/* Suggested Albums */}
           <div className=" p-4 rounded-xl border border-gray-800">
             <h2 className="text-lg font-semibold mb-3">People with similar taste like these albums</h2>
-            <p className="text-gray-600">Comming Soon.</p>
+            <p className="text-gray-600">Coming Soon.</p>
             <div className="grid grid-cols-3 gap-3">
 
             </div>
