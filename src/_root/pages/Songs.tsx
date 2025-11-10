@@ -1,40 +1,42 @@
-import LoaderMusic from "@/components/shared/loaderMusic";
-import { getLastWeekPopularSongs } from "@/lib/appwrite/api";
-import { Song } from "@/types";
-import { useEffect, useState } from "react";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, EffectCoverflow, Mousewheel } from 'swiper/modules';
+// import LoaderMusic from "@/components/shared/loaderMusic";
+// import { getLastWeekPopularSongs } from "@/lib/appwrite/api";
+// import { Song } from "@/types";
+// import { useEffect, useState } from "react";
+// import { Swiper, SwiperSlide } from 'swiper/react';
+// import { Pagination, EffectCoverflow, Mousewheel } from 'swiper/modules';
 
 import 'swiper/css';
 import "swiper/css/effect-coverflow";
 import "swiper/css/pagination";
-import "./css/SongCarousel.css";
-import { Link } from "react-router-dom";
+// import "./css/SongCarousel.css";
+// import { Link } from "react-router-dom";
 
 const Songs = () => {
-  const [popularSongs, setPopularSongs] = useState<Song[]>([]);
-  const [loading, setLoading] = useState(true);
+  // const [popularSongs, setPopularSongs] = useState<Song[]>([]);
+  // const [loading, setLoading] = useState(true);
   
 
   
-  useEffect(() => {
-    const fetchTopTracks = async () => {
-      try { 
-        const topSongs = await getLastWeekPopularSongs();
-        setPopularSongs(topSongs.splice(0,9));
-      }
-      catch(error) {
-        console.log(error);
-      }
-      setLoading(false);
-    }
-    fetchTopTracks();
-  }, []);
+  // useEffect(() => {
+  //   const fetchTopTracks = async () => {
+  //     try { 
+  //       const topSongs = await getLastWeekPopularSongs();
+  //       setPopularSongs(topSongs.splice(0,9));
+  //     }
+  //     catch(error) {
+  //       console.log(error);
+  //     }
+  //     setLoading(false);
+  //   }
+  //   fetchTopTracks();
+  // }, []);
 
 
   return (
     <div className="song-container">
-      <h1 className="text-4xl font-bold">Trending</h1>
+
+      <p className=" text-xl text-gray-500">Coming Soon!</p>
+      {/* <h1 className="text-4xl font-bold">Trending</h1>
       <div className="w-full flex items-center justify-between border-b-2 -m-5 border-gray-500">
         <h2 className="text-2xl">Top Songs</h2>
         <Link to='/toptracks' className="text-md text-gray-400 hover:text-gray-200">See more</Link>
@@ -99,7 +101,7 @@ const Songs = () => {
       </div>
         <p className="text-gray-500 text-lg">Coming soon</p>
 
-
+ */}
 
     </div>
   )

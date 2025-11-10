@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, Rating, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed } from "@/types";
+import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed } from "@/types";
 import { account, appwriteConfig, databases } from './config';
 import { supabase } from "@/lib/supabaseClient";
 
@@ -1663,20 +1663,57 @@ export async function getRatingSong(songId: string, userId: string): Promise<num
 }
 
 
-export async function getAllRatingsOfaSong(songId: string): Promise<Rating[]> {
+// export async function getAllRatingsOfaSong(songId: string): Promise<Rating[]> {
+//     try {
+//         const { data: ratings } = await supabase
+//             .from("song_rating")
+//             .select("*")
+//             .eq("song_id", songId)
+
+//         if (!ratings) return [];
+
+
+//         return ratings;
+//     } catch (error) {
+//         console.error('Failed to fetch ratings:', error);
+//         return [];
+//     }
+// }
+export async function getAllRatingsOfaSong(songId: string): Promise<{
+    counts: { rating: number; count: number }[];
+    average: number;
+    total: number;
+}> {
     try {
-        const { data: ratings } = await supabase
+        const { data: ratings, error } = await supabase
             .from("song_rating")
-            .select("*")
-            .eq("song_id", songId)
+            .select("rating")
+            .eq("song_id", songId);
 
-        if (!ratings) return [];
+        if (error) throw error;
+        if (!ratings) return { counts: [], average: 0, total: 0 };
 
+        // Initialize count map
+        const counts = [1, 2, 3, 4, 5].map((r) => ({ rating: r, count: 0 }));
 
-        return ratings;
+        // Count each rating
+        ratings.forEach((r) => {
+            if (r.rating >= 1 && r.rating <= 5) {
+                counts[r.rating - 1].count++;
+            }
+        });
+
+        // Total count
+        const total = ratings.length;
+
+        // Average rating
+        const sum = counts.reduce((acc, c) => acc + c.rating * c.count, 0);
+        const average = total > 0 ? sum / total : 0;
+
+        return { counts, average, total };
     } catch (error) {
-        console.error('Failed to fetch ratings:', error);
-        return [];
+        console.error("Failed to fetch ratings:", error);
+        return { counts: [], average: 0, total: 0 };
     }
 }
 

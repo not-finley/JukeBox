@@ -122,7 +122,7 @@ const SigninForm = () => {
               Sign up
             </Link>
           </p>
-          <p className="text-small-regular text-light-2 text-center -mt-2">
+          {/* <p className="text-small-regular text-light-2 text-center -mt-2">
             Forgot your password? 
             <Link
               to="/forgot-password"
@@ -130,7 +130,7 @@ const SigninForm = () => {
             >
               Forgot password
             </Link>
-          </p>
+          </p> */}
         </form>
       </div>
     </Form>

@@ -78,7 +78,7 @@ const Library = () => {
         {/* ---- RATINGS SECTION ---- */}
         {activeSection === "ratings" && (
           rated.length === 0 ? (
-            <p className="text-gray-500">No ratings yet.</p>
+            <p className="text-gray-500">You haven't rated anything yet.</p>
           ) : (
             <div className="max-w-6xl grid grid-cols-1 xl:grid-cols-2 gap-4">
               {rated.map((rating, i) => (
@@ -114,7 +114,7 @@ const Library = () => {
         {/* ---- LISTENING HISTORY ---- */}
         {activeSection === "listens" && (
           listened.length === 0 ? (
-            <p className="text-gray-500">No listening history yet.</p>
+            <p className="text-gray-500">You haven't listened to anything yet.</p>
           ) : (
             <div className=" max-w-6xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {listened.map(item => (
@@ -139,14 +139,15 @@ const Library = () => {
         {/* ---- PLAYLISTS (EMPTY STATE FOR NOW) ---- */}
         {activeSection === "playlists" && (
           <div className=" max-w-6xl text-gray-400 text-center py-16">
-            <p className="text-xl font-semibold mb-2">No playlists yet</p>
-            <p className="text-sm">Create playlists to collect songs and albums you love.</p>
-            <button
+            {/* <p className="text-xl font-semibold mb-2">No playlists yet</p>
+            <p className="text-sm">Create playlists to collect songs and albums you love.</p> */}
+            {/* <button
               disabled
               className="mt-4 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Create Playlist
-            </button>
+            </button> */}
+            <p className="text-gray-500">Working on adding this feature still, check back in a few weeks</p>
           </div>
         )}
       </div>
