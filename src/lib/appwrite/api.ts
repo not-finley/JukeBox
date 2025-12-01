@@ -1,7 +1,6 @@
 import { nanoid } from "nanoid";
 
 import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed } from "@/types";
-import { account, appwriteConfig, databases } from './config';
 import { supabase } from "@/lib/supabaseClient";
 
 function normalizeReleaseDate(dateStr: string): string | null {
@@ -236,27 +235,7 @@ export async function searchUsers(query: string): Promise<ISearchUser[]> {
     }
 }
 
-export const signInAccount = async ({ email, password }: { email: string; password: string }) => {
-    try {
-        const session = await account.createEmailPasswordSession(email, password);
-        console.log("Session created:", session);
-        return { session };
-    } catch (error) {
-        console.error("Sign in error:", error);
-        return { error };
-    }
-};
 
-
-
-export async function signOutAccount() {
-    try {
-        const session = await account.deleteSession("current");
-        return session;
-    } catch (error) {
-        console.log(error);
-    }
-}
 
 export async function addFollow(followingId: string, followerId: string): Promise<IFollow | null> {
     const now = new Date();
@@ -2210,35 +2189,6 @@ export async function getReviewed(userId: string): Promise<Review[]> {
     }
 }
 
-
-export async function getLastWeekPopularSongs(): Promise<Song[]> {
-
-    const cachedData = await databases.listDocuments(
-        appwriteConfig.databaseId,
-        appwriteConfig.cacheDataCollectionID
-    );
-
-    const rawData = cachedData.documents[0]?.data;
-
-    if (!rawData) {
-        throw Error("no data found");
-    }
-
-    let topSongs: Song[] = [];
-
-    try {
-        topSongs = JSON.parse(rawData);
-    } catch (error) {
-        console.error("Failed to parse cached data:", error);
-        throw new Error("Invalid cached data format.");
-    }
-
-    return topSongs.map((item) => ({
-        songId: item.songId,
-        title: item.title,
-        album_cover_url: item.album_cover_url,
-    })) as Song[];
-}
 
 
 

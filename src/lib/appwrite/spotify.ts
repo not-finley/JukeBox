@@ -3,6 +3,9 @@ import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SongDetails, Spotif
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
 
+const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID as string;
+const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET as string;
+
 function computeMatchScore(query: string, text: string): number {
     if (!text) return 0;
 
@@ -30,11 +33,12 @@ function computeMatchScore(query: string, text: string): number {
 
 export async function getSpotifyToken(): Promise<string> {
     try {
-        const clientId = import.meta.env.SPOTIFY_CLIENT_ID;
-        const clientSecret = import.meta.env.SPOTIFY_CLIENT_SECRET;
 
         if (!clientId || !clientSecret) {
+            console.log(clientId);
+            console.log(clientSecret);
             throw new Error("Missing Spotify client ID or secret in environment variables.");
+
         }
 
         const credentials = `${clientId}:${clientSecret}`;
