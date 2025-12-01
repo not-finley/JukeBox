@@ -30,8 +30,8 @@ function computeMatchScore(query: string, text: string): number {
 
 export async function getSpotifyToken(): Promise<string> {
     try {
-        const clientId = '4d487e3a0dd4402794ac7b79f866b0b4'//import.meta.env.SPOTIFY_CLIENT_ID;
-        const clientSecret = 'f5c0403f37e24ed0a7ef739184c0a6e8'//import.meta.env.SPOTIFY_CLIENT_SECRET;
+        const clientId = import.meta.env.SPOTIFY_CLIENT_ID;
+        const clientSecret = import.meta.env.SPOTIFY_CLIENT_SECRET;
 
         if (!clientId || !clientSecret) {
             throw new Error("Missing Spotify client ID or secret in environment variables.");
