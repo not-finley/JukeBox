@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<IUser>(INITIAL_USER);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
 
   const checkAuthUser = async (): Promise<boolean> => {
     setIsLoading(true);
@@ -127,12 +128,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Run once on mount
     checkAuthUser();
 
-    // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAuthUser();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        // Update user from session without reloading
+        setUser(prev => ({
+          ...prev,
+          accountId: session.user.id,
+          email: session.user.email ?? '',
+          name: session.user.user_metadata?.name ?? '',
+          username: session.user.user_metadata?.username ?? '',
+        }));
+        setIsAuthenticated(true);
+      } else {
+        setUser(INITIAL_USER);
+        setIsAuthenticated(false);
+      }
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
