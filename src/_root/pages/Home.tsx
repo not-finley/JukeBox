@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Activity, ISearchUser } from "@/types";
 import { useUserContext } from "@/lib/AuthContext";
