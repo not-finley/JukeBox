@@ -38,8 +38,8 @@ export type IUser = {
   email: string;
   imageUrl: string;
   bio: string;
-  followersCount?: number;
-  followingCount?: number;
+  followersCount?: number | null;
+  followingCount?: number | null;
 };
 
 

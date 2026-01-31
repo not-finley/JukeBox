@@ -44,7 +44,9 @@ const Library = () => {
   return (
     <div className="common-container">
       <div className="w-full max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-6">Your Library</h1>
+        <h1 className="text-4xl font-black mb-3 tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+          Your Library
+        </h1>
 
         {/* NAVIGATION TABS */}
         <div className=" max-w-6xl flex gap-4 border-b border-gray-800 mb-6 overflow-x-auto">

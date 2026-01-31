@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Activity, ISearchUser } from "@/types";
 import { useUserContext } from "@/lib/AuthContext";
@@ -9,6 +9,7 @@ import SuggestionsList from "@/components/SuggestionsList";
 const PAGE_SIZE = 10;
 
 const Home = () => {
+  const navigate = useNavigate();
   const { user } = useUserContext();
   const [activityFeed, setActivityFeed] = useState<Activity[]>([]);
   const [filteredFeed, setFilteredFeed] = useState<Activity[]>([]);
@@ -157,15 +158,15 @@ const Home = () => {
   }
 
   return (
-    <div className="common-container w-full px-4 sm:px-8 lg:px-16 py-6">
+    <div className="common-container w-full px-0 sm:px-8 lg:px-16 py-6">
 
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-10 w-full max-w-7xl mx-auto">
 
         {/* LEFT COLUMN — Main Feed */}
-        <div>
+        <div className="w-full">
 
           {/* Header */}
-          <div className="w-full max-w-2xl mb-8">
+          <div className="w-full max-w-2xl px-4 mb-8">
             <h1 className="text-2xl font-semibold text-white mb-1">
               Welcome back, {user?.name?.split(" ")[0] || "there"} 👋
             </h1>
@@ -175,7 +176,7 @@ const Home = () => {
           </div>
 
           {/* Top Navigation */}
-          <div className="flex gap-3 mb-6 max-w-2xl overflow-x-auto no-scrollbar py-2">
+          <div className="flex gap-3 mb-6 max-w-2xl overflow-x-auto no-scrollbar py-2 px-4">
             {[
               { key: "all", label: "All" },
               { key: "review", label: "Reviews" },
@@ -213,8 +214,9 @@ const Home = () => {
 
             return (
               <div
+                onClick={() => {activity.type == "review"? navigate(`/review/${activity.id}`) : ""}}
                 key={activity.id}
-                className="flex flex-col border border-gray-700 rounded-2xl overflow-hidden bg-gray-900/40 transition-all duration-300"
+                className = { `flex flex-col border border-gray-700 rounded-2xl overflow-hidden bg-gray-900/40 transition-all cur duration-300 ${ activity.type == "review" ? "hover:cursor-pointer" : ""}`}
               >
                 {/* 1. HEADER: Standardized for both types */}
                 <div className="flex items-center gap-3 p-4 bg-gray-900/60 backdrop-blur-sm z-10">
@@ -257,7 +259,7 @@ const Home = () => {
                 </div>
 
                 {/* 2. MAIN CONTENT AREA */}
-                <div className="relative w-full aspect-square sm:aspect-video min-h-[300px] overflow-hidden flex items-center justify-center">
+                <div className="relative w-full aspect-square sm:aspect-[6/5] min-h-[300px] overflow-hidden flex items-center justify-center">
                   
                   {/* BACKGROUND IMAGE (The Blur Target) */}
                   <img
@@ -317,9 +319,9 @@ const Home = () => {
                             <span className="text-white/30 text-xs font-mono w-4">
                               {String(idx + 1).padStart(2, '0')}
                             </span>
-                            <span className="text-white font-medium text-sm truncate">
+                             <Link to={`/song/${g.targetId}`} className="font-medium text-white hover:text-emerald-300 text-sm truncate">
                               {g.targetName}
-                            </span>
+                            </Link>
                           </div>
 
                           <div className="flex shrink-0 items-center gap-3 bg-black/20 py-1 px-3 rounded-full border border-white/5">

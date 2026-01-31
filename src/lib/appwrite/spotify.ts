@@ -221,81 +221,82 @@ export async function spotifySuggestions(query: string, token: string): Promise<
     try {
         if (!query) return { sorted: [], unsorted: [] };
 
-        const formattedQuery = `${query}*`;
-
+        // We use a slightly higher limit to allow for better filtering/sorting
         const response = await fetch(
-            `${SPOTIFY_API_BASE_URL}/search?type=track,album,artist&q=${encodeURIComponent(formattedQuery)}&limit=10`,
+            `${SPOTIFY_API_BASE_URL}/search?type=track,album,artist&q=${encodeURIComponent(query)}&limit=15`,
             { headers: { Authorization: `Bearer ${token}` } }
         );
 
         const data = await response.json();
         const results: any[] = [];
 
-        const scoreMatch = (title: string, artistNames: string[] = []) => {
-            let score = computeMatchScore(query, title);
-            artistNames.forEach(name => {
-                score = Math.max(score, computeMatchScore(query, name));
-            });
-            return score;
+        // Helper to score results
+        const getBaseScore = (name: string, type: string) => {
+            const match = computeMatchScore(query.toLowerCase(), name.toLowerCase());
+            
+            // TIERED WEIGHTING:
+            // 1.0 = Tracks (Users usually want the song first)
+            // 0.9 = Albums
+            // 0.8 = Artists (Prevents artists from drowning out songs)
+            const typeWeight = type === 'track' ? 1.0 : type === 'album' ? 0.9 : 0.8;
+            
+            return match * typeWeight;
         };
 
+        // Process Tracks
         data.tracks?.items?.forEach((track: any) => {
-            const artists = track.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
-            const matchScore = scoreMatch(track.name, artists.map((a: any) => a.name));
-
             results.push({
                 type: "track",
                 id: track.id,
                 title: track.name,
                 album_cover_url: track.album?.images?.[0]?.url || "",
-                artists,
-                matchScore,
+                artists: track.artists?.map((a: any) => ({ id: a.id, name: a.name })),
+                popularity: track.popularity || 0,
+                matchScore: getBaseScore(track.name, 'track'),
             });
         });
 
+        // Process Albums
         data.albums?.items?.forEach((album: any) => {
-            const artists = album.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
-            const matchScore = scoreMatch(album.name, artists.map((a: any) => a.name));
-
             results.push({
                 type: "album",
                 id: album.id,
                 title: album.name,
                 album_cover_url: album.images?.[0]?.url || "",
-                artists,
-                matchScore,
+                artists: album.artists?.map((a: any) => ({ id: a.id, name: a.name })),
+                matchScore: getBaseScore(album.name, 'album'),
             });
         });
 
+        // Process Artists
         data.artists?.items?.forEach((artist: any) => {
-            const matchScore = scoreMatch(artist.name);
             results.push({
                 type: "artist",
                 id: artist.id,
                 name: artist.name,
                 image_url: artist.images?.[0]?.url || "",
-                matchScore,
+                popularity: artist.popularity || 0,
+                matchScore: getBaseScore(artist.name, 'artist'),
             });
         });
 
         const unsorted = [...results];
 
-        const isLikelyArtistSearch =
-            results.some(r => r.type === "artist" && r.matchScore > 0.9);
+        // FINAL SORTING LOGIC:
+        // We prioritize Match Score heavily, but use Popularity as a tie-breaker.
+        const sorted = results.sort((a, b) => {
+            // If one is a significantly better text match, it wins
+            if (Math.abs(b.matchScore - a.matchScore) > 0.1) {
+                return b.matchScore - a.matchScore;
+            }
+            // Otherwise, let popularity decide (to show "The Weeknd" before a local artist)
+            return (b.popularity || 0) - (a.popularity || 0);
+        });
 
-        const filtered = isLikelyArtistSearch
-            ? results.filter(r => r.type !== "track" && r.type !== "album") // hide songs
-            : results;
-
-        // sort after filtering
-        filtered.sort((a, b) =>
-            (b.matchScore * 0.9 + (b.popularity || 0) * 0.1) -
-            (a.matchScore * 0.9 + (a.popularity || 0) * 0.1)
-        );
-
-        return { sorted: filtered, unsorted };
+        // Return top 7 most relevant items (mixed types)
+        return { sorted: sorted.slice(0, 7), unsorted };
     } catch (err) {
-        console.error("Error searching Spotify:", err);
+        console.error("Error in spotifySuggestions:", err);
         return { sorted: [], unsorted: [] };
     }
 }

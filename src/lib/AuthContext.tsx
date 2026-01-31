@@ -51,21 +51,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq("user_id", u.id)
           .single();
 
-        // follower and following counts 
-        const { data: followersData, error: followersError } = await supabase
+        const { count: followersCount } = await supabase
           .from("followers")
-          .select("follower_id", { count: 'exact' })
+          .select("*", { count: 'exact', head: true })
           .eq("following_id", u.id);
-
-        const { data: followingData, error: followingError } = await supabase
+        const { count: followingCount } = await supabase
           .from("followers")
-          .select("following_id", { count: 'exact' })
+          .select("*", { count: 'exact', head: true })
           .eq("follower_id", u.id);
-        if (followersError) console.error("Error fetching followers count:", followersError);
-        if (followingError) console.error("Error fetching following count:", followingError);
-
-        const followersCount = followersData ? followersData.length : 0;
-        const followingCount = followingData ? followingData.length : 0;
 
 
         let imageUrl = u.user_metadata?.imageUrl ?? '';
@@ -132,7 +125,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        // Update user from session without reloading
         setUser(prev => ({
           ...prev,
           accountId: session.user.id,
