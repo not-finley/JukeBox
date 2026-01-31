@@ -17,14 +17,14 @@ const Home = () => {
   const [loadingFollowerSuggestions, setLoadingFollowerSuggestions] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [filter, setFilter] = useState<"all" | "review" | "rating" | "listen">("all");
-  const [followerSuggestions, setFollowerSuggestions] = useState<ISearchUser[]>([])
+  const [followerSuggestions, setFollowerSuggestions] = useState<ISearchUser[]>([]);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   const offsetRef = useRef(0);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
   const hasMoreRef = useRef(hasMore);
   useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
-  const navigate = useNavigate();
 
 
   const handleFollow = async (userId: string) => {
@@ -110,19 +110,21 @@ const Home = () => {
     return () => observer.disconnect();
   }, [activityFeed, fetchFeed]);
 
+
   // Filter logic
   useEffect(() => {
     if (filter === "all") setFilteredFeed(activityFeed);
+    // You might need to adjust the filter logic to handle 'grouped' activities
     else if (filter === "listen")
-      setFilteredFeed(activityFeed.filter(a => a.type !== "review" && a.type !== "rating"));
-    else setFilteredFeed(activityFeed.filter(a => a.type === filter));
-  }, [filter, activityFeed]);
-
+      setFilteredFeed(activityFeed.filter(a => a.type !== "review" && a.type !== "rating" && a.type !== "grouped"));
+    else setFilteredFeed(activityFeed.filter(a => a.type === filter || (a.type === "grouped" && a.groupedActivities?.some(g => g.type === filter))));
+  }, [filter, activityFeed]); 
+  
   const activityTypeToPastTense = (type: string) => {
     switch (type) {
-      case "rating": return "rated";
-      case "review": return "reviewed";
-      default: return "listened to";
+      case "rating": return "Rated";
+      case "review": return "Reviewed";
+      default: return "Listened to";
     }
   };
 
@@ -204,99 +206,155 @@ const Home = () => {
           {/* Activity Feed */}
           <div className="flex flex-col gap-6 w-full max-w-2xl mt-2">
             {filteredFeed.map((activity) => {
-              const isReview = activity.type === "review";
+            const isAggregated = (activity as any).isAggregated;
+            const isExpanded = isAggregated && expandedGroup === activity.id;
+            const groupedActivities = (activity as any).groupedActivities || [];
+            const primaryLink = activity.targetType == "song"? `/song/${activity.targetId}`: `/album/${activity.targetId}`;
 
-              return (
-                <div
-                  key={activity.id}
-                  className={`flex items-start gap-4 border-b border-gray-700 pb-4 animate-fadeIn ${isReview ? "cursor-pointer hover:bg-gray-900/40 transition" : ""
-                    }`}
-                  {...(isReview && {
-                    onClick: () => navigate(`/review/${activity.id}`),
-                  })}
-                >
-                  {/* User avatar */}
-                  <Link
-                    to={`/profile/${activity.userId}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
+            return (
+              <div
+                key={activity.id}
+                className="flex flex-col border border-gray-700 rounded-2xl overflow-hidden bg-gray-900/40 transition-all duration-300"
+              >
+                {/* 1. HEADER: Standardized for both types */}
+                <div className="flex items-center gap-3 p-4 bg-gray-900/60 backdrop-blur-sm z-10">
+                  <Link to={`/profile/${activity.userId}`}>
                     <img
                       src={activity.profileUrl}
                       alt={activity.username}
-                      className="w-12 h-12 rounded-full object-cover hover:opacity-90 transition"
+                      className="w-10 h-10 rounded-full object-cover border border-gray-700"
                     />
                   </Link>
-
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-1 text-gray-300">
-                      <Link
-                        to={`/profile/${activity.userId}`}
-                        className="font-semibold hover:text-white"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-1.5">
+                      <Link to={`/profile/${activity.userId}`} className="font-bold text-white hover:underline">
                         {activity.username}
                       </Link>
-
-                      <span className="text-gray-400 flex items-center gap-1">
-                        {activityTypeToPastTense(activity.type)}
+                      <span className="text-gray-400 text-sm">
+                        {isAggregated ? "Juked" : activityTypeToPastTense(activity.type)}
                       </span>
-
-                      <Link
-                        to={
-                          activity.targetType === "song"
-                            ? `/song/${activity.targetId}`
-                            : `/album/${activity.targetId}`
-                        }
-                        className="hover:text-white font-medium"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <Link to={primaryLink} className="font-semibold text-emerald-400 hover:text-emerald-300 truncate">
                         {activity.targetName}
                       </Link>
                     </div>
-
-                    {activity.text && (
-                      <p className="text-gray-400 mt-2 italic">“{activity.text}”</p>
-                    )}
-
-                    {activity.rating && (
-                      <div className="flex items-center mt-1" onClick={(e) => e.stopPropagation()}>
-                        {[...Array(5)].map((_, i) => (
-                          <span
-                            key={i}
-                            className={`text-sm ${i < (activity.rating || 0) ? "text-yellow-400" : "text-gray-500"
-                              }`}
-                          >
-                            ★
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    <p className="text-gray-500 text-sm mt-1">
-                      {timeAgo(activity.date)}
-                    </p>
+                    <p className="text-gray-500 text-[10px] uppercase tracking-wider">{timeAgo(activity.date)}</p>
                   </div>
-
-                  {activity.album_cover_url && (
-                    <Link
-                      to={
-                        activity.targetType === "song"
-                          ? `/song/${activity.targetId}`
-                          : `/album/${activity.targetId}`
-                      }
-                      onClick={(e) => e.stopPropagation()}
+                  
+                  {isAggregated && (
+                    <button
+                      onClick={() => setExpandedGroup(isExpanded ? null : activity.id)}
+                      className="p-2 rounded-full hover:bg-gray-800 transition-colors"
                     >
-                      <img
-                        src={activity.album_cover_url}
-                        alt={activity.targetName}
-                        className="w-20 h-20 rounded-md object-cover hover:opacity-90 transition"
-                      />
-                    </Link>
+                      {/* Simple toggle icon */}
+                      <svg 
+                        className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-emerald-400' : 'text-gray-400'}`} 
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
                   )}
                 </div>
-              );
-            })}
 
+                {/* 2. MAIN CONTENT AREA */}
+                <div className="relative w-full aspect-square sm:aspect-video min-h-[300px] overflow-hidden flex items-center justify-center">
+                  
+                  {/* BACKGROUND IMAGE (The Blur Target) */}
+                  <img
+                    src={activity.album_cover_url || ""}
+                    alt={activity.targetName}
+                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out ${
+                      isExpanded ? 'scale-110 blur-xl brightness-[0.3]' : 'scale-100 blur-0 brightness-100'
+                    }`}
+                    onClick={() => setExpandedGroup(isExpanded ? null : activity.id)}
+                  />
+
+                  {/* OVERLAY: Review Text (Visible when NOT expanded) */}
+                  {!isExpanded && (
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-6 pt-20">
+                        {activity.rating && (
+                          <div className="flex gap-1 mb-2">
+                            {[...Array(5)].map((_, i) => (
+                              <span key={i} className={i < (activity.rating || 0) ? "text-yellow-400" : "text-gray-600/50"}>★</span>
+                            ))}
+                          </div>
+                        )}
+                        {activity.text && (
+                          <p className="text-white text-lg font-medium italic leading-tight drop-shadow-md">
+                            “{activity.text}”
+                          </p>
+                        )}
+                    </div>
+                  )}
+
+                  {/* OVERLAY: Tracklist (Visible ONLY when expanded) */}
+                  <div 
+                    className={`absolute inset-0 z-20 flex flex-col p-6 transition-all duration-500 transform ${
+                      isExpanded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'
+                    }`}
+                  >
+                    <div className="mb-4">
+                      <h4 className="text-emerald-400 font-bold text-sm uppercase tracking-widest">Full Activity</h4>
+                      <p className="text-gray-400 text-xs">Recently played and rated songs</p>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2">
+                    {groupedActivities.map((g: Activity, idx: number) => {
+                      // Determine if this was a combined action
+                      // In our new backend, 'listen' is the baseline, but 'rating' is the upgrade
+                      const hasRating = !!g.rating;
+                      
+                      return (
+                        <div 
+                          key={g.id} 
+                          style={{ transitionDelay: `${idx * 40}ms` }}
+                          className={`flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/5 transition-all duration-500 ${
+                            isExpanded ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {/* Subtle Track Number */}
+                            <span className="text-white/30 text-xs font-mono w-4">
+                              {String(idx + 1).padStart(2, '0')}
+                            </span>
+                            <span className="text-white font-medium text-sm truncate">
+                              {g.targetName}
+                            </span>
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-3 bg-black/20 py-1 px-3 rounded-full border border-white/5">
+                            {/* Always show Listen icon if it's in this group */}
+                            <div className="flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                              </svg>
+                              {!hasRating && <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Listened</span>}
+                            </div>
+
+                            {/* Show Rating if available */}
+                            {hasRating && (
+                              <div className="flex items-center gap-1 border-l border-white/10 pl-3">
+                                <span className="text-yellow-400 text-xs font-bold">{g.rating}</span>
+                                <span className="text-yellow-400/50 text-[10px]">★</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                    <button
+                      onClick={() => setExpandedGroup(null)}
+                      className="mt-4 w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold backdrop-blur-md transition"
+                    >
+                      Back to Review
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
             <div ref={sentinelRef} className="h-32 flex justify-center items-center">
               {loadingMore && <LoaderMusic />}
               {!hasMore && (

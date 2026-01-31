@@ -2225,7 +2225,7 @@ export async function getRecentFollowedActivities(
                     user_id,
                     song_id,
                     listen_date,
-                    song:songs(title, album_id, albums(album_cover_url)),
+                    song:songs(title, album_id, albums(album_cover_url, title)),
                     user:users(username)
                     `)
                 .in("user_id", followedIds)
@@ -2267,7 +2267,7 @@ export async function getRecentFollowedActivities(
                     rating,
                     song_id,
                     rating_date,
-                    song:songs(title, albums(album_cover_url)),
+                    song:songs(title, album_id, albums(album_cover_url, title)),
                     user:users(username)
                 `)
                 .in("user_id", followedIds)
@@ -2314,6 +2314,10 @@ export async function getRecentFollowedActivities(
                 targetName: songObj?.title ?? "Unknown Song",
                 album_cover_url: songAlbum?.album_cover_url ?? "",
                 date: l.listen_date,
+                targetAlbumId: songObj.album_id,
+                targetAlbumName : songAlbum?.title ?? "Unknown Album",
+                isAggregated: false,
+                groupedActivities: []
             });
         }
 
@@ -2331,6 +2335,10 @@ export async function getRecentFollowedActivities(
                 targetName: albumObj?.title ?? "Unknown Album",
                 album_cover_url: albumObj?.album_cover_url ?? "",
                 date: l.listen_date,
+                targetAlbumId: l.album_id,
+                targetAlbumName : albumObj?.title ?? "Unknown Album",
+                isAggregated: false,
+                groupedActivities: []
             });
         }
 
@@ -2357,6 +2365,10 @@ export async function getRecentFollowedActivities(
                         : albumObj?.album_cover_url ?? "",
                 date: r.created_at,
                 text: r.review_text,
+                targetAlbumId: r.album_id,
+                targetAlbumName : songAlbum?.title ?? "Unknown Album",
+                isAggregated: false,
+                groupedActivities: []
             });
         }
 
@@ -2376,6 +2388,10 @@ export async function getRecentFollowedActivities(
                 album_cover_url: songAlbum?.album_cover_url ?? "",
                 date: r.rating_date,
                 rating: r.rating,
+                targetAlbumId:  songObj.album_id,
+                targetAlbumName : songAlbum?.title ?? "Unknown Album",
+                isAggregated: false,
+                groupedActivities: []
             });
         }
 
@@ -2394,15 +2410,22 @@ export async function getRecentFollowedActivities(
                 album_cover_url: albumObj?.album_cover_url ?? "",
                 date: r.rating_date,
                 rating: r.rating,
+                targetAlbumId: r.album_id,
+                targetAlbumName : albumObj?.title ?? "Unknown Album",
+                isAggregated: false,
+                groupedActivities: []
             });
         }
-
 
         activities.sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
 
-        const paginated = activities.slice(offset, offset + limit);
+        const aggregatedActivities = combineAndAggregate(activities);
+
+        console.log(aggregatedActivities);
+
+        const paginated = aggregatedActivities.slice(offset, offset + limit);
 
         const uniqueUserIds = Array.from(new Set(paginated.map(a => a.userId)));
 
@@ -2425,7 +2448,115 @@ export async function getRecentFollowedActivities(
         return [];
     }
 }
+function combineAndAggregate(activities: Activity[]): Activity[] {
+    if (!activities.length) return [];
 
+    const groups = new Map<string, Activity[]>();
+    const TIME_WINDOW_MS = 15 * 60 * 1000; // Increased to 15m for better grouping
+
+    // 1. Initial Grouping by User + Album + Time Window
+    activities.forEach(activity => {
+        const albumId = activity.targetType === "album" ? activity.targetId : activity.targetAlbumId;
+        if (!albumId) {
+            groups.set(`single-${activity.id}`, [activity]);
+            return;
+        }
+
+        const albumKeyPrefix = `${activity.userId}-${albumId}`;
+        let foundGroupKey: string | null = null;
+
+        for (const [key, group] of groups.entries()) {
+            if (key.startsWith(albumKeyPrefix)) {
+                const groupStartTime = new Date(group[0].date).getTime();
+                const activityTime = new Date(activity.date).getTime();
+                if (Math.abs(activityTime - groupStartTime) <= TIME_WINDOW_MS) {
+                    foundGroupKey = key;
+                    break;
+                }
+            }
+        }
+
+        if (foundGroupKey) {
+            groups.get(foundGroupKey)!.push(activity);
+        } else {
+            const newKey = `${albumKeyPrefix}-${new Date(activity.date).getTime()}`;
+            groups.set(newKey, [activity]);
+        }
+    });
+
+    const newFeed: Activity[] = [];
+
+    for (const group of groups.values()) {
+        // --- SECONDARY AGGREGATION: Merge Listen + Rating for the same song ---
+        const mergedByTarget = new Map<string, Activity>();
+        
+        group.forEach(act => {
+            const key = `${act.targetType}-${act.targetId}`;
+            if (!mergedByTarget.has(key)) {
+                mergedByTarget.set(key, { ...act });
+            } else {
+                const existing = mergedByTarget.get(key)!;
+                // Merge Rating into Listen (or vice versa)
+                if (act.rating) existing.rating = act.rating;
+                if (act.text) existing.text = act.text;
+                // Keep the most recent date
+                if (new Date(act.date) > new Date(existing.date)) {
+                    existing.date = act.date;
+                }
+                // If one was a 'review' or 'rating', upgrade the type from 'listen'
+                if (act.type === "review" || act.type === "rating") {
+                    existing.type = act.type;
+                }
+            }
+        });
+
+        const uniqueActivitiesInGroup = Array.from(mergedByTarget.values());
+
+        // 2. Decide how to display this group
+        if (uniqueActivitiesInGroup.length === 1) {
+            newFeed.push(uniqueActivitiesInGroup[0]);
+        } else {
+            // Logic for Aggregated "Juked" Post
+            const explicitAlbumActivity = 
+                uniqueActivitiesInGroup.find(a => a.targetType === "album" && a.type === "review") || 
+                uniqueActivitiesInGroup.find(a => a.targetType === "album" && a.type === "rating") || 
+                uniqueActivitiesInGroup.find(a => a.targetType === "album");
+
+            const representative = uniqueActivitiesInGroup[0];
+            
+            let headline: Activity;
+            let children: Activity[];
+
+            if (explicitAlbumActivity) {
+                headline = explicitAlbumActivity;
+                children = uniqueActivitiesInGroup.filter(a => a.id !== explicitAlbumActivity.id);
+            } else {
+                // Synthetic Headline
+                headline = {
+                    ...representative,
+                    targetType: "album",
+                    targetId: representative.targetAlbumId!,
+                    targetName: representative.targetAlbumName!,
+                    type: "grouped",
+                    rating: undefined,
+                    text: undefined,
+                };
+                children = uniqueActivitiesInGroup;
+            }
+
+            newFeed.push({
+                ...headline,
+                id: `aggregated-${headline.userId}-${headline.targetId}-${new Date(headline.date).getTime()}`,
+                isAggregated: true,
+                groupedActivities: children,
+                type: "grouped",
+                targetName: headline.targetAlbumName || headline.targetName,
+            });
+        }
+    }
+
+    return newFeed.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
 
 export async function getFollowerSuggestions(userId: string) {
     if (!userId) return [];

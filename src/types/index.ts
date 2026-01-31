@@ -249,7 +249,7 @@ export type Activity = {
   userId: string;
   username: string;
   profileUrl?: string;
-  type: "listen" | "review" | "rating";
+  type: "listen" | "review" | "rating" | "grouped";
   targetType: "song" | "album";
   targetId: string;
   targetName: string;
@@ -257,6 +257,10 @@ export type Activity = {
   date: string;
   rating?: number;
   text?: string;
+  targetAlbumId?: string;
+  targetAlbumName?: string;
+  isAggregated: boolean;
+  groupedActivities: Activity [];
 };
 
 export interface Listened {
