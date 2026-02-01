@@ -244,6 +244,28 @@ export type Review = {
   comments?: Comment[];
 }
 
+export interface PSong {
+  songId: string;
+  title: string;
+  album: string;
+  album_cover_url: string;
+  duration_ms?: number;
+  artists: SpotifyArtist[];   
+  order: number;     
+}
+
+export interface Playlist {
+  id: string;
+  name: string;
+  description?: string;
+  cover_url: string;
+  public: boolean;
+  creators: IUser[];  // Array to support collaborative playlists
+  songs: PSong[];   
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type Activity = {
   id: string;
   userId: string;

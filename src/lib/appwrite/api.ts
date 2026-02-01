@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed } from "@/types";
+import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed, Playlist as PlaylistType } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 
 function normalizeReleaseDate(dateStr: string): string | null {
@@ -667,6 +667,71 @@ export async function getUserById(userId: string): Promise<IUser | null> {
         console.error('Failed to fetch user:', error);
         return null;
     }
+}
+
+export async function updatePlaylist(updatedPlaylist: PlaylistType) {
+  try {
+    // 1. Update the metadata (Name, Cover, etc.)
+    const { error: metaError } = await supabase
+      .from("playlists")
+      .update({
+        name: updatedPlaylist.name,
+        cover_url: updatedPlaylist.cover_url,
+      })
+      .eq("id", updatedPlaylist.id);
+
+    if (metaError) throw metaError;
+
+    // 2. Handle Song Reordering
+    // Strategy: Delete existing links and re-insert in new order
+    // This is safer than trying to "update" existing rows one-by-one
+    const { error: deleteError } = await supabase
+      .from("playlist_songs")
+      .delete()
+      .eq("playlist_id", updatedPlaylist.id);
+
+    if (deleteError) throw deleteError;
+
+    // 3. Insert the new order
+    const songLinks = updatedPlaylist.songs.map((song : any, index : any) => ({
+      playlist_id: updatedPlaylist.id,
+      song_id: song.songId,
+      sort_order: index, // The index from your draggable list
+    }));
+
+    const { error: insertError } = await supabase
+      .from("playlist_songs")
+      .insert(songLinks);
+
+    if (insertError) throw insertError;
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating playlist:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Fetches a full playlist with songs ordered correctly
+ */
+export async function getPlaylistById(playlistId: string) {
+  const { data, error } = await supabase
+    .from("playlists")
+    .select(`
+      *,
+      creators:playlist_creators(user_id),
+      songs:playlist_songs(*)
+    `)
+    .eq("playlist_id", playlistId)
+    .single();
+
+  if (error) throw error;
+
+  // Sorting the songs based on the sort_order column
+  const sortedSongs = data.songs.sort((a: any, b: any) => a.sort_order - b.sort_order);
+  
+  return { ...data, songs: sortedSongs };
 }
 
 export async function getSongDetailsById(songId: string): Promise<SongDetails | null> {

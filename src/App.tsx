@@ -16,6 +16,7 @@ import LibraryRatings from './_root/pages/LibraryRatings';
 import LibraryListened from './_root/pages/LibraryListened';
 import ResetPasswordPage from './_auth/ResetPage';
 import ForgotPasswordPage from './_auth/ForgotPasswordPage';
+import PlaylistPage from './_root/pages/PlaylistPage';
 
 const App = () => {
   return (
@@ -50,6 +51,7 @@ const App = () => {
                 <Route path="/album/:id" element={<Album />}/>
                 <Route path="/album/:id/add-review" element={<AddReviewAlbum />}/>
                 <Route path="/search" element={<Search  />}/>
+                <Route path="/playlist/:id" element={<PlaylistPage />}/>
                 
             </Route>
         </Routes>
