@@ -9,14 +9,20 @@ import LoaderMusic from '@/components/shared/loaderMusic';
 const RootLayout = () => {
   const { isAuthenticated, isLoading } = useUserContext();
   
-  if (isLoading) return <div className='common-container bg-red'><LoaderMusic/></div>;
+  if (isLoading) return <div className='common-container'><LoaderMusic/></div>;
   if (!isAuthenticated) return <Navigate to="/sign-in" replace />;
+
   return (
-    <div className="w-full min-h-screen md:flex md:h-dvh">
+    // 1. Remove md:h-dvh from the main wrapper to allow the document to scroll
+    <div className="relative w-full min-h-screen md:flex">
       <Topbar />
+      
+      {/* 2. Your LeftSidebar needs to be 'sticky' or 'fixed' inside its own component 
+          Ensure LeftSidebar has: className="sticky top-0 h-dvh hidden md:block" */}
       <LeftSidebar />
 
-       <section className="flex flex-1 min-h-0 element-container md:min-h-screen">
+      {/* 3. The main section now scrolls with the body */}
+      <section className="flex flex-1 flex-col min-h-screen">
         <Outlet />
       </section>
 
