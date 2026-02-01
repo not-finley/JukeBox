@@ -214,7 +214,7 @@ const Home = () => {
 
             return (
               <div
-                onClick={() => {activity.type == "review"? navigate(`/review/${activity.id}`) : ""}}
+                // onClick={() => {activity.type == "review"? navigate(`/review/${activity.id}`) : ""}}
                 key={activity.id}
                 className = { `flex flex-col border border-gray-700 rounded-2xl overflow-hidden bg-gray-900/40 transition-all cur duration-300 ${ activity.type == "review" ? "hover:cursor-pointer" : ""}`}
               >
