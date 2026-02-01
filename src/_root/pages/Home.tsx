@@ -216,7 +216,7 @@ const Home = () => {
               <div
                 // onClick={() => {activity.type == "review"? navigate(`/review/${activity.id}`) : ""}}
                 key={activity.id}
-                className = { `flex flex-col border border-gray-700 rounded-2xl overflow-hidden bg-gray-900/40 transition-all cur duration-300 ${ activity.type == "review" ? "hover:cursor-pointer" : ""}`}
+                className = { `flex flex-col border border-gray-700 rounded-2xl overflow-hidden bg-gray-900/40 transition-all cur duration-300 ${ activity.type == "review" ? "hover:cursor-pointer" : ""} touch-action-pan-y`}
               >
                 {/* 1. HEADER: Standardized for both types */}
                 <div className="flex items-center gap-3 p-4 bg-gray-900/60 backdrop-blur-sm z-10">
@@ -300,7 +300,7 @@ const Home = () => {
                       <p className="text-gray-400 text-xs">Recently played and rated songs</p>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2" onPointerDown={(e) => e.stopPropagation()}>
+                    <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2" onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
                     {groupedActivities.map((g: Activity, idx: number) => {
                       // Determine if this was a combined action
                       // In our new backend, 'listen' is the baseline, but 'rating' is the upgrade
