@@ -13,16 +13,14 @@ const RootLayout = () => {
   if (!isAuthenticated) return <Navigate to="/sign-in" replace />;
 
   return (
-    // 1. Remove md:h-dvh from the main wrapper to allow the document to scroll
-    <div className="relative w-full min-h-screen md:flex">
+    // min-h-dvh ensures the background covers the full screen without being static
+    <div className="relative w-full min-h-dvh md:flex bg-dark-1">
       <Topbar />
       
-      {/* 2. Your LeftSidebar needs to be 'sticky' or 'fixed' inside its own component 
-          Ensure LeftSidebar has: className="sticky top-0 h-dvh hidden md:block" */}
       <LeftSidebar />
 
-      {/* 3. The main section now scrolls with the body */}
-      <section className="flex flex-1 flex-col min-h-screen">
+      {/* On mobile, we need to ensure this section doesn't push the footer down */}
+      <section className="flex flex-1 flex-col">
         <Outlet />
       </section>
 

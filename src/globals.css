@@ -153,7 +153,7 @@
 }
 
   .common-container {
-    @apply flex flex-col min-h-screen flex-1 items-center gap-10 py-5 px-2 md:px-8 lg:p-14;
+    @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center gap-10 py-5 px-2 md:px-8 lg:p-14;
     touch-action: pan-y;
   }
 

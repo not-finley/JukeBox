@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Activity, ISearchUser } from "@/types";
 import { useUserContext } from "@/lib/AuthContext";
@@ -9,7 +9,7 @@ import SuggestionsList from "@/components/SuggestionsList";
 const PAGE_SIZE = 10;
 
 const Home = () => {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const { user } = useUserContext();
   const [activityFeed, setActivityFeed] = useState<Activity[]>([]);
   const [filteredFeed, setFilteredFeed] = useState<Activity[]>([]);
@@ -214,7 +214,7 @@ const Home = () => {
 
             return (
               <div
-                // onClick={() => {activity.type == "review"? navigate(`/review/${activity.id}`) : ""}}
+                onClick={() => {activity.type == "review"? navigate(`/review/${activity.id}`) : ""}}
                 key={activity.id}
                 className = { `flex flex-col border border-gray-700 rounded-2xl overflow-hidden bg-gray-900/40 transition-all cur duration-300 ${ activity.type == "review" ? "hover:cursor-pointer" : ""} touch-action-pan-y`}
               >
