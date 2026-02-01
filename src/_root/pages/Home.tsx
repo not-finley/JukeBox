@@ -259,7 +259,7 @@ const Home = () => {
                 </div>
 
                 {/* 2. MAIN CONTENT AREA */}
-                <div className="relative w-full aspect-square sm:aspect-[6/5] min-h-[300px] overflow-hidden flex items-center justify-center">
+                <div className="relative w-full aspect-square sm:aspect-[6/5] min-h-[300px] overflow-hidden flex items-center justify-center" onClick={() => setExpandedGroup(isExpanded ? null : activity.id)}>
                   
                   {/* BACKGROUND IMAGE (The Blur Target) */}
                   <img
@@ -268,7 +268,7 @@ const Home = () => {
                     className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out ${
                       isExpanded ? 'scale-110 blur-xl brightness-[0.3]' : 'scale-100 blur-0 brightness-100'
                     }`}
-                    onClick={() => setExpandedGroup(isExpanded ? null : activity.id)}
+                  
                   />
 
                   {/* OVERLAY: Review Text (Visible when NOT expanded) */}
@@ -300,7 +300,7 @@ const Home = () => {
                       <p className="text-gray-400 text-xs">Recently played and rated songs</p>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2">
+                    <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2" onPointerDown={(e) => e.stopPropagation()}>
                     {groupedActivities.map((g: Activity, idx: number) => {
                       // Determine if this was a combined action
                       // In our new backend, 'listen' is the baseline, but 'rating' is the upgrade

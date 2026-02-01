@@ -120,24 +120,37 @@
     @apply flex justify-start items-center;
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
-    border-radius: 2px;
-  }
+.custom-scrollbar {
+  /* Prevents the whole page from bouncing/scrolling when this list ends */
+  overscroll-behavior: contain; 
+  
+  /* Forces the browser to use hardware acceleration for smoother movement */
+  -webkit-overflow-scrolling: touch; 
+  
+  /* Ensures vertical swipes are reserved for scrolling, not accidental clicks */
+  touch-action: pan-y;
+  
+  /* Your existing scrollbar styles */
+}
 
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #09090a;
-  }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+  border-radius: 2px;
+}
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #5c5c7b;
-    border-radius: 50px;
-  }
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #09090a;
+}
 
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #7878a3;
-  }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #5c5c7b;
+  border-radius: 50px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #7878a3;
+}
 
   .common-container {
     @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center gap-10 py-5 px-2 md:px-8 lg:p-14;
