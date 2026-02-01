@@ -31,7 +31,7 @@
 
 @layer base {
   * {
-    @apply box-border list-none p-0 m-0 scroll-smooth overscroll-none;
+    @apply box-border list-none p-0 m-0 scroll-smooth;
   }
 
   /* Ensure root elements don't create horizontal overflow and allow body to be the main scroll container */
@@ -41,7 +41,8 @@
   } */
 
   body {
-    @apply bg-dark-1 text-white font-inter h-dvh custom-scrollbar;
+    @apply bg-dark-1 text-white font-inter min-h-dvh custom-scrollbar;
+    overscroll-behavior-y: auto;
   }
 }
 
@@ -121,16 +122,15 @@
   }
 
 .custom-scrollbar {
-  /* Prevents the whole page from bouncing/scrolling when this list ends */
-  overscroll-behavior: contain; 
-  
-  /* Forces the browser to use hardware acceleration for smoother movement */
+  overscroll-behavior: auto; 
   -webkit-overflow-scrolling: touch; 
-  
-  /* Ensures vertical swipes are reserved for scrolling, not accidental clicks */
   touch-action: pan-y;
-  
-  /* Your existing scrollbar styles */
+}
+
+.inner-scroll {
+  overscroll-behavior: contain;
+  overflow-y: auto;
+  touch-action: pan-y;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -153,7 +153,8 @@
 }
 
   .common-container {
-    @apply flex flex-col min-h-[calc(100dvh-145px)] flex-1 items-center gap-10 py-5 px-2 md:px-8 lg:p-14;
+    @apply flex flex-col min-h-screen flex-1 items-center gap-10 py-5 px-2 md:px-8 lg:p-14;
+    touch-action: pan-y;
   }
 
   /* All Users */

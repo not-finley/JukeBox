@@ -300,7 +300,7 @@ const Home = () => {
                       <p className="text-gray-400 text-xs">Recently played and rated songs</p>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-2" onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
+                    <div className="flex-1 overflow-y-auto space-y-2 inner-scroll pr-2" onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
                     {groupedActivities.map((g: Activity, idx: number) => {
                       // Determine if this was a combined action
                       // In our new backend, 'listen' is the baseline, but 'rating' is the upgrade
