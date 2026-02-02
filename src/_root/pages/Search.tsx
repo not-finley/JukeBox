@@ -63,7 +63,7 @@ const Search = () => {
 
   const renderCard = (item: any) => {
     const isRound = item.type === "artist" || item.type === "user";
-    const linkPath = item.type === "track" ? "song" : item.type;
+    const linkPath = item.type === "track" ? "song" : item.type === "user" ? "profile" : item.type;
     const title = item.title || item.name || item.username;
     const img = item.image_url || item.album_cover_url || item.avatar_url;
 

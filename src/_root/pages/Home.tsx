@@ -367,10 +367,10 @@ const Home = () => {
         </div>
 
         {/* RIGHT COLUMN — Suggested content */}
-        <div className="hidden xl:flex flex-col gap-6">
+        <div className="hidden xl:flex flex-col gap-6 sticky top-6 h-fit">
 
           {/* People You May Know */}
-          <div className=" p-4 rounded-xl border border-gray-800">
+          <div className="p-4 rounded-xl border border-gray-800 bg-gray-900/40">
             <h2 className="text-lg font-semibold mb-3">People you may know</h2>
             <div className="flex flex-col gap-4">
               {loadingFollowerSuggestions && (<LoaderMusic />)}
@@ -392,7 +392,7 @@ const Home = () => {
           </div>
 
           {/* Suggested Albums */}
-          <div className=" p-4 rounded-xl border border-gray-800">
+          <div className="p-4 rounded-xl border border-gray-800 bg-gray-900/40">
             <h2 className="text-lg font-semibold mb-3">People with similar taste like these albums</h2>
             <p className="text-gray-600">Coming Soon.</p>
             <div className="grid grid-cols-3 gap-3">
