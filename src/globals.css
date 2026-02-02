@@ -34,8 +34,15 @@
     @apply box-border list-none p-0 m-0 scroll-smooth;
   }
 
+  html, body {
+    /* This is the magic fix for mobile 'bounce' */
+    overscroll-behavior-y: none; 
+    /* Ensures content stays within the dynamic viewport */
+    height: 100dvh;
+  }
+
   body {
-    @apply bg-dark-1 text-white font-inter min-h-dvh custom-scrollbar;
+    @apply bg-dark-1 text-white font-inter custom-scrollbar;
   }
 }
 
