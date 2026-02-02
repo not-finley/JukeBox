@@ -34,15 +34,8 @@
     @apply box-border list-none p-0 m-0 scroll-smooth;
   }
 
-  /* Ensure root elements don't create horizontal overflow and allow body to be the main scroll container */
-  /* html, #root, body {
-    height: 100%;
-    overflow-x: hidden;
-  } */
-
   body {
     @apply bg-dark-1 text-white font-inter min-h-dvh custom-scrollbar;
-    overscroll-behavior-y: auto;
   }
 }
 
