@@ -9,12 +9,13 @@ export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
+    const redirectUrl = "https://jukeboxd.ca/reset-password";
 
     async function handleReset() {
         setLoading(true);
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/reset-password`,
+            redirectTo: redirectUrl,
         });
 
         setLoading(false);
