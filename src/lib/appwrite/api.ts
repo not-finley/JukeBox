@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed } from "@/types";
+import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed, TrendingResponse } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 
 function normalizeReleaseDate(dateStr: string): string | null {
@@ -2556,6 +2556,45 @@ function combineAndAggregate(activities: Activity[]): Activity[] {
     }
 
     return newFeed.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+export async function getTrendingData(limit: number = 10): Promise<TrendingResponse> {
+    try {
+        const [songsRes, albumsRes, reviewsRes] = await Promise.all([
+            supabase.from("trending_songs").select("*").order("play_count", { ascending: false }).limit(limit),
+            supabase.from("trending_albums").select("*").order("play_count", { ascending: false }).limit(limit),
+            supabase.from("trending_reviews").select("*").order("like_count", { ascending: false }).limit(limit)
+        ]);
+
+        return {
+            topSongs: (songsRes.data || []).map(s => ({
+                songId: s.song_id,
+                title: s.song_title,
+                albumCoverUrl: s.album_cover_url,
+                playCount: s.play_count
+            })),
+            topAlbums: (albumsRes.data || []).map(a => ({
+                albumId: a.album_id,
+                title: a.album_title,
+                albumCoverUrl: a.album_cover_url,
+                playCount: a.play_count
+            })),
+            recentReviews: (reviewsRes.data || []).map(r => ({
+                reviewId: r.review_id,
+                userId: r.user_id,
+                username: r.username,
+                targetType: r.review_type as "song" | "album",
+                targetId: r.review_type === "song" ? r.song_id : r.album_id,
+                targetName: r.target_name,
+                albumCoverUrl: r.album_cover_url,
+                reviewText: r.review_text,
+                createdAt: r.created_at,
+                likeCount: r.like_count || 0,
+            }))
+        };
+    } catch (err) {
+        console.error(err);
+        return { topSongs: [], topAlbums: [], recentReviews: [] };
+    }
 }
 
 export async function getFollowerSuggestions(userId: string) {

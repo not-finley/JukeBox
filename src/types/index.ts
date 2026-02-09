@@ -263,6 +263,39 @@ export type Activity = {
   groupedActivities: Activity [];
 };
 
+export type SongActivity = {
+  songId: string;
+  title: string;
+  albumCoverUrl: string;
+  playCount: number;
+};
+
+export type AlbumActivity = {
+  albumId: string;
+  title: string;
+  albumCoverUrl: string;
+  playCount: number;
+};
+
+export type ReviewActivity = {
+  reviewId: string;
+  userId: string;
+  username: string;
+  targetType: "song" | "album";
+  targetId: string;
+  targetName: string;
+  albumCoverUrl?: string;
+  reviewText: string;
+  createdAt: string;
+  likeCount: number;
+};
+
+export type TrendingResponse = {
+  topSongs: SongActivity[];
+  topAlbums: AlbumActivity[];
+  recentReviews: ReviewActivity[];
+};
+
 export interface Listened {
   type: "song" | "album";
   id: string;
