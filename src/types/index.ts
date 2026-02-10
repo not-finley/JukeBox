@@ -237,7 +237,7 @@ export type Review = {
   id: string;
   name: string;
   album_cover_url: string | null;
-  createdAt: number;
+  createdAt: string;
   likes: number;
   type: "song" | "album";
   creator?: IUser;

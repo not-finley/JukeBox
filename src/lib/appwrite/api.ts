@@ -2059,8 +2059,6 @@ export async function getRated(userId: string): Promise<RatingGeneral[]> {
 
 export async function getReviewedWithLimit(userId: string, limit: number): Promise<Review[]> {
     try {
-
-
         const { data: reviews, error } = await supabase
             .from("reviews")
             .select(`
@@ -2069,7 +2067,8 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
                 song_id,
                 album_id,
                 created_at,
-                user_id
+                user_id, 
+                reviewlikes(count) 
             `)
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
@@ -2078,19 +2077,20 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
         if (error) throw error;
         if (!reviews) return [];
 
-
-
-
         const results = await Promise.all(
             reviews.map(async (r: any) => {
                 let coverUrl = "";
                 const reviewType: "song" | "album" = r.song_id ? "song" : "album";
                 let name = "";
 
+                // Get the like count from the join
+                // Supabase returns this as an array of objects or a single object with { count }
+                const likeCount = r.reviewlikes?.[0]?.count || 0;
+
                 if (r.album_id) {
                     const { data: album } = await supabase
                         .from("albums")
-                        .select("*")
+                        .select("album_cover_url, title")
                         .eq("album_id", r.album_id)
                         .single();
                     coverUrl = album?.album_cover_url ?? "";
@@ -2098,10 +2098,10 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
                 } else if (r.song_id) {
                     const { data: song } = await supabase
                         .from("songs")
-                        .select("*, album:albums(album_cover_url)")
+                        .select("title, album:albums(album_cover_url)")
                         .eq("song_id", r.song_id)
                         .single();
-                    coverUrl = song?.album.album_cover_url ?? "";
+                    coverUrl = (song as any)?.album?.album_cover_url ?? "";
                     name = song?.title ?? "";
                 }
 
@@ -2114,7 +2114,7 @@ export async function getReviewedWithLimit(userId: string, limit: number): Promi
                     type: reviewType,
                     createdAt: r.created_at,
                     album_cover_url: coverUrl,
-                    likes: 0,
+                    likes: likeCount, // Updated this key
                 };
             })
         );

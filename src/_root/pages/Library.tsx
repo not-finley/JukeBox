@@ -9,6 +9,7 @@ import { Listened, RatingGeneral, Review } from "@/types/index";
 const Library = () => {
   const { user } = useUserContext();
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(""); // 1. New State
   const [reviewed, setReviewed] = useState<Review[]>([]);
   const [rated, setRated] = useState<RatingGeneral[]>([]);
   const [listened, setListened] = useState<Listened[]>([]);
@@ -31,127 +32,171 @@ const Library = () => {
     load();
   }, [user]);
 
-  if (loading) return <div className="common-container"><LoaderMusic /></div>;
+  // 2. Filter Logic: Only show items that match name or text
+  const filteredReviews = reviewed.filter(r => 
+    r.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    r.text.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredRated = rated.filter(r => 
+    r.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredListened = listened.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  if (loading) return <div className="common-container flex justify-center items-center min-h-[80vh]"><LoaderMusic /></div>;
 
   const SECTIONS = [
     { key: "reviews", label: "Reviews" },
     { key: "ratings", label: "Rated" },
-    { key: "listens", label: "Listening History" },
-    { key: "playlists", label: "Playlists" }, // future feature
+    { key: "listens", label: "History" },
+    { key: "playlists", label: "Playlists" },
   ];
 
-
   return (
-    <div className="common-container">
-      <div className="w-full max-w-6xl mx-auto">
-        <h1 className="text-4xl font-black mb-3 tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-          Your Library
-        </h1>
+    <div className="common-container w-full px-4 sm:px-8 lg:px-16 py-6">
+      <div className="max-w-7xl w-full mx-auto">
+        
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Your Library</h1>
+            <p className="text-gray-400">Manage your reviews, ratings, and music history.</p>
+          </div>
+
+          {/* 3. SEARCH INPUT UI */}
+          <div className="relative w-full md:max-w-xs">
+            <input 
+              type="text"
+              placeholder={`Search ${activeSection}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-gray-900/50 border border-gray-800 text-white text-sm rounded-xl px-10 py-3 focus:outline-none focus:border-emerald-500/50 transition-all"
+            />
+            <img 
+              src="/assets/icons/search.svg" // Replace with your search icon path
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50"
+              alt="search"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-xs"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* NAVIGATION TABS */}
-        <div className=" max-w-6xl flex gap-4 border-b border-gray-800 mb-6 overflow-x-auto">
+        <div className="flex gap-8 border-b border-gray-800 mb-8 overflow-x-auto no-scrollbar">
           {SECTIONS.map(sec => (
             <button
               key={sec.key}
-              onClick={() => setActiveSection(sec.key as any)}
-              className={`pb-3 text-sm font-semibold transition-colors ${activeSection === sec.key
-                  ? "text-emerald-300 border-b-2 border-emerald-400"
-                  : "text-gray-400 hover:text-gray-200"
-                }`}
+              onClick={() => {
+                setActiveSection(sec.key as any);
+                setSearchQuery(""); // Clear search when switching tabs for better UX
+              }}
+              className={`pb-4 text-sm font-semibold transition-all whitespace-nowrap ${
+                activeSection === sec.key
+                  ? "text-emerald-400 border-b-2 border-emerald-500"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
             >
               {sec.label}
             </button>
           ))}
         </div>
 
+        {/* ---- CONTENT SECTIONS (using filtered variables) ---- */}
+        <div className="min-h-[50vh]">
+          
+          {/* REVIEWS */}
+          {activeSection === "reviews" && (
+            filteredReviews.length === 0 ? (
+              <p className="text-gray-500 italic">No matches found for "{searchQuery}"</p>
+            ) : (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {filteredReviews.map(r => <ReviewItemLibrary key={r.reviewId} review={r} />)}
+              </div>
+            )
+          )}
 
-        {/* ---- REVIEWS SECTION ---- */}
-        {activeSection === "reviews" && (
-          reviewed.length === 0 ? (
-            <p className="text-gray-500">You haven't written any reviews yet.</p>
-          ) : (
-            <div className="max-w-6xl grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {reviewed.map(r => <ReviewItemLibrary key={r.reviewId} review={r} />)}
-            </div>
-          )
-        )}
-
-
-        {/* ---- RATINGS SECTION ---- */}
-        {activeSection === "ratings" && (
-          rated.length === 0 ? (
-            <p className="text-gray-500">You haven't rated anything yet.</p>
-          ) : (
-            <div className="max-w-6xl grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {rated.map((rating, i) => (
-                <div key={i} className="flex items-center bg-gray-800 p-3 rounded-xl border border-gray-700">
-                  <Link to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}>
+          {/* RATINGS */}
+          {activeSection === "ratings" && (
+            filteredRated.length === 0 ? (
+              <p className="text-gray-500 italic">No matches found for "{searchQuery}"</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredRated.map((rating, i) => (
+                  <Link 
+                    key={i} 
+                    to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
+                    className="flex items-center gap-4 p-3 rounded-xl bg-gray-900/40 border border-gray-800 hover:border-emerald-500/50 transition-all group"
+                  >
                     <img
                       src={rating.album_cover_url || "/assets/icons/music-placeholder.svg"}
-                      className="w-16 h-16 rounded-md object-cover"
+                      className="w-14 h-14 rounded-lg object-cover shadow-md"
                     />
-                  </Link>
-
-                  <div className="ml-4 flex-1 min-w-0">
-                    <Link
-                      to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
-                      className="text-indigo-200 font-semibold truncate hover:underline"
-                    >
-                      {rating.title}
-                    </Link>
-                    <p className="text-xs text-gray-400 capitalize">{rating.type}</p>
-                    <div className="mt-1 flex">
-                      {[...Array(5)].map((_, star) => (
-                        <span key={star} className={star < rating.rating ? "text-yellow-400" : "text-gray-600"}>★</span>
-                      ))}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium truncate group-hover:text-emerald-400 transition-colors">
+                        {rating.title}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[...Array(5)].map((_, star) => (
+                            <span key={star} className={`text-[10px] ${star < rating.rating ? "text-emerald-400" : "text-gray-700"}`}>★</span>
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wider">{rating.type}</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  </Link>
+                ))}
+              </div>
+            )
+          )}
+
+          {/* HISTORY */}
+          {activeSection === "listens" && (
+            filteredListened.length === 0 ? (
+              <p className="text-gray-500 italic">No matches found for "{searchQuery}"</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                {filteredListened.map(item => (
+                  <Link
+                    key={item.id}
+                    to={item.type === "song" ? `/song/${item.id}` : `/album/${item.id}`}
+                    className="flex flex-col gap-3 group"
+                  >
+                    <div className="relative overflow-hidden rounded-2xl">
+                      <img
+                        src={item.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                        className="w-full aspect-square object-cover shadow-lg group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
+                    </div>
+                    <div>
+                      <p className="text-white text-sm font-semibold truncate">{item.name}</p>
+                      <p className="text-gray-500 text-xs capitalize">{item.type}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )
+          )}
+
+          {/* PLAYLISTS */}
+          {activeSection === "playlists" && (
+            <div className="flex flex-col items-center justify-center py-20 bg-gray-900/20 rounded-3xl border border-dashed border-gray-800">
+              <p className="text-gray-400 font-medium">Playlists are coming soon</p>
+              <p className="text-gray-600 text-sm">Check back in a few weeks!</p>
             </div>
-          )
-        )}
-
-
-        {/* ---- LISTENING HISTORY ---- */}
-        {activeSection === "listens" && (
-          listened.length === 0 ? (
-            <p className="text-gray-500">You haven't listened to anything yet.</p>
-          ) : (
-            <div className=" max-w-6xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {listened.map(item => (
-                <Link
-                  key={item.id}
-                  to={item.type === "song" ? `/song/${item.id}` : `/album/${item.id}`}
-                  className="group"
-                >
-                  <img
-                    src={item.album_cover_url || "/assets/icons/music-placeholder.svg"}
-                    className="w-full aspect-square object-cover rounded-lg border border-gray-800 group-hover:scale-[1.02] transition"
-                  />
-                  <p className="text-sm text-gray-200 truncate mt-2">{item.name}</p>
-                  <p className="text-xs text-gray-400 capitalize">{item.type}</p>
-                </Link>
-              ))}
-            </div>
-          )
-        )}
-
-
-        {/* ---- PLAYLISTS (EMPTY STATE FOR NOW) ---- */}
-        {activeSection === "playlists" && (
-          <div className=" max-w-6xl text-gray-400 text-center py-16">
-            {/* <p className="text-xl font-semibold mb-2">No playlists yet</p>
-            <p className="text-sm">Create playlists to collect songs and albums you love.</p> */}
-            {/* <button
-              disabled
-              className="mt-4 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              Create Playlist
-            </button> */}
-            <p className="text-gray-500">Working on adding this feature still, check back in a few weeks</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
