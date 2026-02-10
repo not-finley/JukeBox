@@ -3,7 +3,8 @@ import { AlbumDetails } from '@/types';
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
 import { BarChart, Bar, XAxis } from 'recharts';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { isMobile, isTablet } from "react-device-detect";
 import { getSpotifyToken, SpotifyAlbumById } from '@/lib/appwrite/spotify';
 import LoaderMusic from '@/components/shared/loaderMusic';
 import { useUserContext } from '@/lib/AuthContext';
@@ -211,44 +212,64 @@ const Album = () => {
                             {/* Tracks */}
                             <section className="bg-black px-4 py-12 lg:w-3/5">
                                 <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Tracks</h2>
-                                <ul className="divide-y divide-gray-700">
-                                    {album.tracks.map((track, index) => (
-                                        <li
-                                            key={index}
-                                            className="grid grid-cols-[40px_1fr_auto_5px] items-center bg-gray-800 p-3 hover:bg-gray-700 transition rounded-md mt-1 mb-1"
-                                        >
-                                            {/* Track number */}
-                                            <span className="text-gray-400">{index + 1}</span>
+                                <ul className="divide-y divide-gray-800">
+                                    {album.tracks.map((track, index) => {
+                                        const hasRating = songRatings[index] > 0;
+                                        
+                                        return (
+                                            <li
+                                                key={index}
+                                                className="group grid grid-cols-[30px_1fr_auto] items-center gap-4 p-3 hover:bg-white/5 transition-all rounded-xl mt-1 mb-1"
+                                            >
+                                                {/* 1. Track Number or Play Icon */}
+                                                <span className="text-gray-500 font-medium text-sm w-4 text-center">
+                                                    {index + 1}
+                                                </span>
 
-                                            {/* Title */}
-                                            <Link to={`/song/${track.songId}`} className="text-white truncate">
-                                                {track.title}
-                                            </Link>
+                                                {/* 2. Title */}
+                                                <Link to={`/song/${track.songId}`} className="flex flex-col min-w-0">
+                                                    <span className="text-white font-medium truncate group-hover:text-emerald-400 transition-colors">
+                                                        {track.title}
+                                                    </span>
+                                                </Link>
 
-                                            {/* Stars */}
-                                            <div className="flex gap-1 justify-center">
-                                                {[...Array(5)].map((_, starIndex) => {
-                                                    const value = starIndex + 1;
-                                                    return (
-                                                        <button
-                                                            key={value}
-                                                            type="button"
-                                                            onClick={() => handleSongRating(value, index)}
-                                                        >
-                                                            <img
-                                                                src={
-                                                                    songRatings[index] >= value
-                                                                        ? "/assets/icons/cute-star_full.svg"
-                                                                        : "/assets/icons/cute-star.svg"
-                                                                }
-                                                                className="h-4/6 w-7"
-                                                            />
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </li>
-                                    ))}
+                                                {/* 3. Stars Logic */}
+                                                <div className={`flex items-center gap-1 transition-all duration-300 ${
+                                                    !isMobile && !isTablet 
+                                                        ? `opacity-0 group-hover:opacity-100 ${hasRating ? 'opacity-100' : ''}` 
+                                                        : 'opacity-100' 
+                                                }`}>
+                                                    <div className="flex gap-0.5">
+                                                        {[...Array(5)].map((_, starIndex) => {
+                                                            const value = starIndex + 1;
+                                                            const isActive = songRatings[index] >= value;
+                                                            return (
+                                                                <button
+                                                                    key={value}
+                                                                    type="button"
+                                                                    onClick={() => handleSongRating(value, index)}
+                                                                    className="transition-transform active:scale-125 hover:scale-110"
+                                                                >
+                                                                    <img
+                                                                        src={isActive 
+                                                                            ? "/assets/icons/cute-star_full.svg" 
+                                                                            : "/assets/icons/cute-star.svg"
+                                                                        }
+                                                                        className={`w-5 h-5 md:w-6 md:h-6 transition-all ${
+                                                                            isActive 
+                                                                            ? 'drop-shadow-[0_0_5px_rgba(16,185,129,0.4)]' 
+                                                                            // If not active, we invert the black to white and dim it
+                                                                            : 'invert opacity-20 group-hover:opacity-40 hover:!opacity-100'
+                                                                        }`}
+                                                                        />
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </section>
                             {/* Ratings + Actions */}
@@ -277,56 +298,74 @@ const Album = () => {
                                             </BarChart>
                                         </div>
                                     )}
-                                {/* User Actions */}
-                                <div className="mt-10 w-full max-w-sm bg-gray-800 rounded-lg p-4 ">
-                                    <div className="flex gap-2 mt-2">
-                                        <Button className="shad-button_primary w-1/2"
-                                            onClick={listenedClick}
-                                        >
-                                            <div className="flex-col flex-center">
-                                                <img
-                                                    width={25}
-                                                    src={listened ? '/assets/icons/headphones-filled.svg' : '/assets/icons/headphones.svg'}
-                                                />
-                                                <p className="tiny-medium text-black">{listened ? 'remove' : 'Listened'}</p>
-                                            </div>
-                                        </Button>
+                                {/* User Actions Card */}
+                                <div className="mt-10 w-full max-w-sm rounded-2xl bg-gray-900/40 backdrop-blur-xl border border-gray-800 p-5 shadow-2xl transition-all hover:border-gray-700/50">
+                                
+                                <div className="flex gap-3">
+                                    {/* Listened Toggle Button */}
+                                    <Button 
+                                    onClick={listenedClick}
+                                    className={`flex-1 h-16 rounded-xl transition-all duration-300 active:scale-95 ${
+                                        listened 
+                                        ? "bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20" 
+                                        : "bg-white/5 border border-white/10 hover:bg-white/10"
+                                    }`}
+                                    >
+                                    <div className="flex flex-col items-center gap-1">
+                                        <img
+                                        src={listened ? '/assets/icons/headphones-filled.svg' : '/assets/icons/headphones.svg'}
+                                        className={`w-6 h-6 transition-transform ${listened ? 'scale-110' : ''}`}
+                                        alt="headphones"
+                                        />
+                                        <p className={`text-[10px] font-bold uppercase tracking-widest ${listened ? 'text-emerald-400' : 'text-gray-400'}`}>
+                                        {listened ? 'Listened' : 'Mark Listened'}
+                                        </p>
+                                    </div>
+                                    </Button>
 
-                                        <Link className={`${buttonVariants({ variant: "default" })} shad-button_primary w-1/2`}
-                                            to={`/album/${album?.albumId}/add-review`}
-                                            key="add-review"
-                                        >
-                                            <div className="flex-col flex-center">
-                                                <img
-                                                    width={22.5}
-                                                    src='/assets/icons/pen-nib.svg'
-                                                />
-                                                <p className="tiny-medium text-black">Review</p>
-                                            </div>
-                                        </Link>
+                                    {/* Review Link Button */}
+                                    <Link 
+                                    to={`/album/${album?.albumId}/add-review`}
+                                    className="flex-1 h-16 rounded-xl bg-emerald-500 hover:bg-emerald-400 transition-all duration-300 active:scale-95 flex flex-col items-center justify-center gap-1 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                                    >
+                                        <img
+                                        src='/assets/icons/pen-nib.svg'
+                                        className="w-5 h-5 brightness-0" // Makes the icon black to contrast with emerald
+                                        alt="review"
+                                        />
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-black">
+                                        Write Review
+                                        </p>
+                                    </Link>
+                                </div>
+
+                                {/* Rating Bar */}
+                                <div className="relative mt-3 group">
+                                    <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                                    <div className="relative flex items-center justify-between px-4 h-12 bg-black/40 border border-white/5 rounded-xl backdrop-blur-md">
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Your Rating</span>
+                                    <div className="flex gap-1.5">
+                                        {[...Array(5)].map((_, index) => {
+                                        const value = index + 1;
+                                        const isActive = rating >= value;
+                                        return (
+                                            <button
+                                            key={value}
+                                            type="button"
+                                            className="transition-transform active:scale-125 hover:scale-110"
+                                            onClick={() => handleRating(value)}
+                                            >
+                                            <img
+                                                src={isActive ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
+                                                className={`w-6 h-6 ${isActive ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'opacity-40'}`}
+                                                alt={`${value} stars`}
+                                            />
+                                            </button>
+                                        );
+                                        })}
                                     </div>
-                                    <div className="bg-emerald-500 w-full h-10 rounded-md mt-2 justify-center flex items-center">
-                                        <div className="flex gap-1">
-                                            {[...Array(5)].map((_, index) => {
-                                                const value = (index + 1);
-                                                return (
-                                                    <button
-                                                        key={value}
-                                                        type="button"
-                                                        className="text-2xl text-black hover:text-gray-50"
-                                                        onClick={() => handleRating(value)}
-                                                    >
-                                                        <img
-                                                            //src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
-                                                            //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
-                                                            src={rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
-                                                            className="h-4/6 w-10"
-                                                        />
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
                                     </div>
+                                </div>
                                 </div>
                             </section>
 

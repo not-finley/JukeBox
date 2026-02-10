@@ -204,7 +204,7 @@ const Search = () => {
           <img src="/assets/icons/search.svg" className="w-20 h-20 opacity-20 mb-4" />
           <p className="text-gray-500 font-medium">Search for something new...</p>
           <div className="mt-8 flex flex-wrap justify-center gap-2 max-w-lg">
-            {["Taylor Swift", "The Weeknd", "Drake", "SZA", "Kendrick Lamar"].map(t => (
+            {["Phoebe Bridgers", "Vampire Weekend", "Haim", "SZA", "Kendrick Lamar"].map(t => (
               <button
                 key={t}
                 onClick={() => { setSearchQuery(t); performSearch(t); }}

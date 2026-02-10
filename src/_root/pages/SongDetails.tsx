@@ -136,59 +136,87 @@ const SongDetailsSection = () => {
       {/* {notFound && <h1 className='text-2xl text-gray-300'>Arist not found</h1>} */}
       {song && (
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
-          {/* Left Section: Album Cover */}
+          {/* Left Section: Album Cover + User Actions */}
           <div className="lg:w-1/3 flex-shrink-0 mb-8 lg:mb-0">
-            <img
-              src={song?.album_cover_url}
-              alt="Album Cover"
-              className="rounded-lg shadow-lg"
-              style={{ width: '100%', height: 'auto' }}
-            />
-            <div className="flex gap-2 mt-2">
-              <Button className="shad-button_primary w-1/2" onClick={listenedClick}>
-                <div className="flex-col flex-center">
-                  <img
-                    width={25}
-                    src={listened ? '/assets/icons/headphones-filled.svg' : '/assets/icons/headphones.svg'}
-                  />
-                  <p className="tiny-medium text-black">{listened ? 'remove' : 'Listened'}</p>
-                </div>
-              </Button>
-
-              <Link className={`${buttonVariants({ variant: "default" })} shad-button_primary w-1/2`}
-                to={`/song/${song?.songId}/add-review`}
-                key="add-review"
-              >
-                <div className="flex-col flex-center">
-                  <img
-                    width={22.5}
-                    src='/assets/icons/pen-nib.svg'
-                  />
-                  <p className="tiny-medium text-black">Review</p>
-                </div>
-              </Link>
+            {/* Big Album Art */}
+            <div className="relative group overflow-hidden rounded-2xl shadow-2xl mb-6">
+              <img
+                src={song?.album_cover_url}
+                alt={song?.title}
+                className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                <p className="text-white text-xs font-medium italic">Released {song?.release_date.slice(0,4)}</p>
+              </div>
             </div>
-            <div className="bg-emerald-500 w-full h-10 rounded-md mt-2 justify-center flex items-center">
-              <div className="flex gap-1">
-                {[...Array(5)].map((_, index) => {
-                  const value = (index + 1);
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      className="text-2xl text-black hover:text-gray-50"
-                      onClick={() => handleRating(value)}
 
-                    >
-                      <img
-                        // src={hover >= value || rating >= value? '/assets/icons/star_full.svg' : '/assets/icons/star_empty.svg'}
-                        //src={hover >= value? '/assets/icons/star_full.svg' : rating >= value? '/assets/icons/star_full_bg.svg' : '/assets/icons/star_empty.svg'}
-                        src={rating >= value ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
-                        className="h-4/6 w-10"
-                      />
-                    </button>
-                  );
-                })}
+            {/* User Actions Card (Synced with Album style) */}
+            <div className="w-full rounded-2xl bg-gray-900/40 backdrop-blur-xl border border-gray-800 p-5 shadow-2xl transition-all hover:border-emerald-500/20">
+              
+              <div className="flex gap-3">
+                {/* Listened Toggle */}
+                <Button 
+                  onClick={listenedClick}
+                  className={`flex-1 h-16 rounded-xl transition-all duration-300 active:scale-95 ${
+                    listened 
+                    ? "bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20" 
+                    : "bg-white/5 border border-white/10 hover:bg-white/10"
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <img
+                      src={listened ? '/assets/icons/headphones-filled.svg' : '/assets/icons/headphones.svg'}
+                      className={`w-6 h-6 transition-transform ${listened ? 'scale-110' : ''}`}
+                      alt="headphones"
+                    />
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${listened ? 'text-emerald-400' : 'text-gray-400'}`}>
+                      {listened ? 'Listened' : 'Mark Listened'}
+                    </p>
+                  </div>
+                </Button>
+
+                {/* Review Link */}
+                <Link 
+                  to={`/song/${song?.songId}/add-review`}
+                  className="flex-1 h-16 rounded-xl bg-emerald-500 hover:bg-emerald-400 transition-all duration-300 active:scale-95 flex flex-col items-center justify-center gap-1 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                >
+                  <img
+                    src='/assets/icons/pen-nib.svg'
+                    className="w-5 h-5 brightness-0"
+                    alt="review"
+                  />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-black">
+                    Review
+                  </p>
+                </Link>
+              </div>
+
+              {/* Rating Bar */}
+              <div className="relative mt-3 group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                <div className="relative flex items-center justify-between px-4 h-12 bg-black/40 border border-white/5 rounded-xl backdrop-blur-md">
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-tight">Rating</span>
+                  <div className="flex gap-1.5">
+                    {[...Array(5)].map((_, index) => {
+                      const value = index + 1;
+                      const isActive = rating >= value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          className="transition-transform active:scale-125 hover:scale-110"
+                          onClick={() => handleRating(value)}
+                        >
+                          <img
+                            src={isActive ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
+                            className={`w-6 h-6 ${isActive ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'opacity-30 hover:opacity-100'}`}
+                            alt={`${value} stars`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
