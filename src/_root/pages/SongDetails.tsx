@@ -2,7 +2,7 @@ import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
 import { addListenedSong, addUpdateRatingSong, addSongToDatabase, getAllRatingsOfaSong, getRatingSong, getSongDetailsById, hasListenedSong, removeListenedSong, deleteRaitingSong } from "@/lib/appwrite/api";
 import { useEffect, useState } from "react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { getSpotifyToken, SpotifyTrackById } from "@/lib/appwrite/spotify";
 import { useUserContext } from "@/lib/AuthContext";
