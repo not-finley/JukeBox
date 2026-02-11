@@ -77,6 +77,14 @@ export type Song = {
   popularity: number
 }
 
+export type Track = {
+    title: string;
+    songId: string;
+    artist: string;
+    album_cover_url: string;
+    preview_url: string;
+};
+
 export type Album = {
   albumId: string;
   title: string;
@@ -123,6 +131,9 @@ export interface SpotifyTrack {
   popularity: number;
   external_urls: { spotify: string };
   artists: SpotifyArtist[];
+  external_ids: {
+    isrc: string;
+  };
 }
 
 export interface SpotifySong {
@@ -135,6 +146,7 @@ export interface SpotifySong {
   artists: SpotifyArtist[];
   release_date: string;
   popularity: number;
+  isrc: string;
 }
 
 export interface SpotifyTrackPaging {
@@ -190,6 +202,8 @@ export type SongDetails = {
   reviews: SongReview[];
   ratings: Rating[];
   artists: any[];
+  isrc: string;
+  preview_url: string;
 }
 
 export type ArtistDetails = {

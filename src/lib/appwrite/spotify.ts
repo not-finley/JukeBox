@@ -325,6 +325,7 @@ export async function SpotifyTrackById(songId: string, token: string) {
                 release_date: track.album.release_date,
                 popularity: track.popularity,
                 artists: track.artists,
+                isrc: track.external_ids?.isrc || ""
             };
         }
         return null
@@ -406,6 +407,9 @@ export async function SpotifyAlbumById(
             name: s.name,
             external_urls: { spotify: s.external_urls.spotify },
             popularity: s.popularity ?? 0,
+            external_ids: {
+                isrc: s.external_ids?.isrc || "",
+            },
             artists: s.artists.map((a: any) => ({
                 id: a.id,
                 name: a.name,
@@ -479,7 +483,6 @@ export async function getArtistDiscographyFromSpotify(
 
             const full: SpotifyAlbumWithTracks = await resp.json();
 
-            // ✅ tracks always in full.tracks.items
             const trackItems = full.tracks?.items ?? [];
 
             const formattedTracks: SongDetails[] = trackItems.map((track) => ({
@@ -494,6 +497,8 @@ export async function getArtistDiscographyFromSpotify(
                 ratings: [],
                 artists: track.artists,
                 spotify_url: track.external_urls?.spotify ?? "",
+                isrc: track.external_ids?.isrc || "",
+                preview_url: ""
             }));
 
             albumDetails.push({

@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 
 import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed, TrendingResponse } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
+import { getDeezerPreview } from "./deezer";
 
 function normalizeReleaseDate(dateStr: string): string | null {
     if (!dateStr) return null;
@@ -744,6 +745,8 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
                     updatedAt: r.created_at,
                 }))
             ),
+            isrc: songData.isrc,
+            preview_url: songData.preview_url
         };
 
         return song;
@@ -1019,7 +1022,8 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
         const { data: songData, error: songError } = await supabase
             .from("songs")
             .select("*")
-            .eq("album_id", albumId);
+            .eq("album_id", albumId)
+            .order("track_number", { ascending: true });
 
 
         if (songError) throw songError;
@@ -1068,7 +1072,9 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                 spotify_url: s.spotify_url,
                 album_cover_url: albumData.album_cover_url,
                 release_date: albumData.release_date,
-                popularity: s.pop
+                popularity: s.pop,
+                isrc: s.isrc, 
+                preview_url: s.preview_url
             })),
             album_type: albumData.album_type,
             artists: artistList,
@@ -1146,9 +1152,26 @@ export async function addSongToDatabase(song: SpotifySong) {
         // --- Check if song exists ---
         const { data: existingSong, error: selectSongError } = await supabase
             .from("songs")
-            .select("*")
+            .select("song_id, preview_url")
             .eq("song_id", song.songId)
             .single();
+
+        if (existingSong && !existingSong.preview_url) {
+            const freshPreviewUrl = await getDeezerPreview(
+                song.title, 
+                song.artists[0].name, 
+                song.isrc
+            );
+
+            if (freshPreviewUrl) {
+                await supabase
+                    .from("songs")
+                    .update({ preview_url: freshPreviewUrl })
+                    .eq("song_id", song.songId);
+                
+                console.log(`✅ Patched missing preview for: ${song.title}`);
+            }
+        }
 
         if (selectSongError && selectSongError.code !== "PGRST116") {
             // PGRST116 = no rows found
@@ -1179,6 +1202,12 @@ export async function addSongToDatabase(song: SpotifySong) {
 
         // --- Insert song if it doesn't exist ---
         if (!existingSong) {
+            const previewUrl = await getDeezerPreview(
+                song.title, 
+                song.artists[0].name, 
+                song.isrc
+            );
+
             const { error: songInsertError } = await supabase
                 .from("songs")
                 .insert([{
@@ -1187,6 +1216,8 @@ export async function addSongToDatabase(song: SpotifySong) {
                     album_id: song.album.id,
                     spotify_url: song.spotify_url,
                     pop: song.popularity,
+                    isrc: song.isrc,
+                    preview_url: previewUrl
                 }]);
             if (songInsertError) throw songInsertError;
         }

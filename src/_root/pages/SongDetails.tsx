@@ -9,6 +9,8 @@ import { useUserContext } from "@/lib/AuthContext";
 import ReviewItem from "@/components/ReviewItem";
 import { BarChart, Bar, XAxis } from 'recharts';
 import { FaSpotify } from "react-icons/fa";
+import { usePlayerContext } from "@/context/PlayerContext";
+import { Play } from "lucide-react";
 
 
 
@@ -23,7 +25,7 @@ const SongDetailsSection = () => {
   const [globalRatings, setGlobalRatings] = useState<{ rating: number; count: number }[]>([]);
   const [globalAverage, setGlobalAverage] = useState(0);
   const [globalTotal, setGlobalTotal] = useState(0);
-
+  const { playTrack } = usePlayerContext();
 
   const fetchGlobalRaiting = async () => {
     const { counts, average, total } = await getAllRatingsOfaSong(id || '');
@@ -138,17 +140,38 @@ const SongDetailsSection = () => {
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
           {/* Left Section: Album Cover + User Actions */}
           <div className="lg:w-1/3 flex-shrink-0 mb-8 lg:mb-0">
-            {/* Big Album Art */}
-            <div className="relative group overflow-hidden rounded-2xl shadow-2xl mb-6">
-              <img
-                src={song?.album_cover_url}
-                alt={song?.title}
-                className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                <p className="text-white text-xs font-medium italic">Released {song?.release_date.slice(0,4)}</p>
+            {/* Big Album Art with Play Overlay */}
+            <div 
+                className="relative group overflow-hidden rounded-2xl shadow-2xl mb-6 cursor-pointer"
+                onClick={() => playTrack({title: song.title, songId: song.songId, preview_url: song.preview_url, album_cover_url: song.album_cover_url, artist: song.artists.map(a => a.name).join(", ")})}
+              >
+                <img
+                  src={song?.album_cover_url}
+                  alt={song?.title}
+                  className="w-full h-auto object-cover transition-transform duration-700 md:group-hover:scale-110"
+                />
+                
+                {/* Play/Pause Overlay */}
+                <div className="absolute inset-0 bg-black/20 md:bg-black/40 flex items-center justify-center 
+                                opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-emerald-500 rounded-full flex items-center justify-center 
+                                  shadow-[0_0_30px_rgba(16,185,129,0.4)] 
+                                  transition-transform duration-300
+                                  md:translate-y-4 md:group-hover:translate-y-0">
+                      <Play size={30} fill="black" className="ml-1 md:w-[40px] md:h-[40px]" />
+                  </div>
+                </div>
+
+                {/* Mobile Bottom Info Bar (Always visible on mobile, hover on desktop) */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent 
+                                opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 
+                                flex items-end p-4 md:p-6">
+                  <div className="flex flex-col">
+                    <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em]">Preview Track</p>
+                    <p className="text-gray-400 text-[10px] italic md:hidden">Tap to play</p>
+                  </div>
+                </div>
               </div>
-            </div>
 
             {/* User Actions Card (Synced with Album style) */}
             <div className="w-full rounded-2xl bg-gray-900/40 backdrop-blur-xl border border-gray-800 p-5 shadow-2xl transition-all hover:border-emerald-500/20">
