@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import defaultAvatar from "/assets/icons/profile-placeholder.svg";
 import { useUserContext } from "@/lib/AuthContext";
@@ -35,6 +35,7 @@ export default function ReviewPage() {
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 
   useEffect(() => {
@@ -102,6 +103,16 @@ export default function ReviewPage() {
     setReplyText("");
 
     loadReview();
+  };
+
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCommentInput(e.target.value);
+    
+    // Auto-resize logic
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"; // Reset height to recalculate
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
   };
 
 
@@ -300,33 +311,49 @@ export default function ReviewPage() {
               )}
           </div>
 
-          {/* Comment Input */}
-          {!showCommentInput && (
+          {showCommentInput ? (
+            <div className="sticky bottom-4 mt-6 p-4 bg-gray-900/80 backdrop-blur-lg border border-gray-700 rounded-2xl shadow-2xl transition-all">
+              <div className="flex items-start gap-3">
+                <img
+                  src={user.imageUrl || defaultAvatar}
+                  className="h-9 w-9 rounded-full object-cover hidden sm:block border border-gray-700"
+                />
+                
+                <div className="flex-1 flex flex-col gap-2">
+                  <textarea
+                    ref={textareaRef}
+                    rows={1}
+                    placeholder="Write a comment..."
+                    value={commentInput}
+                    onChange={handleInput}
+                    className="w-full bg-gray-800/50 border border-gray-700 text-white rounded-xl px-4 py-3 focus:outline-none text-sm focus:border-emerald-500/50 transition-all resize-none overflow-hidden min-h-[46px] max-h-[200px]"
+                  />
+                  
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setShowCommentInput(false)}
+                      className="text-gray-400 hover:text-white px-4 py-2 text-sm font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddComment}
+                      disabled={!commentInput.trim()}
+                      className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:hover:bg-emerald-500 text-black px-6 py-2 rounded-xl font-bold text-sm transition-all"
+                    >
+                      Post
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
             <button
               onClick={() => setShowCommentInput(true)}
-              className="text-gray-400 hover:text-white"
+              className="w-full mt-4 py-4 border-t border-gray-800 text-gray-500 hover:text-emerald-400 transition-colors text-left text-sm"
             >
               Add a comment...
             </button>
-          )}
-
-          {/* Show input only when opened */}
-          {showCommentInput && (
-            <div className="flex gap-2 items-center mt-3">
-              <input
-                type="text"
-                placeholder="Write a comment..."
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2 focus:border-gray-500"
-              />
-              <button
-                onClick={handleAddComment}
-                className="bg-green-500 hover:bg-green-400 text-black px-4 py-2 rounded-xl font-medium"
-              >
-                Post
-              </button>
-            </div>
           )}
         </>)}
     </div>

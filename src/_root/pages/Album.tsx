@@ -356,9 +356,16 @@ const Album = () => {
                                             onClick={() => handleRating(value)}
                                             >
                                             <img
-                                                src={isActive ? '/assets/icons/cute-star_full.svg' : '/assets/icons/cute-star.svg'}
-                                                className={`w-6 h-6 ${isActive ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'opacity-40'}`}
-                                                alt={`${value} stars`}
+                                                src={isActive 
+                                                    ? "/assets/icons/cute-star_full.svg" 
+                                                    : "/assets/icons/cute-star.svg"
+                                                }
+                                                className={`w-5 h-5 md:w-6 md:h-6 transition-all ${
+                                                    isActive 
+                                                    ? 'drop-shadow-[0_0_5px_rgba(16,185,129,0.4)]' 
+                                                    // If not active, we invert the black to white and dim it
+                                                    : 'invert opacity-20 group-hover:opacity-40 hover:!opacity-100'
+                                                }`}
                                             />
                                             </button>
                                         );
