@@ -1175,23 +1175,6 @@ export async function addSongToDatabase(song: SpotifySong) {
             .eq("song_id", song.songId)
             .single();
 
-        if (existingSong && !existingSong.preview_url) {
-            const freshPreviewUrl = await getDeezerPreview(
-                song.title, 
-                song.artists[0].name, 
-                song.isrc
-            );
-
-            if (freshPreviewUrl) {
-                await supabase
-                    .from("songs")
-                    .update({ preview_url: freshPreviewUrl })
-                    .eq("song_id", song.songId);
-                
-                console.log(`✅ Patched missing preview for: ${song.title}`);
-            }
-        }
-
         if (selectSongError && selectSongError.code !== "PGRST116") {
             // PGRST116 = no rows found
             throw selectSongError;
@@ -1221,11 +1204,6 @@ export async function addSongToDatabase(song: SpotifySong) {
 
         // --- Insert song if it doesn't exist ---
         if (!existingSong) {
-            const previewUrl = await getDeezerPreview(
-                song.title, 
-                song.artists[0].name, 
-                song.isrc
-            );
 
             const { error: songInsertError } = await supabase
                 .from("songs")
@@ -1236,7 +1214,6 @@ export async function addSongToDatabase(song: SpotifySong) {
                     spotify_url: song.spotify_url,
                     pop: song.popularity,
                     isrc: song.isrc,
-                    preview_url: previewUrl
                 }]);
             if (songInsertError) throw songInsertError;
         }
@@ -1483,12 +1460,16 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
             .upsert(artistAlbumLinks);
 
         // --- Batch insert songs ---
+
+        console.log(album.tracks.items)
+        
         const songInserts = album.tracks.items.map((s: SpotifyTrack) => ({
             song_id: s.id,
             title: s.name,
             album_id: album.id,
             spotify_url: s.external_urls.spotify,
-            pop: s.popularity
+            pop: s.popularity, 
+            isrc: s.external_ids?.isrc || null
         }));
 
         await supabase

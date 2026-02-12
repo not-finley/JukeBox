@@ -379,36 +379,38 @@ export async function SpotifyArtistById(artistId: string, token: string) {
     }
 }
 
-
 export async function SpotifyAlbumById(
     albumId: string,
     token: string
 ): Promise<SpotifyAlbumWithTracks | null> {
     try {
         const response = await fetch(`${SPOTIFY_API_BASE_URL}/albums/${albumId}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!response.ok) {
-            console.error("Spotify API error:", response.status, response.statusText);
-            return null;
-        }
-
+        if (!response.ok) return null;
         const album: any = await response.json();
 
-        // Spotify tracks come in a paging object
-        const tracksPaging = album.tracks ?? { items: [], total: 0, limit: 50, next: null, offset: 0, href: "" };
+        // 1. Get all track IDs from the simplified objects
+        const trackIds = album.tracks.items.map((t: any) => t.id).join(',');
 
-        // Map tracks to SpotifyTrack shape
-        const tracks: SpotifyTrack[] = tracksPaging.items.map((s: any) => ({
+        // 2. Fetch "Full Track Objects" to get ISRCs and Popularity
+        // Note: This endpoint handles up to 50 IDs at once.
+        const tracksResponse = await fetch(`${SPOTIFY_API_BASE_URL}/tracks?ids=${trackIds}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!tracksResponse.ok) throw new Error("Failed to fetch full track details");
+        const fullTracksData = await tracksResponse.json();
+
+        // 3. Map the Full Track data (which contains ISRCs)
+        const tracks: SpotifyTrack[] = fullTracksData.tracks.map((s: any) => ({
             id: s.id,
             name: s.name,
             external_urls: { spotify: s.external_urls.spotify },
             popularity: s.popularity ?? 0,
             external_ids: {
-                isrc: s.external_ids?.isrc || "",
+                isrc: s.external_ids?.isrc || "", // This will now be populated!
             },
             artists: s.artists.map((a: any) => ({
                 id: a.id,
@@ -417,7 +419,6 @@ export async function SpotifyAlbumById(
             })),
         }));
 
-        // Return SpotifyAlbumWithTracks type
         const result: SpotifyAlbumWithTracks = {
             id: album.id,
             name: album.name,
@@ -432,7 +433,7 @@ export async function SpotifyAlbumById(
                 external_urls: a.external_urls,
             })),
             tracks: {
-                ...tracksPaging,
+                ...album.tracks,
                 items: tracks,
             },
         };

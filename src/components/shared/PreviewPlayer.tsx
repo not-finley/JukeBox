@@ -21,8 +21,8 @@ export const PreviewPlayer = () => {
     };
 
     return (
-        <div className="fixed bottom-6 left-4 right-4 z-[100] animate-in slide-in-from-bottom-4 duration-300">
-            <div className="bg-gray-900/90 backdrop-blur-2xl border border-white/10 p-3 rounded-2xl flex flex-col gap-2 shadow-2xl max-w-4xl mx-auto">
+        <div className="fixed bottom-20 left-4 right-4 z-[100] animate-in slide-in-from-bottom-4 duration-300">
+            <div className="bg-gray-900/10 backdrop-blur-md border border-white/10 p-3 rounded-2xl flex flex-col gap-2 shadow-2xl max-w-4xl mx-auto">
                 
                 <div className="flex items-center gap-4">
                     <img 
