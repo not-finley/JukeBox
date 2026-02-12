@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 
 import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed, TrendingResponse } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
+import { getDeezerPreview } from "./deezer";
 
 function normalizeReleaseDate(dateStr: string): string | null {
     if (!dateStr) return null;
@@ -711,7 +712,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
 
         if (reviewError) throw reviewError;
 
-
+        const preview_url = await getDeezerPreview(songData.title, songData.artists, songData.isrc)
 
         // Build song object
         const song: SongDetails = {
@@ -744,6 +745,8 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
                     updatedAt: r.created_at,
                 }))
             ),
+            isrc: songData.isrc,
+            preview_url: preview_url
         };
 
         return song;
@@ -1019,11 +1022,23 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
         const { data: songData, error: songError } = await supabase
             .from("songs")
             .select("*")
-            .eq("album_id", albumId);
+            .eq("album_id", albumId)
+            .order("track_number", { ascending: true });
 
 
         if (songError) throw songError;
         if (!songData) throw new Error("No songs found");
+
+        const trackInputs = songData.map(s => ({
+            songId: s.song_id,
+            title: s.title,
+            artist: s.artist, // Assuming s.artist is the primary artist string
+            isrc: s.isrc
+        }));
+
+        const { data: enrichmentData, error: enrichmentError } = await supabase.functions.invoke('enrich-album', {
+            body: { tracks: trackInputs }
+        });
 
 
         // fetch artists 
@@ -1051,6 +1066,14 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
 
         if (reviewError) throw reviewError;
 
+        //get preview url's 
+        const previewMap = new Map();
+        if (!enrichmentError && enrichmentData?.tracks) {
+            enrichmentData.tracks.forEach((t: any) => {
+                previewMap.set(t.songId, t.preview_url);
+            });
+        }
+
         const album: AlbumDetails = {
             albumId: albumData.album_id,
             title: albumData.title,
@@ -1068,7 +1091,9 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                 spotify_url: s.spotify_url,
                 album_cover_url: albumData.album_cover_url,
                 release_date: albumData.release_date,
-                popularity: s.pop
+                popularity: s.pop,
+                isrc: s.isrc, 
+                preview_url: previewMap.get(s.song_id) || null,
             })),
             album_type: albumData.album_type,
             artists: artistList,
@@ -1146,7 +1171,7 @@ export async function addSongToDatabase(song: SpotifySong) {
         // --- Check if song exists ---
         const { data: existingSong, error: selectSongError } = await supabase
             .from("songs")
-            .select("*")
+            .select("song_id, preview_url")
             .eq("song_id", song.songId)
             .single();
 
@@ -1179,6 +1204,7 @@ export async function addSongToDatabase(song: SpotifySong) {
 
         // --- Insert song if it doesn't exist ---
         if (!existingSong) {
+
             const { error: songInsertError } = await supabase
                 .from("songs")
                 .insert([{
@@ -1187,6 +1213,7 @@ export async function addSongToDatabase(song: SpotifySong) {
                     album_id: song.album.id,
                     spotify_url: song.spotify_url,
                     pop: song.popularity,
+                    isrc: song.isrc,
                 }]);
             if (songInsertError) throw songInsertError;
         }
@@ -1433,12 +1460,16 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
             .upsert(artistAlbumLinks);
 
         // --- Batch insert songs ---
+
+        console.log(album.tracks.items)
+        
         const songInserts = album.tracks.items.map((s: SpotifyTrack) => ({
             song_id: s.id,
             title: s.name,
             album_id: album.id,
             spotify_url: s.external_urls.spotify,
-            pop: s.popularity
+            pop: s.popularity, 
+            isrc: s.external_ids?.isrc || null
         }));
 
         await supabase

@@ -1,5 +1,5 @@
 import { addAlbumComplex, addListenedAlbum, addUpdateRatingAlbum, addUpdateRatingSong, deleteRaitingAlbum, deleteRaitingSong, getAlbumDetailsById, getAlbumTrackRatings, getAllRatingsOfAlbum, getRatingAlbum, hasListenedAlbum, removeListenedAlbum } from '@/lib/appwrite/api';
-import { AlbumDetails } from '@/types';
+import { AlbumDetails, Track } from '@/types';
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
 import { BarChart, Bar, XAxis } from 'recharts';
@@ -10,6 +10,8 @@ import LoaderMusic from '@/components/shared/loaderMusic';
 import { useUserContext } from '@/lib/AuthContext';
 import { FaSpotify } from "react-icons/fa";
 import ReviewItem from '@/components/ReviewItem';
+import { Play } from 'lucide-react';
+import { usePlayerContext } from '@/context/PlayerContext';
 
 
 const Album = () => {
@@ -24,6 +26,7 @@ const Album = () => {
     const [globalAverage, setGlobalAverage] = useState(0);
     const [globalTotal, setGlobalTotal] = useState(0);
     const [songRatings, setSongRatings] = useState<number[]>([]);
+    const { playTrack } = usePlayerContext();
 
 
     const addAlbum = async () => {
@@ -119,6 +122,10 @@ const Album = () => {
 
         setLoading(false);
     };
+
+    const handlePlayPreview = (track: Track) => {
+        playTrack(track);
+    }
 
     const listenedClick = async () => {
         if (listened) {
@@ -222,9 +229,18 @@ const Album = () => {
                                                 className="group grid grid-cols-[30px_1fr_auto] items-center gap-4 p-3 hover:bg-white/5 transition-all rounded-xl mt-1 mb-1"
                                             >
                                                 {/* 1. Track Number or Play Icon */}
-                                                <span className="text-gray-500 font-medium text-sm w-4 text-center">
+                                                <div className="relative w-6 h-6 flex-center">
+                                                   {/* Show number by default, Play icon on hover */}
+                                                    <span className="text-gray-500 group-hover:opacity-0 transition-opacity">
                                                     {index + 1}
-                                                </span>
+                                                    </span>
+                                                    <button 
+                                                    onClick={() => handlePlayPreview({title: track.title, songId: track.songId, artist: album.artists[0].name, album_cover_url: album.album_cover_url, preview_url: track.preview_url, isrc: track.isrc})}
+                                                    className="absolute inset-0 opacity-0 group-hover:opacity-100 flex-center text-emerald-400"
+                                                    >
+                                                    <Play size={18} fill="currentColor" />
+                                                    </button>
+                                                </div>
 
                                                 {/* 2. Title */}
                                                 <Link to={`/song/${track.songId}`} className="flex flex-col min-w-0">
