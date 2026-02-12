@@ -83,6 +83,7 @@ export type Track = {
     artist: string;
     album_cover_url: string;
     preview_url: string;
+    isrc: string;
 };
 
 export type Album = {

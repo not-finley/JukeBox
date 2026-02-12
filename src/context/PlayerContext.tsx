@@ -24,6 +24,10 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     // We use a ref so the Audio object persists across re-renders
     const audioRef = useRef<HTMLAudioElement>(new Audio());
 
+    useEffect(() => {
+        audioRef.current.crossOrigin = "anonymous";
+    }, []);
+
     // Handle Track Changes & Playback
     useEffect(() => {
         const audio = audioRef.current;
@@ -45,6 +49,7 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         // small delay prevents ORB spam detection
         const timeout = setTimeout(() => {
             audio.src = currentTrack.preview_url;
+            
             audio.volume = volume;
 
             const onCanPlay = () => {
@@ -89,6 +94,7 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
             togglePlay();
         } else {
             setCurrentTrack(track);
+            console.log(track);
         }
     };
 

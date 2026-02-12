@@ -235,7 +235,7 @@ const Album = () => {
                                                     {index + 1}
                                                     </span>
                                                     <button 
-                                                    onClick={() => handlePlayPreview({title: track.title, songId: track.songId, artist: album.artists[0].name, album_cover_url: album.album_cover_url, preview_url: track.preview_url})}
+                                                    onClick={() => handlePlayPreview({title: track.title, songId: track.songId, artist: album.artists[0].name, album_cover_url: album.album_cover_url, preview_url: track.preview_url, isrc: track.isrc})}
                                                     className="absolute inset-0 opacity-0 group-hover:opacity-100 flex-center text-emerald-400"
                                                     >
                                                     <Play size={18} fill="currentColor" />

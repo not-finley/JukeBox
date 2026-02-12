@@ -143,7 +143,7 @@ const SongDetailsSection = () => {
             {/* Big Album Art with Play Overlay */}
             <div 
                 className="relative group overflow-hidden rounded-2xl shadow-2xl mb-6 cursor-pointer"
-                onClick={() => playTrack({title: song.title, songId: song.songId, preview_url: song.preview_url, album_cover_url: song.album_cover_url, artist: song.artists.map(a => a.name).join(", ")})}
+                onClick={() => playTrack({title: song.title, songId: song.songId, preview_url: song.preview_url, album_cover_url: song.album_cover_url, artist: song.artists.map(a => a.name).join(", "), isrc: song.isrc})}
               >
                 <img
                   src={song?.album_cover_url}

@@ -712,7 +712,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
 
         if (reviewError) throw reviewError;
 
-
+        const preview_url = await getDeezerPreview(songData.title, songData.artists, songData.isrc)
 
         // Build song object
         const song: SongDetails = {
@@ -746,7 +746,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
                 }))
             ),
             isrc: songData.isrc,
-            preview_url: songData.preview_url
+            preview_url: preview_url
         };
 
         return song;
@@ -1029,6 +1029,17 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
         if (songError) throw songError;
         if (!songData) throw new Error("No songs found");
 
+        const trackInputs = songData.map(s => ({
+            songId: s.song_id,
+            title: s.title,
+            artist: s.artist, // Assuming s.artist is the primary artist string
+            isrc: s.isrc
+        }));
+
+        const { data: enrichmentData, error: enrichmentError } = await supabase.functions.invoke('enrich-album', {
+            body: { tracks: trackInputs }
+        });
+
 
         // fetch artists 
         const { data: artists, error: artistError } = await supabase
@@ -1055,6 +1066,14 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
 
         if (reviewError) throw reviewError;
 
+        //get preview url's 
+        const previewMap = new Map();
+        if (!enrichmentError && enrichmentData?.tracks) {
+            enrichmentData.tracks.forEach((t: any) => {
+                previewMap.set(t.songId, t.preview_url);
+            });
+        }
+
         const album: AlbumDetails = {
             albumId: albumData.album_id,
             title: albumData.title,
@@ -1074,7 +1093,7 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                 release_date: albumData.release_date,
                 popularity: s.pop,
                 isrc: s.isrc, 
-                preview_url: s.preview_url
+                preview_url: previewMap.get(s.song_id) || null,
             })),
             album_type: albumData.album_type,
             artists: artistList,
