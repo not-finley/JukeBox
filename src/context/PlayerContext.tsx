@@ -64,6 +64,48 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         return () => clearTimeout(timeout);
     }, [currentTrack]);
 
+    useEffect(() => {
+    const audio = audioRef.current;
+
+    if (currentTrack && 'mediaSession' in navigator) {
+        // 1. Update the Metadata
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: currentTrack.title,
+                artist: currentTrack.artist,
+                album:  "Unknown Album",
+                artwork: [
+                    { src: currentTrack.album_cover_url, sizes: '96x96',   type: 'image/png' },
+                    { src: currentTrack.album_cover_url, sizes: '128x128', type: 'image/png' },
+                    { src: currentTrack.album_cover_url, sizes: '192x192', type: 'image/png' },
+                    { src: currentTrack.album_cover_url, sizes: '256x256', type: 'image/png' },
+                    { src: currentTrack.album_cover_url, sizes: '384x384', type: 'image/png' },
+                    { src: currentTrack.album_cover_url, sizes: '512x512', type: 'image/png' },
+                ]
+            });
+
+            // 2. Sync playback state
+            navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+
+            // 3. Add Action Handlers (Physical Buttons)
+            navigator.mediaSession.setActionHandler('play', () => {
+                togglePlay();
+            });
+            navigator.mediaSession.setActionHandler('pause', () => {
+                togglePlay();
+            });
+            
+            // Optional: Seek handlers
+            navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+                const skipTime = details.seekOffset || 10;
+                audio.currentTime = Math.max(audio.currentTime - skipTime, 0);
+            });
+            navigator.mediaSession.setActionHandler('seekforward', (details) => {
+                const skipTime = details.seekOffset || 10;
+                audio.currentTime = Math.min(audio.currentTime + skipTime, audio.duration);
+            });
+        }
+    }, [currentTrack, isPlaying]);
+
     // Sync Volume
     useEffect(() => {
         audioRef.current.volume = volume;
