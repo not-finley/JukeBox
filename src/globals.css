@@ -396,7 +396,7 @@
 
   /* Button */
   .shad-button_primary {
-    @apply bg-emerald-500 hover:bg-emerald-400 text-light-1 flex gap-2 !important;
+      @apply bg-emerald-500 hover:bg-emerald-400 text-light-1 flex-center gap-2 !important;
   }
 
   .shad-button_dark_4 {

@@ -12,6 +12,7 @@ import { FaSpotify } from "react-icons/fa";
 import { usePlayerContext } from "@/context/PlayerContext";
 import { Play } from "lucide-react";
 import PlayingVisualizer from "@/components/shared/PlayingVisualizer";
+import AuthModal from "@/components/shared/AuthModal";
 
 
 
@@ -21,12 +22,13 @@ const SongDetailsSection = () => {
   const [loading, setLoading] = useState(true);
   const [listened, setListened] = useState(true);
   const [songNotFound, setNotFound] = useState(false);
-  const { user } = useUserContext();
+  const { user, isAuthenticated } = useUserContext();
   const [rating, setRating] = useState(0);
   const [globalRatings, setGlobalRatings] = useState<{ rating: number; count: number }[]>([]);
   const [globalAverage, setGlobalAverage] = useState(0);
   const [globalTotal, setGlobalTotal] = useState(0);
   const { playTrack, currentTrack, isPlaying } = usePlayerContext();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const isCurrent = currentTrack?.songId === song?.songId;
 
@@ -39,6 +41,10 @@ const SongDetailsSection = () => {
   };
 
   const handleRating = async (value: number) => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     if (value == rating) {
       setRating(0);
       await deleteRaitingSong(id ? id : '', user.accountId)
@@ -103,14 +109,16 @@ const SongDetailsSection = () => {
   }
 
   useEffect(() => {
-    if (id && user?.accountId) {
+    if (id) {
       fetchSongAndReviews();
-      fetchListened();
-      addUpdateRatingSonglocal();
       fetchGlobalRaiting();
-    }
 
-  }, [user?.accountId, id]);
+      if (isAuthenticated && user?.accountId) {
+        fetchListened();
+        addUpdateRatingSonglocal();
+      }
+    }
+  }, [id, user?.accountId, isAuthenticated]);
 
 
   if (!song) {
@@ -126,6 +134,10 @@ const SongDetailsSection = () => {
   }
 
   const listenedClick = async () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     if (listened) {
       await removeListenedSong(song ? song.songId : '', user.accountId)
       setListened(false);
@@ -145,14 +157,19 @@ const SongDetailsSection = () => {
           <div className="lg:w-1/3 flex-shrink-0 mb-8 lg:mb-0">
             <div 
             className="relative group overflow-hidden rounded-2xl shadow-2xl mb-6 cursor-pointer"
-            onClick={() => playTrack({
+            onClick={() => {
+              if (!isAuthenticated) {
+                setShowAuthModal(true);
+                return;
+              }
+              playTrack({
                 title: song.title, 
                 songId: song.songId, 
                 preview_url: song.preview_url, 
                 album_cover_url: song.album_cover_url, 
                 artist: song.artists.map(a => a.name).join(", "), 
                 isrc: song.isrc
-            })}
+            })}}
           >
             <img
               src={song?.album_cover_url}
@@ -272,7 +289,19 @@ const SongDetailsSection = () => {
             <div className="mb-5 flex flex-wrap items-center gap-3">
                 {/* Local Play Album Button */}
                 <Button
-                    onClick={() => playTrack({title: song.title, songId: song.songId, preview_url: song.preview_url, album_cover_url: song.album_cover_url, artist: song.artists.map(a => a.name).join(", "), isrc: song.isrc})}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        setShowAuthModal(true);
+                        return;
+                      }
+                      playTrack({
+                        title: song.title, 
+                        songId: song.songId, 
+                        preview_url: song.preview_url, 
+                        album_cover_url: song.album_cover_url, 
+                        artist: song.artists.map(a => a.name).join(", "), 
+                        isrc: song.isrc
+                    })}}
                     className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg"
                 >
                     <Play fill="black" size={18} />
@@ -344,6 +373,7 @@ const SongDetailsSection = () => {
           </div>
         </div>
       )}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 };

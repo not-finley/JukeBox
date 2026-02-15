@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 import {
@@ -21,6 +21,7 @@ import { createUserAccount } from "@/lib/appwrite/api";
 const SignupForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const form = useForm<z.infer<typeof SignupValidation>>({
     resolver: zodResolver(SignupValidation),
@@ -31,6 +32,8 @@ const SignupForm = () => {
       password: "",
     },
   });
+
+  const redirectTo = location.state?.from || "/";
 
   const { mutateAsync: signInAccount, isPending: isSigningIn } = useSignInAccount();
 
@@ -51,7 +54,7 @@ const SignupForm = () => {
 
       if (session) {
         form.reset();
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       } else {
         toast({ title: "Sign in after signup failed." });
       }

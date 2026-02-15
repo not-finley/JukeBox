@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import {
   Form,
@@ -22,6 +22,7 @@ import { useState } from "react";
 const SigninForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<z.infer<typeof SigninValidation>>({
@@ -34,14 +35,16 @@ const SigninForm = () => {
 
   const { mutateAsync: signInAccount, isPending } = useSignInAccount();
 
+  const redirectTo = location.state?.from || "/";
+
   async function onSubmit(values: z.infer<typeof SigninValidation>) {
     try {
-      const session = await signInAccount(values); // ✅ use the mutation
+      const session = await signInAccount(values);
       console.log("Signed in session:", session);
 
       if (session) {
         form.reset();
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       } else {
         toast({ title: "Sign in failed. Please try again." });
       }

@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { INewUser } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
 
 // -------------------- MUTATIONS --------------------
@@ -41,10 +42,12 @@ export const useSignInAccount = () => {
 
 // Sign out the current user
 export const useSignOutAccount = () => {
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: async () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      navigate("/auth-select")
       return true;
     },
   });
