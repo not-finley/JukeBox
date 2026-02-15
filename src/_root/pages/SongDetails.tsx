@@ -11,6 +11,7 @@ import { BarChart, Bar, XAxis } from 'recharts';
 import { FaSpotify } from "react-icons/fa";
 import { usePlayerContext } from "@/context/PlayerContext";
 import { Play } from "lucide-react";
+import PlayingVisualizer from "@/components/shared/PlayingVisualizer";
 
 
 
@@ -25,7 +26,9 @@ const SongDetailsSection = () => {
   const [globalRatings, setGlobalRatings] = useState<{ rating: number; count: number }[]>([]);
   const [globalAverage, setGlobalAverage] = useState(0);
   const [globalTotal, setGlobalTotal] = useState(0);
-  const { playTrack } = usePlayerContext();
+  const { playTrack, currentTrack, isPlaying } = usePlayerContext();
+
+  const isCurrent = currentTrack?.songId === song?.songId;
 
   const fetchGlobalRaiting = async () => {
     const { counts, average, total } = await getAllRatingsOfaSong(id || '');
@@ -140,38 +143,36 @@ const SongDetailsSection = () => {
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
           {/* Left Section: Album Cover + User Actions */}
           <div className="lg:w-1/3 flex-shrink-0 mb-8 lg:mb-0">
-            {/* Big Album Art with Play Overlay */}
             <div 
-                className="relative group overflow-hidden rounded-2xl shadow-2xl mb-6 cursor-pointer"
-                onClick={() => playTrack({title: song.title, songId: song.songId, preview_url: song.preview_url, album_cover_url: song.album_cover_url, artist: song.artists.map(a => a.name).join(", "), isrc: song.isrc})}
-              >
-                <img
-                  src={song?.album_cover_url}
-                  alt={song?.title}
-                  className="w-full h-auto object-cover transition-transform duration-700 md:group-hover:scale-110"
-                />
-                
-                {/* Play/Pause Overlay */}
-                <div className="absolute inset-0 bg-black/20 md:bg-black/40 flex items-center justify-center 
-                                opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-emerald-500 rounded-full flex items-center justify-center 
-                                  shadow-[0_0_30px_rgba(16,185,129,0.4)] 
-                                  transition-transform duration-300
-                                  md:translate-y-4 md:group-hover:translate-y-0">
-                      <Play size={30} fill="black" className="ml-1 md:w-[40px] md:h-[40px]" />
-                  </div>
-                </div>
-
-                {/* Mobile Bottom Info Bar (Always visible on mobile, hover on desktop) */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent 
-                                opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 
-                                flex items-end p-4 md:p-6">
-                  <div className="flex flex-col">
-                    <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em]">Preview Track</p>
-                    <p className="text-gray-400 text-[10px] italic md:hidden">Tap to play</p>
-                  </div>
-                </div>
-              </div>
+            className="relative group overflow-hidden rounded-2xl shadow-2xl mb-6 cursor-pointer"
+            onClick={() => playTrack({
+                title: song.title, 
+                songId: song.songId, 
+                preview_url: song.preview_url, 
+                album_cover_url: song.album_cover_url, 
+                artist: song.artists.map(a => a.name).join(", "), 
+                isrc: song.isrc
+            })}
+          >
+            <img
+              src={song?.album_cover_url}
+              alt={song?.title}
+              className={`w-full h-auto object-cover transition-transform duration-700 md:group-hover:scale-105 ${isCurrent ? 'brightness-50' : ''}`}
+            />
+            
+            {/* Overlay: Shows Visualizer if playing, or Play icon on hover if not */}
+            <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${isCurrent ? 'opacity-100' : 'opacity-0 md:group-hover:opacity-100 bg-black/40'}`}>
+                {isCurrent ? (
+                    <div className="scale-[2.5]"> {/* Scaled up for the big cover */}
+                        <PlayingVisualizer isPaused={!isPlaying} />
+                    </div>
+                ) : (
+                    <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                        <Play size={30} fill="black" className="ml-1" />
+                    </div>
+                )}
+            </div>
+          </div>
 
             {/* User Actions Card (Synced with Album style) */}
             <div className="w-full rounded-2xl bg-gray-900/40 backdrop-blur-xl border border-gray-800 p-5 shadow-2xl transition-all hover:border-emerald-500/20">
@@ -257,7 +258,7 @@ const SongDetailsSection = () => {
               <p className="font-bold">{song?.title}</p>
             </h1>
             <Link to={`/album/${song?.album_id}`} className=" lg:text-3xl md:text-xl sm:text-2xl xs:text-xl hover:text-white text-gray-300">{song?.album}</Link>
-            <p className="text-lg text-gray-300 mb-4">
+            <p className="text-lg text-gray-300 mb-2">
               <span>{song?.release_date.slice(0, 4)}</span> | By{" "}
               {song?.artists.map((a, i) => (
                 <Link to={`/artist/${a.artist_id}`} key={a.id} className="hover:text-white">
@@ -267,17 +268,29 @@ const SongDetailsSection = () => {
               ))}
             </p>
 
-            {song.spotify_url && (
-              <a
-                href={song.spotify_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className=" flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-black font-semibold py-2 px-4 rounded-lg shadow-md transition w-fit mb-8"
-              >
-                <FaSpotify className="text-xl" />
-                <span>Listen on Spotify</span>
-              </a>
-            )}
+            {/* Button Row */}
+            <div className="mb-5 flex flex-wrap items-center gap-3">
+                {/* Local Play Album Button */}
+                <Button
+                    onClick={() => playTrack({title: song.title, songId: song.songId, preview_url: song.preview_url, album_cover_url: song.album_cover_url, artist: song.artists.map(a => a.name).join(", "), isrc: song.isrc})}
+                    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg"
+                >
+                    <Play fill="black" size={18} />
+                    <span>Play Song</span>
+                </Button>
+
+                {/* Spotify Link Button */}
+                {song.spotify_url && (
+                    <a
+                        href={song.spotify_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg"
+                    >
+                        <FaSpotify size={20} />
+                    </a>
+                )}
+            </div>
 
             {/* Ratings */}
             <div className="w-full flex items-center justify-between mb-6">

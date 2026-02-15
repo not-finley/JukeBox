@@ -11,12 +11,16 @@ type PlayerContextType = {
     seek: (val: number) => void;
     volume: number;
     setVolume: (val: number) => void;
+    queue: Track[]; 
+    playAlbum: (tracks: Track[], startIndex?: number) => void;
+    skipNext: () => void;
 };
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+    const [queue, setQueue] = useState<Track[]>([]);
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [volume, setVolume] = useState(0.5);
@@ -27,6 +31,20 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         audioRef.current.crossOrigin = "anonymous";
     }, []);
+
+    useEffect(() => {
+        const audio = audioRef.current;
+        const handleEnded = () => {
+            if (queue.length > 0) {
+                skipNext();
+            } else {
+                setIsPlaying(false);
+            }
+        };
+
+        audio.addEventListener("ended", handleEnded);
+        return () => audio.removeEventListener("ended", handleEnded);
+    }, [queue, currentTrack]);
 
     // Handle Track Changes & Playback
     useEffect(() => {
@@ -135,8 +153,22 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         if (currentTrack?.songId === track.songId) {
             togglePlay();
         } else {
+            setQueue([]); // Clear queue if playing a single track
             setCurrentTrack(track);
-            console.log(track);
+        }
+    };
+
+    const playAlbum = (tracks: Track[], startIndex = 0) => {
+        if (tracks.length === 0) return;
+        setQueue(tracks.slice(startIndex + 1)); // Set the rest of the album as queue
+        setCurrentTrack(tracks[startIndex]);
+    };
+
+    const skipNext = () => {
+        if (queue.length > 0) {
+            const nextTrack = queue[0];
+            setQueue(prev => prev.slice(1)); // Remove the track we're about to play
+            setCurrentTrack(nextTrack);
         }
     };
 
@@ -160,6 +192,12 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    useEffect(() => {
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.setActionHandler('nexttrack', queue.length > 0 ? skipNext : null);
+        }
+    }, [queue]);
+
     return (
         <PlayerContext.Provider value={{ 
             currentTrack, 
@@ -170,7 +208,10 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
             progress, 
             seek, 
             volume, 
-            setVolume 
+            setVolume,
+            queue,
+            playAlbum,
+            skipNext
         }}>
             {children}
         </PlayerContext.Provider>
