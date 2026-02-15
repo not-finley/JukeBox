@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useUserContext } from "@/lib/AuthContext";
 import { Link, useParams } from "react-router-dom";
-import { getListened, getRated, getReviewed, getUserById, updateUser, addFollow, removeFollow, checkIfFollowing } from "@/lib/appwrite/api";
+import { getListened, getRated, getReviewed, getUserById, updateUser, addFollow, removeFollow, checkIfFollowing, getFollowersList } from "@/lib/appwrite/api";
 import { Listened, RatingGeneral, Review } from "@/types";
 import { IUser } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { isMobile, isTablet } from "react-device-detect";
+import { set } from "react-hook-form";
 
 
 
@@ -49,6 +50,34 @@ const ProfileComponent = ({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState(profileuser.imageUrl || fallbackImage);
   const [isFollowing, setIsFollowing] = useState(following);
+  const [showFollowModal, setShowFollowModal] = useState<{show: boolean, type: 'followers' | 'following'}>({
+    show: false,
+    type: 'followers'
+  });
+  const [list, setList] = useState<any[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
+
+
+  useEffect(() => {
+    // Only fetch if the modal is actually open!
+    if (!showFollowModal.show) return;
+
+    const fetchList = async () => {
+      setLoadingList(true);
+      try {
+        // Use profileuser.accountId, NOT userid
+        const data = await getFollowersList(profileuser.accountId, showFollowModal.type);
+        setList(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingList(false);
+      }
+    };
+
+    fetchList();
+  }, [profileuser.accountId, showFollowModal.type, showFollowModal.show]); 
+
 
     
 
@@ -208,11 +237,17 @@ const ProfileComponent = ({
             )}
           </div>
           <div className="flex gap-8 text-center md:text-left mb-2 w-full justify-between">
-            <div>
+            <div 
+              className="cursor-pointer hover:opacity-70" 
+              onClick={() => setShowFollowModal({ show: true, type: 'followers' })}
+            >
               <span className="font-bold">{profileuser.followersCount}</span>
               <div className="text-xs text-gray-400">Followers</div>
             </div>
-            <div>
+            <div 
+              className="cursor-pointer hover:opacity-70" 
+              onClick={() => setShowFollowModal({ show: true, type: 'following' })}
+            >
               <span className="font-bold">{profileuser.followingCount}</span>
               <div className="text-xs text-gray-400">Following</div>
             </div>
@@ -423,7 +458,47 @@ const ProfileComponent = ({
 
         </div>
       </div>
+      {showFollowModal.show && (
+        <div className="fixed inset-0 bottom-10 md:bottom-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-gray-900 border  border-gray-800 w-full max-w-md rounded-2xl max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center">
+              <h3 className="text-lg font-bold capitalize">{showFollowModal.type}</h3>
+              <button onClick={() => setShowFollowModal({ ...showFollowModal, show: false })}>✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingList ? (
+                <LoaderMusic />
+              ) : list.length === 0 ? (
+                <p className="text-gray-500 italic">No {showFollowModal.type} found.</p>
+              ) : (
+                <div className="space-y-2">
+                  {list.map((item) => (
+                    <Link to={`/profile/${item.accountId}`} key={item.accountId} onClick={() => setShowFollowModal({ ...showFollowModal, show: false })} className="flex items-center gap-3 p-2 hover:bg-gray-800 rounded-lg">
+                      <img
+                        src={item.imageUrl || "/assets/icons/profile-placeholder.svg"}
+                        alt={item.name}
+                        className="w-10 h-10 rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== window.location.origin + "/assets/icons/profile-placeholder.svg") {
+                            target.src = "/assets/icons/profile-placeholder.svg";
+                          }
+                        }}
+                      />
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-xs text-gray-500">{item.username}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+    
   );
 };
 
