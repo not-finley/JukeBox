@@ -133,7 +133,7 @@ const Search = () => {
 
   return (
     // Force the outer container to never expand past 100vw
-    <div className="flex flex-col w-full max-w-full overflow-x-hidden min-h-screen pb-20">
+    <div className="common-container flex flex-col w-full max-w-full overflow-x-hidden min-h-screen pb-20">
       
       {/* 1. HEADER SECTION (Stays centered, padding-aware) */}
       <div className="w-full px-4 pt-6 sm:pt-10 mb-6">

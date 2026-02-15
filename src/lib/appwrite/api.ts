@@ -666,6 +666,44 @@ export async function getUserById(userId: string): Promise<IUser | null> {
     }
 }
 
+
+export async function getFollowersList(userId: string, type: 'followers' | 'following') {
+    const columnToMatch = type === 'followers' ? 'following_id' : 'follower_id';
+    const columnToSelect = type === 'followers' ? 'follower_id' : 'following_id';
+
+    const { data, error } = await supabase
+        .from("followers")
+        .select(`
+            users!${columnToSelect} (
+                user_id,
+                name,
+                username,
+                bio
+            )
+        `)
+        .eq(columnToMatch, userId);
+
+    if (error) {
+        console.error("Supabase Error:", error);
+        throw error;
+    }
+
+    const usersWithImages = await Promise.all(
+        data.map(async (item: any) => {
+            const user = item.users;
+            if (!user) return null;
+
+            return {
+                ...user,
+                accountId: user.user_id,
+                imageUrl: await getProfileUrl(user.user_id)
+            };
+        })
+    );
+    
+    return usersWithImages;
+}
+
 export async function getSongDetailsById(songId: string): Promise<SongDetails | null> {
     try {
         // Fetch the song
