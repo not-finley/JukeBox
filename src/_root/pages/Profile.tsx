@@ -41,15 +41,19 @@ const ProfileComponent = ({
   loadingReviews,
   loadingRatings
 }: profileProps) => {
+
+  const fallbackImage = "/assets/icons/profile-placeholder.svg";
   const [editing, setEditing] = useState(false);
   const { setUser } = useUserContext();
   const [bio, setBio] = useState(profileuser.bio || "");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState(profileuser.imageUrl);
+  const [previewUrl, setPreviewUrl] = useState(profileuser.imageUrl || fallbackImage);
   const [isFollowing, setIsFollowing] = useState(following);
 
+    
+
   useEffect(() => {
-    setPreviewUrl(profileuser.imageUrl);
+    setPreviewUrl(profileuser.imageUrl || fallbackImage);
     setBio(profileuser.bio || "");
   }, [profileuser]);
 
@@ -127,6 +131,14 @@ const ProfileComponent = ({
           src={previewUrl}
           alt="User avatar"
           className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-gray-800 object-cover mb-4"
+
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            // If the URL we tried failed, swap it for the placeholder
+            if (target.src !== window.location.origin + fallbackImage) {
+              setPreviewUrl(fallbackImage);
+            }
+          }}
         />
         {editing && (
           <input

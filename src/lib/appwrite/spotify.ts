@@ -1,10 +1,30 @@
 import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SongDetails, SpotifyTrack } from '@/types';
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
-const SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token";
 
-const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID as string;
-const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET as string;
+export async function getSpotifyToken(): Promise<string> {
+    try {
+        const response = await fetch("/api/spotify-token");
+        
+        // Let's parse the data first
+        const data = await response.json();
+
+        // If the data has the token, we are good! 
+        // We don't care if the response.ok is being finicky.
+        if (data && data.access_token) {
+            return data.access_token;
+        }
+
+        // If we get here, it actually failed
+        console.error("Server returned data but no token:", data);
+        throw new Error("Token not found in response");
+        
+    } catch (error) {
+        console.error("Token Error:", error);
+        throw error;
+    }
+}
+
 
 function computeMatchScore(query: string, text: string): number {
     if (!text) return 0;
@@ -31,41 +51,6 @@ function computeMatchScore(query: string, text: string): number {
     return score;
 }
 
-export async function getSpotifyToken(): Promise<string> {
-    try {
-
-        if (!clientId || !clientSecret) {
-            console.log(clientId);
-            console.log(clientSecret);
-            throw new Error("Missing Spotify client ID or secret in environment variables.");
-
-        }
-
-        const credentials = `${clientId}:${clientSecret}`;
-        const encodedCredentials = btoa(credentials); // Base64 encoding
-
-        const response = await fetch(SPOTIFY_TOKEN_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                Authorization: `Basic ${encodedCredentials}`,
-            },
-            body: "grant_type=client_credentials",
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.access_token) {
-            return data.access_token; // Return the token
-        } else {
-            console.error("Failed to fetch Spotify token:", data);
-            throw new Error(data.error || "Failed to fetch Spotify token");
-        }
-    } catch (error) {
-        console.error("Error fetching Spotify token:", error);
-        throw error;
-    }
-}
 
 
 export async function searchSongInSpotify(query: string, token: string) {
@@ -249,7 +234,8 @@ export async function spotifySuggestions(query: string, token: string): Promise<
                 type: "track",
                 id: track.id,
                 title: track.name,
-                album_cover_url: track.album?.images?.[0]?.url || "",
+                // Changed to image_url to match artists and UI expectations
+                image_url: track.album?.images?.[0]?.url || "", 
                 artists: track.artists?.map((a: any) => ({ id: a.id, name: a.name })),
                 popularity: track.popularity || 0,
                 matchScore: getBaseScore(track.name, 'track'),
@@ -262,7 +248,8 @@ export async function spotifySuggestions(query: string, token: string): Promise<
                 type: "album",
                 id: album.id,
                 title: album.name,
-                album_cover_url: album.images?.[0]?.url || "",
+                // Changed to image_url
+                image_url: album.images?.[0]?.url || "", 
                 artists: album.artists?.map((a: any) => ({ id: a.id, name: a.name })),
                 matchScore: getBaseScore(album.name, 'album'),
             });
