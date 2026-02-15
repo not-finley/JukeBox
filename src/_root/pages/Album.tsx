@@ -10,8 +10,9 @@ import LoaderMusic from '@/components/shared/loaderMusic';
 import { useUserContext } from '@/lib/AuthContext';
 import { FaSpotify } from "react-icons/fa";
 import ReviewItem from '@/components/ReviewItem';
-import { Play } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 import { usePlayerContext } from '@/context/PlayerContext';
+import PlayingVisualizer from '@/components/shared/PlayingVisualizer';
 
 
 const Album = () => {
@@ -26,7 +27,7 @@ const Album = () => {
     const [globalAverage, setGlobalAverage] = useState(0);
     const [globalTotal, setGlobalTotal] = useState(0);
     const [songRatings, setSongRatings] = useState<number[]>([]);
-    const { playTrack } = usePlayerContext();
+    const { playAlbum, currentTrack, isPlaying, togglePlay } = usePlayerContext();
 
 
     const addAlbum = async () => {
@@ -123,10 +124,6 @@ const Album = () => {
         setLoading(false);
     };
 
-    const handlePlayPreview = (track: Track) => {
-        playTrack(track);
-    }
-
     const listenedClick = async () => {
         if (listened) {
             await removeListenedAlbum(album ? album.albumId : '', user.accountId)
@@ -148,6 +145,21 @@ const Album = () => {
             console.log(error)
         }
     }
+
+    const formatTrack = (track: any): Track => ({
+        title: track.title,
+        songId: track.songId,
+        artist: album?.artists[0].name || "Unknown",
+        album_cover_url: album?.album_cover_url || "",
+        preview_url: track.preview_url,
+        isrc: track.isrc
+    });
+
+    const handlePlayAlbum = () => {
+        if (!album) return;
+        const formattedTracks = album.tracks.map(formatTrack);
+        playAlbum(formattedTracks);
+    };
 
 
     useEffect(() => {
@@ -200,17 +212,29 @@ const Album = () => {
                                             ))}
                                         </p>
                                     )}
-                                    {album.spotify_url && (
-                                        <a
-                                            href={album.spotify_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="mt-3 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-black font-semibold py-2 px-4 rounded-lg shadow-md transition w-fit"
+                                    {/* Button Row */}
+                                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                                        {/* Local Play Album Button */}
+                                        <Button
+                                            onClick={handlePlayAlbum}
+                                            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg"
                                         >
-                                            <FaSpotify className="text-xl" />
-                                            <span>Listen on Spotify</span>
-                                        </a>
-                                    )}
+                                            <Play fill="black" size={18} />
+                                            <span>Play Album</span>
+                                        </Button>
+
+                                        {/* Spotify Link Button */}
+                                        {album.spotify_url && (
+                                            <a
+                                                href={album.spotify_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-2 bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg"
+                                            >
+                                                <FaSpotify size={20} />
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -221,6 +245,7 @@ const Album = () => {
                                 <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Tracks</h2>
                                 <ul className="divide-y divide-gray-800">
                                     {album.tracks.map((track, index) => {
+                                        const isCurrent = currentTrack?.songId === track.songId;
                                         const hasRating = songRatings[index] > 0;
                                         
                                         return (
@@ -229,22 +254,43 @@ const Album = () => {
                                                 className="group grid grid-cols-[30px_1fr_auto] items-center gap-4 p-3 hover:bg-white/5 transition-all rounded-xl mt-1 mb-1"
                                             >
                                                 {/* 1. Track Number or Play Icon */}
-                                                <div className="relative w-6 h-6 flex-center">
-                                                   {/* Show number by default, Play icon on hover */}
-                                                    <span className="text-gray-500 group-hover:opacity-0 transition-opacity">
-                                                    {index + 1}
-                                                    </span>
+                                                <div className="relative w-6 h-6 flex items-center justify-center">
+                                                    {/* 1. Show number or visualizer */}
+                                                    {isCurrent ? (
+                                                        <div className="group-hover:opacity-0 transition-opacity">
+                                                            <PlayingVisualizer isPaused={!isPlaying} />
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-gray-500 group-hover:opacity-0 transition-opacity text-sm">
+                                                            {index + 1}
+                                                        </span>
+                                                    )}
+
+                                                    {/* 2. The Toggle Button */}
                                                     <button 
-                                                    onClick={() => handlePlayPreview({title: track.title, songId: track.songId, artist: album.artists[0].name, album_cover_url: album.album_cover_url, preview_url: track.preview_url, isrc: track.isrc})}
-                                                    className="absolute inset-0 opacity-0 group-hover:opacity-100 flex-center text-emerald-400"
+                                                        onClick={() => {
+                                                            if (isCurrent) {
+                                                                togglePlay(); // If it's the active track, just play/pause
+                                                            } else {
+                                                                const formattedTracks = album.tracks.map(formatTrack);
+                                                                playAlbum(formattedTracks, index); // If different track, start the album from here
+                                                            }
+                                                        }}
+                                                        className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center text-emerald-400 transition-opacity"
                                                     >
-                                                    <Play size={18} fill="currentColor" />
+                                                        {isCurrent && isPlaying ? (
+                                                            <Pause size={18} fill="currentColor" />
+                                                        ) : (
+                                                            <Play size={18} fill="currentColor" />
+                                                        )}
                                                     </button>
                                                 </div>
 
                                                 {/* 2. Title */}
                                                 <Link to={`/song/${track.songId}`} className="flex flex-col min-w-0">
-                                                    <span className="text-white font-medium truncate group-hover:text-emerald-400 transition-colors">
+                                                    <span className={`font-medium truncate transition-colors ${
+                                                        isCurrent ? 'text-emerald-400' : 'text-white group-hover:text-emerald-400'
+                                                    }`}>
                                                         {track.title}
                                                     </span>
                                                 </Link>

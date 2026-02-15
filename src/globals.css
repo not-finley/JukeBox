@@ -407,3 +407,33 @@
     @apply flex gap-4 items-center justify-start hover:bg-transparent hover:text-white !important;
   }
 }
+
+.playing-icon {
+  display: flex;
+  justify-content: space-between;
+  width: 13px;
+  height: 13px;
+}
+
+.playing-icon span {
+  width: 2px;
+  height: 100%;
+  background-color: #10b981; /* Tailwind emerald-500 */
+  border-radius: 1px;
+  transform-origin: bottom;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.playing-icon span:nth-child(2) { animation-delay: 0.2s; }
+.playing-icon span:nth-child(3) { animation-delay: 0.4s; }
+.playing-icon span:nth-child(4) { animation-delay: 0.1s; }
+
+@keyframes bounce {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+/* Pause the animation if the player is paused */
+.paused span {
+  animation-play-state: paused;
+}
