@@ -17,18 +17,14 @@ function normalizeReleaseDate(dateStr: string): string | null {
     return null; // fallback
 }
 
-const getProfileUrl = async (userId: string): Promise<string> => {
-    const possibleExts = ["jpg", "jpeg", "png", "webp"];
-    for (const ext of possibleExts) {
-        const { data: signedData, error } = await supabase.storage
-            .from("profiles")
-            .createSignedUrl(`${userId}/profile.${ext}`, 60 * 60); // 1 hour
-        if (!error && signedData?.signedUrl) {
-            return signedData.signedUrl;
-        }
-    }
-    // Fallback placeholder
-    return "/assets/icons/profile-placeholder.svg";
+export const getProfileUrl = (userId: string): string => {
+    if (!userId) return "/assets/icons/profile-placeholder.svg";
+
+    // This is your project reference from your URL
+    const PROJECT_ID = "akneztqjuwaharlzqwvc"; 
+    
+    // Construct the direct link to the public object
+    return `https://${PROJECT_ID}.supabase.co/storage/v1/object/public/profiles/${userId}/profile.jpg` || "/assets/icons/profile-placeholder.svg";
 };
 
 

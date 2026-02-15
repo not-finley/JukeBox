@@ -134,13 +134,18 @@ export default function ReviewPage() {
 
           {/* Review Header */}
           <div className="flex items-center gap-3 mb-4">
-            <Link
-              to={`/profile/${review.creator.accountId}`}
-            >
+            <Link to={`/profile/${review.creator.accountId}`}>
               <img
                 src={review.creator?.imageUrl || defaultAvatar}
+                key={review.creator?.imageUrl} // Force reset on change
                 alt=""
                 className="h-12 w-12 rounded-full object-cover border border-gray-700"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== window.location.origin + defaultAvatar) {
+                    target.src = defaultAvatar;
+                  }
+                }}
               />
             </Link>
             <div>
@@ -219,7 +224,14 @@ export default function ReviewPage() {
                     <Link to={`/profile/${c.creator.accountId}`}>
                       <img
                         src={c.creator?.imageUrl || defaultAvatar}
+                        key={c.creator?.imageUrl}
                         className="h-9 w-9 rounded-full object-cover border border-gray-700"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== window.location.origin + defaultAvatar) {
+                            target.src = defaultAvatar;
+                          }
+                        }}
                       />
                     </Link>
 
@@ -286,8 +298,15 @@ export default function ReviewPage() {
                       <Link to={`/profile/${c.creator.accountId}`}>
                         <img
                           src={reply.creator?.imageUrl || defaultAvatar}
+                          key={reply.creator?.imageUrl}
                           className="h-7 w-7 rounded-full border border-gray-700"
-                        />
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            if (target.src !== window.location.origin + defaultAvatar) {
+                              target.src = defaultAvatar;
+                            }
+                          }}
+                          />
                       </Link>
                       <div className="bg-gray-800/30 border border-gray-700 p-2 rounded-xl">
                         <p className="text-sm text-gray-300">
@@ -316,7 +335,14 @@ export default function ReviewPage() {
               <div className="flex items-start gap-3">
                 <img
                   src={user.imageUrl || defaultAvatar}
+                  key={user.imageUrl}
                   className="h-9 w-9 rounded-full object-cover hidden sm:block border border-gray-700"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    if (target.src !== window.location.origin + defaultAvatar) {
+                      target.src = defaultAvatar;
+                    }
+                  }}
                 />
                 
                 <div className="flex-1 flex flex-col gap-2">
