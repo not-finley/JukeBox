@@ -13,11 +13,12 @@ import ReviewItem from '@/components/ReviewItem';
 import { Play, Pause } from 'lucide-react';
 import { usePlayerContext } from '@/context/PlayerContext';
 import PlayingVisualizer from '@/components/shared/PlayingVisualizer';
+import AuthModal from '@/components/shared/AuthModal';
 
 
 const Album = () => {
     const { id } = useParams();
-    const { user } = useUserContext();
+    const { user, isAuthenticated } = useUserContext();
     const [album, setAlbum] = useState<AlbumDetails | null>(null);
     const [notFound, setNotFound] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
@@ -28,6 +29,7 @@ const Album = () => {
     const [globalTotal, setGlobalTotal] = useState(0);
     const [songRatings, setSongRatings] = useState<number[]>([]);
     const { playAlbum, currentTrack, isPlaying, togglePlay } = usePlayerContext();
+    const [showAuthModal, setShowAuthModal] = useState(false);
 
 
     const addAlbum = async () => {
@@ -51,6 +53,10 @@ const Album = () => {
 
 
     const handleRating = async (value: number) => {
+        if (!isAuthenticated) {
+            setShowAuthModal(true);
+            return;
+        }
         if (value == rating) {
             setRating(0);
             await deleteRaitingAlbum(id ? id : '', user.accountId)
@@ -70,6 +76,10 @@ const Album = () => {
 
 
     const handleSongRating = async (value: number, trackIndex: number) => {
+        if (!isAuthenticated) {
+            setShowAuthModal(true);
+            return;
+        }
         if (value === songRatings[trackIndex]) {
             value = 0;
         }
@@ -125,6 +135,10 @@ const Album = () => {
     };
 
     const listenedClick = async () => {
+        if (!isAuthenticated) {
+            setShowAuthModal(true);
+            return;
+        }
         if (listened) {
             await removeListenedAlbum(album ? album.albumId : '', user.accountId)
             setListened(false);
@@ -156,6 +170,10 @@ const Album = () => {
     });
 
     const handlePlayAlbum = () => {
+        if (!isAuthenticated) {
+            setShowAuthModal(true);
+            return;
+        }
         if (!album) return;
         const formattedTracks = album.tracks.map(formatTrack);
         playAlbum(formattedTracks);
@@ -269,6 +287,10 @@ const Album = () => {
                                                     {/* 2. The Toggle Button */}
                                                     <button 
                                                         onClick={() => {
+                                                            if (!isAuthenticated) {
+                                                                setShowAuthModal(true);
+                                                                return;
+                                                            }
                                                             if (isCurrent) {
                                                                 togglePlay(); // If it's the active track, just play/pause
                                                             } else {
@@ -450,6 +472,7 @@ const Album = () => {
                             )
                             )}
                         </section>
+                        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
                     </div>
 
                 )

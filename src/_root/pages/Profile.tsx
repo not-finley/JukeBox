@@ -6,6 +6,7 @@ import { Listened, RatingGeneral, Review } from "@/types";
 import { IUser } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { isMobile, isTablet } from "react-device-detect";
+import AuthModal from "@/components/shared/AuthModal";
 
 
 
@@ -44,7 +45,7 @@ const ProfileComponent = ({
 
   const fallbackImage = "/assets/icons/profile-placeholder.svg";
   const [editing, setEditing] = useState(false);
-  const { setUser } = useUserContext();
+  const { setUser, isAuthenticated } = useUserContext();
   const [bio, setBio] = useState(profileuser.bio || "");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState(profileuser.imageUrl || fallbackImage);
@@ -55,6 +56,7 @@ const ProfileComponent = ({
   });
   const [list, setList] = useState<any[]>([]);
   const [loadingList, setLoadingList] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
 
   useEffect(() => {
@@ -86,7 +88,6 @@ const ProfileComponent = ({
   }, [profileuser]);
 
   useEffect(() => {
-    // Sync with parent prop when it changes
     setIsFollowing(following);
   }, [following]);
 
@@ -130,6 +131,10 @@ const ProfileComponent = ({
 
 
   const handleFollow = async () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     try {
       await addFollow(profileuser.accountId, userid);
       setIsFollowing(true);
@@ -496,6 +501,7 @@ const ProfileComponent = ({
           </div>
         </div>
       )}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
     
   );

@@ -3,6 +3,7 @@ export const sidebarLinks = [
       imgURL: "/assets/icons/house.svg",
       route: "/",
       label: "Home",
+      authRequired: true,
     },
     {
       imgURL: "/assets/icons/search.svg",
@@ -18,6 +19,7 @@ export const sidebarLinks = [
       imgURL: "/assets/icons/music.svg",
       route: "/library",
       label: "Library",
+      authRequired: true,
     }
   ];
   
@@ -26,17 +28,13 @@ export const sidebarLinks = [
       imgURL: "/assets/icons/house.svg",
       route: "/",
       label: "Home",
+      authRequired: true,
     },
     {
       imgURL: "/assets/icons/search.svg",
       route: "/search",
       label: "Search",
     },
-    // {
-    //   imgURL: "/assets/icons/add.svg",
-    //   route: "/add",
-    //   label: "Add",
-    // },
     {
       imgURL: "/assets/icons/vinyl.svg",
       route: "/trending",
@@ -46,5 +44,6 @@ export const sidebarLinks = [
       imgURL: "/assets/icons/music.svg",
       route: "/library",
       label: "Library",
+      authRequired: true,
     }
   ];

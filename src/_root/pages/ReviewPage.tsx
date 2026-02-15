@@ -17,13 +17,14 @@ import {
 } from "@/lib/appwrite/api";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Comment } from "@/types";
+import AuthModal from "@/components/shared/AuthModal";
 
 
 
 
 export default function ReviewPage() {
   const { id } = useParams(); // review id from URL
-  const { user } = useUserContext();
+  const { user, isAuthenticated } = useUserContext();
   const navigate = useNavigate();
 
   const [review, setReview] = useState<any>(null);
@@ -35,6 +36,7 @@ export default function ReviewPage() {
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 
@@ -66,8 +68,10 @@ export default function ReviewPage() {
   };
 
   const handleLikeClick = async () => {
-    if (!user) return alert("You must be logged in to like reviews.");
-
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
     if (liked) {
       const success = await removeLikeFromReview(id!, user.accountId);
       if (success) {
@@ -84,7 +88,6 @@ export default function ReviewPage() {
   };
 
   const handleAddComment = async () => {
-    if (!user) return alert("You must be logged in to like reviews.");
     if (!id) return alert("can't add a comment to a non existant review");
     await addCommentToReview(id, user.accountId, commentInput);
     setCommentInput("");
@@ -94,7 +97,6 @@ export default function ReviewPage() {
 
 
   const handleReply = async (parentId: string) => {
-    if (!user) return alert("You must be logged in to reply.");
     if (!replyText.trim()) return;
 
     await addCommentToReview(id!, user.accountId, replyText, parentId);
@@ -251,7 +253,13 @@ export default function ReviewPage() {
                         <span>{timeAgo(c.createdAt)}</span>
                         <button
                           className="hover:text-gray-300 transition cursor-pointer"
-                          onClick={() => setReplyTo(c.commentId)}
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              setShowAuthModal(true);
+                            } else {
+                              setReplyTo(c.commentId)
+                            }
+                          }}
                         >
                           Reply
                         </button>
@@ -375,13 +383,20 @@ export default function ReviewPage() {
             </div>
           ) : (
             <button
-              onClick={() => setShowCommentInput(true)}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  setShowAuthModal(true);
+                } else {
+                  setShowCommentInput(true);
+                }
+              }}
               className="w-full mt-4 py-4 border-t border-gray-800 text-gray-500 hover:text-emerald-400 transition-colors text-left text-sm"
             >
               Add a comment...
             </button>
           )}
         </>)}
+        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
 
   );

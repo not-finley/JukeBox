@@ -2,6 +2,7 @@ export type INavLink = {
   imgURL: string;
   route: string;
   label: string;
+  authRequired?: boolean;
 };
 
 export type IUpdateUser = {
