@@ -222,8 +222,15 @@ const Home = () => {
                 <div className="flex items-center gap-3 p-4 bg-gray-900/60 backdrop-blur-sm z-10">
                   <Link to={`/profile/${activity.userId}`}>
                     <img
-                      src={activity.profileUrl}
+                      src={activity.profileUrl || "/assets/icons/profile-placeholder.svg"}
                       alt={activity.username}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        // If the URL we tried failed, swap it for the placeholder
+                        if (target.src !== window.location.origin + "/assets/icons/profile-placeholder.svg") {
+                          target.src = window.location.origin + "/assets/icons/profile-placeholder.svg";
+                        }
+                      }}
                       className="w-10 h-10 rounded-full object-cover border border-gray-700"
                     />
                   </Link>
@@ -377,7 +384,13 @@ const Home = () => {
               {followerSuggestions.length == 0 && !loadingFollowerSuggestions && (<p className="text-gray-600">No suggestsions found.</p>)}
               {followerSuggestions.map(u => (
                 <div className="flex items-center gap-3">
-                  <Link to={`/profile/${u.id}`}><img src={u.avatar_url} className="w-10 h-10 rounded-full" /></Link>
+                  <Link to={`/profile/${u.id}`}><img src={u.avatar_url || "/assets/icons/profile-placeholder.svg"} onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    // If the URL we tried failed, swap it for the placeholder
+                    if (target.src !== window.location.origin + "/assets/icons/profile-placeholder.svg") {
+                      target.src = window.location.origin + "/assets/icons/profile-placeholder.svg";
+                    }
+                  }} className="w-10 h-10 rounded-full" /></Link>
 
                   <div className="flex-1">
                     <Link to={`/profile/${u.id}`}><p className="text-gray-200 font-medium hover:underline">{u.username}</p></Link>
