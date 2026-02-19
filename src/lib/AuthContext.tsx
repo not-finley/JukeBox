@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { IUser, IContextType } from '@/types';
 import LoaderMusic from '@/components/shared/loaderMusic';
+import { getProfileUrl } from './appwrite/api';
 
 export const INITIAL_USER: IUser = {
   accountId: '',
@@ -61,23 +62,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq("follower_id", u.id);
 
 
-        let imageUrl = u.user_metadata?.imageUrl ?? '';
+        const imageUrl = getProfileUrl(u.id);
 
-        try {
-          const { data: signedData, error: signedError } = await supabase.storage
-            .from("profiles")
-            .createSignedUrl(`${u.id}/profile.jpg`, 60 * 60 * 2);
-
-          if (signedError) {
-            console.warn(`No profile image for user ${u.id}, using default.`);
-          } else {
-            imageUrl = signedData?.signedUrl ?? imageUrl;
-          }
-        } catch (err) {
-          console.warn(`Error creating signed URL for user ${u.id}:`, err);
-        }
-
-     
         setUser({
           accountId: u.id,
           name: u.user_metadata?.name ?? '',
@@ -131,15 +117,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email ?? '',
           name: session.user.user_metadata?.name ?? '',
           username: session.user.user_metadata?.username ?? '',
+          imageUrl: getProfileUrl(session.user.id) ?? '',
         }));
         setIsAuthenticated(true);
       } else {
         setUser(INITIAL_USER);
         setIsAuthenticated(false);
       }
-      setIsLoading(false);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 

@@ -3,28 +3,40 @@ import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SongDetails, Spotif
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
 export async function getSpotifyToken(): Promise<string> {
+    const now = Date.now();
+
+    // 1. Try to get existing token from storage
+    const cachedToken = localStorage.getItem("spotify_token");
+    const expiry = localStorage.getItem("spotify_token_expiry");
+
+    // 2. If it exists and hasn't expired (with a 5-min safety buffer), use it!
+    if (cachedToken && expiry && now < parseInt(expiry) - 300000) {
+        return cachedToken;
+    }
+
+    // 3. Otherwise, fetch a new one
     try {
         const response = await fetch("/api/spotify-token");
-        
-        // Let's parse the data first
         const data = await response.json();
 
-        // If the data has the token, we are good! 
-        // We don't care if the response.ok is being finicky.
         if (data && data.access_token) {
+            // Calculate expiry: Current time + (3600 seconds * 1000)
+            const expiresInMs = (data.expires_in || 3600) * 1000;
+            const absoluteExpiry = now + expiresInMs;
+
+            // 4. Save to storage for next time
+            localStorage.setItem("spotify_token", data.access_token);
+            localStorage.setItem("spotify_token_expiry", absoluteExpiry.toString());
+
             return data.access_token;
         }
 
-        // If we get here, it actually failed
-        console.error("Server returned data but no token:", data);
         throw new Error("Token not found in response");
-        
     } catch (error) {
         console.error("Token Error:", error);
         throw error;
     }
 }
-
 
 function computeMatchScore(query: string, text: string): number {
     if (!text) return 0;

@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { useUserContext } from "@/lib/AuthContext";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import ReviewItemLibrary from "@/components/ReviewItemLibrary";
-import { getReviewedWithLimit, getRatedWithLimit, getListenedWithLimit } from "@/lib/appwrite/api";
+import { getReviewedWithLimit, getRatedWithLimit, getListenedWithLimit, getPlaylists } from "@/lib/appwrite/api";
 import { Listened, RatingGeneral, Review } from "@/types/index";
+import { Plus, Music } from "lucide-react";
 
 const Library = () => {
   const { user } = useUserContext();
@@ -13,20 +14,23 @@ const Library = () => {
   const [reviewed, setReviewed] = useState<Review[]>([]);
   const [rated, setRated] = useState<RatingGeneral[]>([]);
   const [listened, setListened] = useState<Listened[]>([]);
+  const [playlists, setPlaylists] = useState<any[]>([]);
   const [activeSection, setActiveSection] = useState<"reviews" | "ratings" | "listens" | "playlists">("reviews");
 
   useEffect(() => {
     if (!user?.accountId) return;
     const load = async () => {
       setLoading(true);
-      const [r1, r2, r3] = await Promise.all([
+      const [r1, r2, r3, r4] = await Promise.all([
         getReviewedWithLimit(user.accountId, 50),
         getRatedWithLimit(user.accountId, 100),
         getListenedWithLimit(user.accountId, 100),
+        getPlaylists(user.accountId)
       ]);
       setReviewed(r1);
       setRated(r2);
       setListened(r3);
+      setPlaylists(r4);
       setLoading(false);
     };
     load();
@@ -44,6 +48,10 @@ const Library = () => {
 
   const filteredListened = listened.filter(item => 
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredPlaylists = playlists.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) return <div className="common-container flex justify-center items-center min-h-[80vh]"><LoaderMusic /></div>;
@@ -117,8 +125,25 @@ const Library = () => {
           {/* REVIEWS */}
           {activeSection === "reviews" && (
             filteredReviews.length === 0 ? (
-              <p className="text-gray-500 italic">No matches found for "{searchQuery}"</p>
+              /* Case 1: Search returned nothing */
+              searchQuery.length > 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <p className="text-gray-500 italic">No matches found for "{searchQuery}"</p>
+                </div>
+              ) : (
+                /* Case 2: The list is actually empty (No reviews created yet) */
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="bg-dark-3 p-6 rounded-full mb-4">
+                    <img src="/assets/icons/pen-nib.svg" className="w-10 h-10 opacity-20 invert" alt="No reviews" />
+                  </div>
+                  <p className="text-gray-400 font-medium">You haven't written any reviews yet.</p>
+                  <Link to="/search" className="text-emerald-500 text-sm mt-2 hover:underline">
+                    Explore music to start reviewing
+                  </Link>
+                </div>
+              )
             ) : (
+              /* Case 3: We have reviews to show */
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {filteredReviews.map(r => <ReviewItemLibrary key={r.reviewId} review={r} />)}
               </div>
@@ -126,9 +151,22 @@ const Library = () => {
           )}
 
           {/* RATINGS */}
+
           {activeSection === "ratings" && (
             filteredRated.length === 0 ? (
-              <p className="text-gray-500 italic">No matches found for "{searchQuery}"</p>
+              searchQuery.length > 0 ? (
+                <p className="text-gray-500 italic text-center py-10">No matches found for "{searchQuery}"</p>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="bg-dark-3 p-6 rounded-full mb-4">
+                    <span className="text-4xl opacity-20">★</span>
+                  </div>
+                  <p className="text-gray-400 font-medium">No ratings yet.</p>
+                  <Link to="/trending" className="text-emerald-500 text-sm mt-2 hover:underline">
+                    Rate your first track
+                  </Link>
+                </div>
+              )
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredRated.map((rating, i) => (
@@ -138,7 +176,7 @@ const Library = () => {
                     className="flex items-center gap-4 p-3 rounded-xl bg-gray-900/40 border border-gray-800 hover:border-emerald-500/50 transition-all group"
                   >
                     <img
-                      src={rating.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                      src={rating.album_cover_url || "/assets/icons/music-placeholder.png"}
                       className="w-14 h-14 rounded-lg object-cover shadow-md"
                     />
                     <div className="flex-1 min-w-0">
@@ -160,10 +198,19 @@ const Library = () => {
             )
           )}
 
-          {/* HISTORY */}
           {activeSection === "listens" && (
             filteredListened.length === 0 ? (
-              <p className="text-gray-500 italic">No matches found for "{searchQuery}"</p>
+              searchQuery.length > 0 ? (
+                <p className="text-gray-500 italic text-center py-10">No matches found for "{searchQuery}"</p>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="bg-dark-3 p-6 rounded-full mb-4">
+                    <img src="/assets/icons/headphones.svg" className="w-10 h-10 opacity-20 invert" alt="No listens" />
+                  </div>
+                  <p className="text-gray-400 font-medium">Your listening history is empty.</p>
+                  <p className="text-gray-600 text-sm max-w-[250px] mt-1">Start playing music to track your journey.</p>
+                </div>
+              )
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                 {filteredListened.map(item => (
@@ -174,7 +221,7 @@ const Library = () => {
                   >
                     <div className="relative overflow-hidden rounded-2xl">
                       <img
-                        src={item.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                        src={item.album_cover_url || "/assets/icons/music-placeholder.png"}
                         className="w-full aspect-square object-cover shadow-lg group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
@@ -189,13 +236,64 @@ const Library = () => {
             )
           )}
 
-          {/* PLAYLISTS */}
-          {activeSection === "playlists" && (
-            <div className="flex flex-col items-center justify-center py-20 bg-gray-900/20 rounded-3xl border border-dashed border-gray-800">
-              <p className="text-gray-400 font-medium">Playlists are coming soon</p>
-              <p className="text-gray-600 text-sm">Check back in a few weeks!</p>
+         {/* PLAYLISTS */}
+        {activeSection === "playlists" && (
+          filteredPlaylists.length === 0 && searchQuery.length > 0 ? (
+            <p className="text-gray-500 italic text-center py-10">No matches found for "{searchQuery}"</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+              
+              {/* Existing Playlists */}
+              {filteredPlaylists.map(playlist => (
+                <Link
+                  key={playlist.playlistId}
+                  to={`/playlist/${playlist.playlistId}`}
+                  className="flex flex-col gap-3 group"
+                >
+                  <div className="relative overflow-hidden rounded-2xl aspect-square bg-gray-800">
+                    {playlist.coverUrl ? (
+                      <img
+                        src={playlist.coverUrl}
+                        className="w-full h-full object-cover shadow-lg group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center opacity-20">
+                        <Music size={48} />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-semibold truncate group-hover:text-emerald-400 transition-colors">
+                      {playlist.name}
+                    </p>
+                    <p className="text-gray-500 text-xs">{playlist.songCount || 0} songs</p>
+                  </div>
+                </Link>
+              ))}
+
+              {/* Persistent "Create New" Card */}
+              {/* Only show this if the user isn't actively searching, or always if you prefer */}
+              {searchQuery.length === 0 && (
+                <Link
+                  to="/create-playlist"
+                  className="flex flex-col gap-3 group"
+                >
+                  <div className="relative aspect-square rounded-2xl border-2 border-dashed border-gray-800 bg-gray-900/20 group-hover:bg-gray-900/40 group-hover:border-emerald-500/50 transition-all flex flex-col items-center justify-center text-gray-500 group-hover:text-emerald-500">
+                    <Plus size={40} strokeWidth={1.5} />
+                    <span className="text-[10px] uppercase font-black tracking-widest mt-2">New Playlist</span>
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-sm font-semibold group-hover:text-emerald-400 transition-colors">
+                      Create...
+                    </p>
+                    <p className="text-gray-600 text-xs">Custom collection</p>
+                  </div>
+                </Link>
+              )}
             </div>
-          )}
+          )
+        )}
         </div>
       </div>
     </div>

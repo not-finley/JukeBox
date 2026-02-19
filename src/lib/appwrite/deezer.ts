@@ -10,6 +10,8 @@ export const getDeezerPreview = async (title: string, artist: string, isrc?: str
             }
         });
 
+        console.log("Edge Function Response:", data, error);
+
         if (error) {
             console.error("Edge Function Error:", error);
             return null;

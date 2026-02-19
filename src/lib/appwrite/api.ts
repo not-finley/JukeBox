@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed, TrendingResponse } from "@/types";
+import { AlbumDetails, ArtistDetails, INewUser, IUser, IFollow, Listened, RatingGeneral, Comment, Review, Song, SongDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SpotifySong, Activity, ISearchUser, SpotifyTrack, SpotifyArtistDetailed, TrendingResponse, Playlist } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import { getDeezerPreview } from "./deezer";
 
@@ -213,15 +213,13 @@ export async function searchUsers(query: string): Promise<ISearchUser[]> {
         if (error) throw error;
         if (!usersData) return [];
 
-        // Map to ISearchUser format
-        const results: ISearchUser[] = await Promise.all(
-            usersData.map(async (user: any) => ({
-                id: user.user_id,
-                username: user.username,
-                name: user.name,
-                avatar_url: await getProfileUrl(user.user_id),
-            }))
-        );
+        const results = usersData.map((user: any) => ({
+            id: user.user_id,
+            username: user.username,
+            name: user.name,
+            avatar_url: getProfileUrl(user.user_id),
+        }))
+        
 
         console.log(results);
 
@@ -491,8 +489,7 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
             name = song?.title ?? "";
         }
 
-        const comments: Comment[] = await Promise.all(
-            (reviewData.comments ?? []).map(async (c: any) => ({
+        const comments: Comment[] = (reviewData.comments ?? []).map((c: any) => ({
                 commentId: c.comment_id,
                 parentId: c.parent_id,
                 text: c.content,
@@ -503,11 +500,11 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
                     name: c.user.name,
                     username: c.user.username,
                     email: c.user.email,
-                    imageUrl: await getProfileUrl(c.user.user_id),
+                    imageUrl: getProfileUrl(c.user.user_id),
                     bio: c.user.bio ?? "",
                 }
-            }))
-        );
+            }));
+        
 
         comments.sort(
             (a, b) =>
@@ -1202,96 +1199,51 @@ export async function getAlbumTrackRatings(
 // add song, album artist into the relevant tables depending if they are there or not 
 export async function addSongToDatabase(song: SpotifySong) {
     try {
-        // --- Check if song exists ---
-        const { data: existingSong, error: selectSongError } = await supabase
-            .from("songs")
-            .select("song_id, preview_url")
-            .eq("song_id", song.songId)
-            .single();
-
-        if (selectSongError && selectSongError.code !== "PGRST116") {
-            // PGRST116 = no rows found
-            throw selectSongError;
-        }
-
-        // --- Insert album if it doesn't exist ---
-        const { data: existingAlbum } = await supabase
+        // 1. Upsert Album (onConflict uses the primary key)
+        const { error: albumError } = await supabase
             .from("albums")
-            .select("*")
-            .eq("album_id", song.album.id)
-            .single();
+            .upsert({
+                album_id: song.album.id,
+                title: song.album.name,
+                spotify_url: song.album.external_urls.spotify,
+                album_cover_url: song.album_cover_url,
+                release_date: normalizeReleaseDate(song.album.release_date),
+                total_tracks: song.album.total_tracks,
+            }, { onConflict: 'album_id' });
 
-        if (!existingAlbum) {
-            const { error: albumError } = await supabase
-                .from("albums")
-                .insert([{
-                    album_id: song.album.id,
-                    title: song.album.name,
-                    spotify_url: song.album.external_urls.spotify,
-                    album_cover_url: song.album_cover_url,
-                    release_date: normalizeReleaseDate(song.album.release_date),
-                    total_tracks: song.album.total_tracks,
-                }]);
+        if (albumError) throw albumError;
 
-            if (albumError) throw albumError;
-        }
+        // 2. Upsert Song
+        const { error: songInsertError } = await supabase
+            .from("songs")
+            .upsert({
+                song_id: song.songId,
+                title: song.title,
+                album_id: song.album.id,
+                spotify_url: song.spotify_url,
+                pop: song.popularity,
+                isrc: song.isrc,
+            }, { onConflict: 'song_id' });
 
-        // --- Insert song if it doesn't exist ---
-        if (!existingSong) {
+        if (songInsertError) throw songInsertError;
 
-            const { error: songInsertError } = await supabase
-                .from("songs")
-                .insert([{
-                    song_id: song.songId,
-                    title: song.title,
-                    album_id: song.album.id,
-                    spotify_url: song.spotify_url,
-                    pop: song.popularity,
-                    isrc: song.isrc,
-                }]);
-            if (songInsertError) throw songInsertError;
-        }
-
-        // --- Insert artists for song if they don't exist ---
+        // 3. Upsert Artists and link them
         for (const artist of song.artists) {
-            const { data: existingArtist } = await supabase
-                .from("artists")
-                .select("*")
-                .eq("artist_id", artist.id)
-                .single();
+            await supabase.from("artists").upsert({
+                artist_id: artist.id,
+                name: artist.name,
+                spotify_url: artist.external_urls.spotify,
+            }, { onConflict: 'artist_id' });
 
-            if (!existingArtist) {
-                const { error: artistError } = await supabase
-                    .from("artists")
-                    .insert([{
-                        artist_id: artist.id,
-                        name: artist.name,
-                        spotify_url: artist.external_urls.spotify,
-                    }]);
-                if (artistError) throw artistError;
-            }
-
-            // --- Link song and artist ---
-            const { data: existingLink } = await supabase
-                .from("artistsongs")
-                .select("*")
-                .eq("song_id", song.songId)
-                .eq("artist_id", artist.id)
-                .single();
-
-            if (!existingLink) {
-                const { error: linkError } = await supabase
-                    .from("artistsongs")
-                    .insert([{ song_id: song.songId, artist_id: artist.id }]);
-                if (linkError) throw linkError;
-            }
+            await supabase.from("artistsongs").upsert({
+                song_id: song.songId, 
+                artist_id: artist.id 
+            }, { onConflict: 'song_id, artist_id' });
         }
-
-
 
         return true;
     } catch (error) {
-        console.error("Error adding song to database:", error);
+        console.error("Error syncing song to database:", error);
         throw error;
     }
 }
@@ -2700,4 +2652,424 @@ export async function getFollowerSuggestions(userId: string) {
         mutual_count: s.mutual_count,
         ...profilesWithAvatars.find(p => p.user_id === s.suggested_user)
     }));
+}
+
+
+export const getPlaylistById = async (playlistId: string): Promise<Playlist | null> => {
+    try {
+        const { data, error } = await supabase
+            .from('playlists')
+            .select(`
+                playlist_id,
+                name,
+                description,
+                created_at,
+                cover_url,
+                playlist_creators (
+                    user:users (*) 
+                ),
+                playlist_songs (
+                    order,
+                    song:songs (
+                        album:albums(album_cover_url, title), 
+                        title, 
+                        song_id, 
+                        album_id, 
+                        isrc, 
+                        artists:artists (*)
+                    )
+                ),
+                songCount:playlist_songs(count)
+            `)
+            .eq('playlist_id', playlistId)
+            .order('order', { referencedTable: 'playlist_songs', ascending: true })
+            .single();
+
+        if (error || !data) throw error || new Error("Playlist not found");
+
+        // 1. Resolve Creators
+        const resolvedCreators = await Promise.all(
+            data.playlist_creators.map(async (pc: any) => ({
+                ...pc.user,
+                imageUrl: await getProfileUrl(pc.user.user_id), 
+                accountId: pc.user.user_id,
+                name: pc.user.name
+            }))
+        );
+
+        // 2. Prepare Inputs for Enrichment
+        // Ensure keys match what your Edge Function expects (compare with your Album logic)
+        const trackInputs = data.playlist_songs.map((ps: any) => ({
+            songId: ps.song.song_id, // Using songId to match your Album logic
+            title: ps.song.title,
+            artist: ps.song.artists.map((a: any) => a.name).join(", "),
+            isrc: ps.song.isrc
+        }));
+
+        // 3. Invoke Edge Function
+        const { data: enrichmentData, error: enrichmentError } = await supabase.functions.invoke('enrich-album', {
+            body: { tracks: trackInputs }
+        });
+
+        // 4. Create the Preview Map
+        const previewMap = new Map();
+        if (!enrichmentError && enrichmentData?.tracks) {
+            enrichmentData.tracks.forEach((t: any) => {
+                // Use the same ID key returned by your function (songId vs song_id)
+                const idKey = t.songId || t.song_id;
+                previewMap.set(idKey, t.preview_url);
+            });
+        }
+
+        return {
+            playlistId: data.playlist_id,
+            name: data.name,
+            description: data.description,
+            createdAt: data.created_at,
+            coverUrl: data.cover_url,
+            creators: resolvedCreators,
+            songCount: data.songCount?.[0]?.count || 0,
+            songs: data.playlist_songs.map((ps: any) => {
+                const s = ps.song;
+                return {
+                    songId: s.song_id,
+                    title: s.title,
+                    isrc: s.isrc,
+                    album: s.album,
+                    album_id: s.album_id,
+                    album_cover_url: s.album?.album_cover_url,
+                    album_title: s.album?.title,
+                    artist: s.artists.map((a: any) => a.name).join(", "), 
+                    artists: s.artists.map((a: any) => ({
+                        artistId: a.artist_id,
+                        name: a.name
+                    })),
+                    preview_url: previewMap.get(s.song_id) || null, 
+                    spotify_url: s.spotify_url || null,
+                    release_date: s.release_date || null,
+                    popularity: s.popularity || null,
+                    reviews: [], 
+                    ratings: []
+                };
+            }),
+        };
+    } catch (error) {
+        console.error("Error fetching playlist:", error);
+        return null;
+    }
+};
+
+export async function deletePlaylist(playlistId: string) {
+    try {
+        // 1. Delete from DB and get the cover_url back
+        const { data, error } = await supabase
+            .from('playlists')
+            .delete()
+            .eq('playlist_id', playlistId)
+            .select('cover_url')
+            .single();
+
+        if (error) throw error;
+
+        const isStorageUrl = data?.cover_url?.includes('storage/v1/object/public/playlists/');
+
+        if (data?.cover_url && isStorageUrl) {
+            const parts = data.cover_url.split('/playlists/');
+            const filePath = parts[1]; 
+
+            if (filePath) {
+                const { error: storageError } = await supabase
+                    .storage
+                    .from('playlists')
+                    .remove([filePath]);
+
+                if (storageError) {
+                    console.error("Storage cleanup failed:", storageError.message);
+                }
+            }
+        }
+
+        return true;
+    } catch (err) {
+        console.error("Failed to delete playlist:", err);
+        return false;
+    }
+}
+
+
+export async function removeSongFromPlaylist(playlistId: string, songId: string) {
+    try {
+        // 1. Get the 'order' value of the song BEFORE deleting it
+        const { data: songData, error: fetchError } = await supabase
+            .from('playlist_songs')
+            .select('"order"')
+            .eq('playlist_id', playlistId)
+            .eq('song_id', songId)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // 2. Delete the song
+        const { error: deleteError } = await supabase
+            .from('playlist_songs')
+            .delete()
+            .eq('playlist_id', playlistId)
+            .eq('song_id', songId);
+
+        if (deleteError) throw deleteError;
+
+        // 3. CALL THE SQL FUNCTION manually using .rpc()
+        const { error: rpcError } = await supabase.rpc('reorder_songs_on_delete', {
+            p_playlist_id: playlistId,
+            p_deleted_order: songData.order
+        });
+
+        if (rpcError) throw rpcError;
+
+        return true;
+    } catch (err) {
+        console.error("Failed to remove and reorder:", err);
+        return false;
+    }
+}
+
+export async function getPlaylists(userId: string): Promise<Playlist[]> {
+    try {
+        const { data: playlists, error } = await supabase
+            .from("playlists")
+            .select(`
+                playlist_id,
+                name,
+                description,
+                created_at,
+                cover_url,
+                playlist_creators!inner (user_id),
+                songCount:playlist_songs(count)
+                )
+            `)
+            .eq("playlist_creators.user_id", userId)
+            .order("created_at", { ascending: false });
+        if (error) throw error;
+        if (!playlists) return [];
+
+        const results = await Promise.all(
+            playlists.map(async (p: any) => {
+                const actualCount = p.songCount?.[0]?.count || 0;
+                return {
+                    playlistId: p.playlist_id,
+                    name: p.name,
+                    description: p.description,
+                    createdAt: p.created_at,
+                    creators: [{
+                        accountId: userId,
+                        username: "",
+                        name: "", 
+                        imageUrl: await getProfileUrl(userId), 
+                        email: "", 
+                        bio: ""
+
+                    }],
+                    coverUrl: p.cover_url,
+                    songs: [],
+                    songCount: actualCount
+                };
+            })
+        );
+
+
+        return results;
+    } catch (err) {
+        console.error("Failed to fetch user playlists:", err);
+        return [];                          
+    }
+}
+
+export function processPlaylistCover(file: File, size = 800): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        
+        img.onerror = () => reject(new Error("Failed to load image"));
+
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext("2d")!;
+
+            // --- CENTER CROP LOGIC ---
+            let sourceX = 0;
+            let sourceY = 0;
+            let sourceWidth = img.width;
+            let sourceHeight = img.height;
+
+            if (img.width > img.height) {
+                sourceWidth = img.height;
+                sourceX = (img.width - img.height) / 2;
+            } else {
+                sourceHeight = img.width;
+                sourceY = (img.height - img.width) / 2;
+            }
+
+            ctx.drawImage(
+                img, 
+                sourceX, sourceY, sourceWidth, sourceHeight, 
+                0, 0, size, size                             
+            );
+
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error("Canvas to Blob failed"));
+            }, "image/webp", 0.85); 
+        };
+    });
+}
+
+export async function createPlaylist(
+    userId: string, 
+    name: string, 
+    description: string, 
+    imageFile: File | null
+): Promise<{ success: boolean; playlistId?: string; error?: string }> {
+    try {
+        const now = new Date();
+        const isoString = now.toISOString();
+        // 1. Generate a unique ID for the playlist first
+        const playlistId = crypto.randomUUID();
+        let coverUrl = null;
+
+        if (imageFile) {
+            const fileName = `${userId}/${playlistId}.webp`;
+            const { data: _storageData, error: storageError } = await supabase.storage
+                .from("playlists")
+                .upload(fileName, imageFile, {
+                cacheControl: '3600',
+                upsert: true
+                });
+
+            if (storageError) throw storageError;
+
+            // Get the Public URL for the uploaded image
+            const { data: urlData } = supabase.storage
+                .from("playlists")
+                .getPublicUrl(fileName);
+                
+            coverUrl = urlData.publicUrl;
+        }
+
+        // 3. Insert Playlist Row
+        const { error: playlistError } = await supabase
+        .from("playlists")
+        .insert({
+            playlist_id: playlistId,
+            name: name,
+            description: description,
+            created_at: isoString,
+            cover_url: coverUrl || "/assets/icons/music-placeholder.png"
+        });
+
+        if (playlistError) throw playlistError;
+
+        // 4. Add Creator to playlist_creators (Join Table)
+        const { error: creatorError } = await supabase
+        .from("playlist_creators")
+        .insert({
+            playlist_id: playlistId,
+            user_id: userId,
+        });
+
+        if (creatorError) throw creatorError;
+
+        return { success: true, playlistId };
+
+    } catch (error: any) {
+        console.error("Create Playlist Error:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function updatePlaylistMetadata(
+    playlistId: string, 
+    updates: { name: string; description: string }
+) {
+    const { data, error } = await supabase
+        .from('playlists')
+        .update({
+            name: updates.name,
+            description: updates.description,
+        })
+        .eq('playlist_id', playlistId)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function addSongToPlaylist(playlistId: string, songId: string, index: number) {
+    const { error } = await supabase
+        .from('playlist_songs')
+        .insert({
+            playlist_id: playlistId,
+            song_id: songId,
+            order: index
+        });
+
+    if (error) {
+        // Handle unique constraint if the song is already in the playlist
+        if (error.code === '23505') return { success: true, message: 'Already in playlist' };
+        throw error;
+    }
+
+    return { success: true };
+}
+
+export async function updatePlaylistCover(
+    userId: string, 
+    playlistId: string, 
+    imageFile: File
+): Promise<string> {
+    const fileName = `${userId}/${playlistId}.webp`;
+
+    // 1. Upload/Overwrite to Storage
+    const { error: storageError } = await supabase.storage
+        .from("playlists")
+        .upload(fileName, imageFile, {
+            cacheControl: '0',
+            upsert: true
+        });
+
+    if (storageError) throw storageError;
+
+    // 2. Get Public URL
+    const { data: urlData } = supabase.storage
+        .from("playlists")
+        .getPublicUrl(fileName);
+        
+    const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    // 3. Update the Database row
+    const { error: dbError } = await supabase
+        .from("playlists")
+        .update({ cover_url: publicUrl })
+        .eq('playlist_id', playlistId);
+
+    if (dbError) throw dbError;
+
+    return publicUrl;
+}
+
+export async function updateSongsOrder(playlistId: string, orderedSongIds: string[]) {
+    // We update each song-playlist link with its new index
+    const updates = orderedSongIds.map((songId, index) => ({
+        playlist_id: playlistId,
+        song_id: songId,
+        order: index
+    }));
+
+    const { error } = await supabase
+        .from('playlist_songs')
+        .upsert(updates, { onConflict: 'playlist_id, song_id' });
+
+    if (error) throw error;
 }

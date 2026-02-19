@@ -62,7 +62,7 @@ const ReviewItemLibrary = ({ review }: ReviewItemProps) => {
                 className="flex items-center gap-3 mt-2 p-2 rounded-xl bg-black/30 hover:bg-black/50 border border-gray-800/50 transition-colors"
             >
                 <img
-                    src={review.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                    src={review.album_cover_url || "/assets/icons/music-placeholder.png"}
                     alt={review.name}
                     className="h-12 w-12 rounded-lg object-cover shadow-sm"
                 />
