@@ -39,6 +39,9 @@ const LeftSidebar = () => {
                 src={user.imageUrl || defaultAvatar}
                 alt="profile"
                 className="h-14 w-14 rounded-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultAvatar;
+                }}
               />
               <div className="flex flex-col text-white">
                 <p className="body-bold">{user.name}</p>

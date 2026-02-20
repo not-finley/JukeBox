@@ -18,6 +18,8 @@ import ResetPasswordPage from './_auth/ResetPage';
 import ForgotPasswordPage from './_auth/ForgotPasswordPage';
 import SignedInLayout from './_root/SignedInLayout';
 import SelectAuth from './_auth/forms/SelectAuth';
+import PlaylistPage from './_root/pages/PlaylistPage';
+import CreatePlaylist from './_root/pages/CreatePlaylist';
 
 const App = () => {
   return (
@@ -44,6 +46,7 @@ const App = () => {
               <Route path="/artist/:id/discography" element={<Discography />}/>
               <Route path="/album/:id" element={<Album />}/>
               <Route path="/search" element={<Search  />}/>
+              <Route path="/playlist/:id" element={<PlaylistPage />}/>
             </Route>
             {/* private routes */}
             <Route element={<SignedInLayout />}>
@@ -55,6 +58,7 @@ const App = () => {
               <Route path="/update-profile/:id" element={<UpdateProfile />}/>
               <Route path="/song/:id/add-review" element={<AddReviewSong />}/>
               <Route path="/album/:id/add-review" element={<AddReviewAlbum />}/>
+              <Route path="/create-playlist" element={<CreatePlaylist />}/>
             </Route>
         </Routes>
         <Toaster />

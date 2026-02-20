@@ -303,7 +303,7 @@ const ProfileComponent = ({
                   >
                     {/* Cover Image */}
                     <img
-                      src={listen.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                      src={listen.album_cover_url || "/assets/icons/music-placeholder.png"}
                       alt={listen.name}
                       className="w-full aspect-square object-cover rounded-lg border border-gray-700 transition-transform duration-300 group-hover:scale-[1.03]"
                     />
@@ -355,7 +355,7 @@ const ProfileComponent = ({
                       className="flex-shrink-0"
                     >
                       <img
-                        src={review.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                        src={review.album_cover_url || "/assets/icons/music-placeholder.png"}
                         alt={review.name}
                         className="w-16 h-16 rounded-md object-cover"
                       />
@@ -412,7 +412,7 @@ const ProfileComponent = ({
                       className="flex-shrink-0"
                     >
                       <img
-                        src={rating.album_cover_url || "/assets/icons/music-placeholder.svg"}
+                        src={rating.album_cover_url || "/assets/icons/music-placeholder.png"}
                         alt={rating.title}
                         className="w-16 h-16 rounded-md object-cover"
                       />

@@ -83,6 +83,7 @@ const SongDetailsSection = () => {
   const fetchSongAndReviews = async () => {
     try {
       const fetchedSong = await getSongDetailsById(id || "");
+      console.log("Fetched song details:", fetchedSong);
       if (!fetchedSong) {
         await addSong(); // Only call getSong if the song is not in the database
       } else {
@@ -93,6 +94,7 @@ const SongDetailsSection = () => {
       console.error("Error fetching song or reviews:", error);
     }
     setLoading(false);
+    
   };
 
   const fetchListened = async () => {

@@ -327,3 +327,14 @@ export interface ISearchUser {
   avatar_url: string;
   mutual_count?: number;
 }
+
+export type Playlist = {
+    playlistId: string;
+    name: string;
+    description?: string;
+    creators: IUser[];
+    coverUrl: string;
+    songs: SongDetails[]; // Array of the songs we've already been working with
+    createdAt: string;
+    songCount: number;
+};
