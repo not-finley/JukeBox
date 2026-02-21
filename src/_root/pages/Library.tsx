@@ -267,7 +267,17 @@ const Library = () => {
                     <p className="text-white text-sm font-semibold truncate group-hover:text-emerald-400 transition-colors">
                       {playlist.name}
                     </p>
-                    <p className="text-gray-500 text-xs">{playlist.songCount || 0} songs</p>
+                    <span className="text-sm text-gray-400 ">
+                        {playlist.albumCount > 0 ? (
+                            <>
+                                {playlist.albumCount} {playlist.albumCount === 1 ? 'album' : 'albums'}, {playlist.totalTracks} tracks
+                            </>
+                        ) : (
+                            <>
+                                {playlist.totalTracks} {playlist.totalTracks === 1 ? 'track' : 'tracks'}
+                            </>
+                        )}
+                    </span>
                   </div>
                 </Link>
               ))}

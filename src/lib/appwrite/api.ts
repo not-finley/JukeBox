@@ -2668,8 +2668,10 @@ export const getPlaylistById = async (playlistId: string): Promise<Playlist | nu
                 playlist_creators (
                     user:users (*) 
                 ),
-                playlist_songs (
+                playlist_items (
+                    id,
                     order,
+                    type,
                     song:songs (
                         album:albums(album_cover_url, title), 
                         title, 
@@ -2677,17 +2679,29 @@ export const getPlaylistById = async (playlistId: string): Promise<Playlist | nu
                         album_id, 
                         isrc, 
                         artists:artists (*)
+                    ),
+                    album:albums (
+                        album_id,
+                        title,
+                        album_cover_url,
+                        artists:artists (*),
+                        songs:songs (
+                            song_id,
+                            title,
+                            isrc,
+                            artists:artists (*)
+                        )
                     )
                 ),
-                songCount:playlist_songs(count)
+                songCount:playlist_items(count)
             `)
             .eq('playlist_id', playlistId)
-            .order('order', { referencedTable: 'playlist_songs', ascending: true })
+            .order('order', { referencedTable: 'playlist_items', ascending: true })
             .single();
 
         if (error || !data) throw error || new Error("Playlist not found");
 
-        // 1. Resolve Creators
+        // 1. Resolve Creators (Existing logic)
         const resolvedCreators = await Promise.all(
             data.playlist_creators.map(async (pc: any) => ({
                 ...pc.user,
@@ -2697,29 +2711,35 @@ export const getPlaylistById = async (playlistId: string): Promise<Playlist | nu
             }))
         );
 
-        // 2. Prepare Inputs for Enrichment
-        // Ensure keys match what your Edge Function expects (compare with your Album logic)
-        const trackInputs = data.playlist_songs.map((ps: any) => ({
-            songId: ps.song.song_id, // Using songId to match your Album logic
-            title: ps.song.title,
-            artist: ps.song.artists.map((a: any) => a.name).join(", "),
-            isrc: ps.song.isrc
-        }));
+        // 2. Prepare Inputs for Enrichment (Extract tracks from both songs and albums)
+        const trackInputs: any[] = [];
+        data.playlist_items.forEach((item: any) => {
+            if (item.type === 'song' && item.song) {
+                trackInputs.push({
+                    songId: item.song.song_id,
+                    title: item.song.title,
+                    artist: item.song.artists.map((a: any) => a.name).join(", "),
+                    isrc: item.song.isrc
+                });
+            } else if (item.type === 'album' && item.album) {
+                item.album.songs.forEach((as: any) => {
+                    trackInputs.push({
+                        songId: as.song_id,
+                        title: as.title,
+                        artist: as.artists.map((a: any) => a.name).join(", "),
+                        isrc: as.isrc
+                    });
+                });
+            }
+        });
 
-        // 3. Invoke Edge Function
-        const { data: enrichmentData, error: enrichmentError } = await supabase.functions.invoke('enrich-album', {
+        // 3. Invoke Edge Function for Previews
+        const { data: enrichmentData } = await supabase.functions.invoke('enrich-album', {
             body: { tracks: trackInputs }
         });
 
-        // 4. Create the Preview Map
         const previewMap = new Map();
-        if (!enrichmentError && enrichmentData?.tracks) {
-            enrichmentData.tracks.forEach((t: any) => {
-                // Use the same ID key returned by your function (songId vs song_id)
-                const idKey = t.songId || t.song_id;
-                previewMap.set(idKey, t.preview_url);
-            });
-        }
+        enrichmentData?.tracks?.forEach((t: any) => previewMap.set(t.songId || t.song_id, t.preview_url));
 
         return {
             playlistId: data.playlist_id,
@@ -2729,28 +2749,42 @@ export const getPlaylistById = async (playlistId: string): Promise<Playlist | nu
             coverUrl: data.cover_url,
             creators: resolvedCreators,
             songCount: data.songCount?.[0]?.count || 0,
-            songs: data.playlist_songs.map((ps: any) => {
-                const s = ps.song;
-                return {
-                    songId: s.song_id,
-                    title: s.title,
-                    isrc: s.isrc,
-                    album: s.album,
-                    album_id: s.album_id,
-                    album_cover_url: s.album?.album_cover_url,
-                    album_title: s.album?.title,
-                    artist: s.artists.map((a: any) => a.name).join(", "), 
-                    artists: s.artists.map((a: any) => ({
-                        artistId: a.artist_id,
-                        name: a.name
-                    })),
-                    preview_url: previewMap.get(s.song_id) || null, 
-                    spotify_url: s.spotify_url || null,
-                    release_date: s.release_date || null,
-                    popularity: s.popularity || null,
-                    reviews: [], 
-                    ratings: []
-                };
+            albumCount: 0, 
+            totalTracks: 0,
+            items: data.playlist_items.map((item: any) => {
+                if (item.type === 'album' && item.album) {
+                    const alb = item.album;
+                    return {
+                        id: item.id,
+                        type: 'album',
+                        albumId: alb.album_id,
+                        title: alb.title,
+                        album_cover_url: alb.album_cover_url,
+                        artist: alb.artists,
+                        tracks: alb.songs.map((as: any) => ({
+                            songId: as.song_id,
+                            title: as.title,
+                            album_cover_url: alb.album_cover_url,
+                            preview_url: previewMap.get(as.song_id) || null,
+                            artist: as.artists,
+                            isrc: as.isrc
+                        }))
+                    };
+                } else {
+                    const s = item.song;
+                    return {
+                        id: item.id,
+                        type: 'song',
+                        songId: s.song_id,
+                        title: s.title,
+                        album: s.album,
+                        albumId: s.album_id,
+                        album_cover_url: s.album?.album_cover_url,
+                        artist: s.artists,
+                        preview_url: previewMap.get(s.song_id) || null,
+                        isrc: s.isrc
+                    };
+                }
             }),
         };
     } catch (error) {
@@ -2797,38 +2831,62 @@ export async function deletePlaylist(playlistId: string) {
 }
 
 
-export async function removeSongFromPlaylist(playlistId: string, songId: string) {
+// Generic add function for both types
+export async function addItemToPlaylist(
+    playlistId: string, 
+    itemId: string, 
+    type: 'song' | 'album', 
+    index: number
+) {
+    const insertData: any = {
+        id: itemId,
+        playlist_id: playlistId,
+        order: index,
+        type: type
+    };
+
+    if (type === 'song') insertData.song_id = itemId;
+    else insertData.album_id = itemId;
+
+    const { error } = await supabase
+        .from('playlist_items')
+        .insert(insertData);
+
+    if (error) {
+        if (error.code === '23505') return { success: true, message: 'Already in playlist' };
+        throw error;
+    }
+
+    return { success: true };
+}
+
+// Update the remove function to handle the generic item ID
+export async function removeItemFromPlaylist(playlistId: string, itemId: string) {
     try {
-        // 1. Get the 'order' value of the song BEFORE deleting it
-        const { data: songData, error: fetchError } = await supabase
-            .from('playlist_songs')
+        // Find by the row ID (playlist_items.id) rather than song_id
+        const { data: itemData, error: fetchError } = await supabase
+            .from('playlist_items')
             .select('"order"')
-            .eq('playlist_id', playlistId)
-            .eq('song_id', songId)
+            .eq('id', itemId)
             .single();
 
         if (fetchError) throw fetchError;
 
-        // 2. Delete the song
         const { error: deleteError } = await supabase
-            .from('playlist_songs')
+            .from('playlist_items')
             .delete()
-            .eq('playlist_id', playlistId)
-            .eq('song_id', songId);
+            .eq('id', itemId);
 
         if (deleteError) throw deleteError;
 
-        // 3. CALL THE SQL FUNCTION manually using .rpc()
-        const { error: rpcError } = await supabase.rpc('reorder_songs_on_delete', {
+        await supabase.rpc('reorder_items_on_delete', {
             p_playlist_id: playlistId,
-            p_deleted_order: songData.order
+            p_deleted_order: itemData.order
         });
-
-        if (rpcError) throw rpcError;
 
         return true;
     } catch (err) {
-        console.error("Failed to remove and reorder:", err);
+        console.error("Failed to remove item:", err);
         return false;
     }
 }
@@ -2844,17 +2902,36 @@ export async function getPlaylists(userId: string): Promise<Playlist[]> {
                 created_at,
                 cover_url,
                 playlist_creators!inner (user_id),
-                songCount:playlist_songs(count)
+                playlist_items (
+                    type,
+                    songs (song_id),
+                    albums (
+                        album_id,
+                        songs (song_id)
+                    )
                 )
             `)
             .eq("playlist_creators.user_id", userId)
             .order("created_at", { ascending: false });
+
         if (error) throw error;
         if (!playlists) return [];
 
         const results = await Promise.all(
             playlists.map(async (p: any) => {
-                const actualCount = p.songCount?.[0]?.count || 0;
+                const items = p.playlist_items || [];
+                
+                const albumCount = items.filter((i: any) => i.type === 'album').length;
+                
+                const soloSongCount = items.filter((i: any) => i.type === 'song').length;
+
+                const totalTracks = items.reduce((acc: number, item: any) => {
+                    if (item.type === 'album') {
+                        return acc + (item.albums?.songs?.length || 0);
+                    }
+                    return acc + 1;
+                }, 0);
+
                 return {
                     playlistId: p.playlist_id,
                     name: p.name,
@@ -2867,15 +2944,15 @@ export async function getPlaylists(userId: string): Promise<Playlist[]> {
                         imageUrl: await getProfileUrl(userId), 
                         email: "", 
                         bio: ""
-
                     }],
                     coverUrl: p.cover_url,
-                    songs: [],
-                    songCount: actualCount
+                    items: [], // Keeping this empty as per your original structure
+                    albumCount: albumCount,
+                    songCount: soloSongCount,
+                    totalTracks: totalTracks
                 };
             })
         );
-
 
         return results;
     } catch (err) {
@@ -3008,7 +3085,7 @@ export async function updatePlaylistMetadata(
 
 export async function addSongToPlaylist(playlistId: string, songId: string, index: number) {
     const { error } = await supabase
-        .from('playlist_songs')
+        .from('playlist_items')
         .insert({
             playlist_id: playlistId,
             song_id: songId,
@@ -3059,17 +3136,35 @@ export async function updatePlaylistCover(
     return publicUrl;
 }
 
-export async function updateSongsOrder(playlistId: string, orderedSongIds: string[]) {
+export async function updateSongsOrder(playlistId: string, orderedSongIds: {songId:any, id: any}[]) {
     // We update each song-playlist link with its new index
-    const updates = orderedSongIds.map((songId, index) => ({
+    const updates = orderedSongIds.map((songId, id, index) => ({
+        id: id,
         playlist_id: playlistId,
         song_id: songId,
         order: index
     }));
 
     const { error } = await supabase
-        .from('playlist_songs')
+        .from('playlist_items')
         .upsert(updates, { onConflict: 'playlist_id, song_id' });
+
+    if (error) throw error;
+}
+
+export async function updateItemsOrder(playlistId: string, orderedItems: any[]) {
+    const updates = orderedItems.map((item, index) => ({
+        id: item.id, // Using the unique primary key of the join table
+        playlist_id: playlistId,
+        song_id: item.type === 'song' ? item.songId : null,
+        album_id: item.type === 'album' ? item.albumId : null,
+        type: item.type,
+        order: index
+    }));
+
+    const { error } = await supabase
+        .from('playlist_items')
+        .upsert(updates);
 
     if (error) throw error;
 }

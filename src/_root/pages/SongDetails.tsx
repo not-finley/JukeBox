@@ -10,9 +10,10 @@ import ReviewItem from "@/components/ReviewItem";
 import { BarChart, Bar, XAxis } from 'recharts';
 import { FaSpotify } from "react-icons/fa";
 import { usePlayerContext } from "@/context/PlayerContext";
-import { Play } from "lucide-react";
+import { Play, Plus } from "lucide-react";
 import PlayingVisualizer from "@/components/shared/PlayingVisualizer";
 import AuthModal from "@/components/shared/AuthModal";
+import PlaylistModal from "@/components/shared/PlaylistModal"
 
 
 
@@ -29,6 +30,7 @@ const SongDetailsSection = () => {
   const [globalTotal, setGlobalTotal] = useState(0);
   const { playTrack, currentTrack, isPlaying } = usePlayerContext();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
   const isCurrent = currentTrack?.songId === song?.songId;
 
@@ -79,6 +81,14 @@ const SongDetailsSection = () => {
       setNotFound(true);
     }
   }
+
+  const handleAddToPlaylist = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    setShowPlaylistModal(true);
+  };
 
   const fetchSongAndReviews = async () => {
     try {
@@ -310,6 +320,14 @@ const SongDetailsSection = () => {
                     <span>Play Song</span>
                 </Button>
 
+                <Button
+                    onClick={handleAddToPlaylist}
+                    className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg border border-gray-700"
+                >
+                    <Plus size={20} />
+                    <span>Add to Playlist</span>
+                </Button>
+
                 {/* Spotify Link Button */}
                 {song.spotify_url && (
                     <a
@@ -376,6 +394,12 @@ const SongDetailsSection = () => {
         </div>
       )}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <PlaylistModal 
+        isOpen={showPlaylistModal} 
+        onClose={() => setShowPlaylistModal(false)} 
+        itemId={id || ''} 
+        type = "song"
+      />
     </div>
   );
 };

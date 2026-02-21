@@ -328,13 +328,28 @@ export interface ISearchUser {
   mutual_count?: number;
 }
 
+export type ItemDetails = {
+  id: string;
+  type: 'album' | 'song';
+  albumId?: string;
+  title: string;
+  album_cover_url: string;
+  artist: any[];
+  tracks?: Song[];
+  songId?: string;
+  preview_url?: string;
+  isrc?: string;
+}
+
 export type Playlist = {
     playlistId: string;
     name: string;
     description?: string;
     creators: IUser[];
     coverUrl: string;
-    songs: SongDetails[]; // Array of the songs we've already been working with
+    items: ItemDetails[];
     createdAt: string;
     songCount: number;
+    albumCount: number;
+    totalTracks: number;
 };
