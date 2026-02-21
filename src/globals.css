@@ -437,3 +437,23 @@
 .paused span {
   animation-play-state: paused;
 }
+
+html {
+  scrollbar-color: #3f3f46 #09090b; /* thumb / track */
+  scrollbar-width: thin;
+}
+
+/* Chrome/Safari version for the whole page */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b; /* zinc-950 */
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a; /* zinc-800 */
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46; /* zinc-700 */
+}

@@ -45,24 +45,33 @@ const Artist = () => {
   };
 
   const fetchArtist = async () => {
-  try {
-    const fetchedArtist = await getArtistDetailsById(id || "");
-    if (!fetchedArtist) {
-      await addArtist();
-    } else {
-      fetchedArtist.albums = fetchedArtist.albums
-        .sort((a, b) =>
-          new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
-        )
-        .filter(album => album.album_type === "album");
-      console.log("fetched artist", fetchedArtist);
-      setArtist(fetchedArtist);
+    try {
+      setLoading(true);
+      let data = await getArtistDetailsById(id || "");
+
+      if (!data) {
+        // Artist not in DB or not fully loaded
+        await addArtist();
+        data = await getArtistDetailsById(id || "");
+      }
+
+      if (data) {
+        // Ensure albums are always sorted and filtered
+        data.albums = data.albums
+          .filter(album => album.album_type === "album")
+          .sort((a, b) => new Date(b.release_date).getTime() - new Date(a.release_date).getTime());
+        
+        setArtist(data);
+      } else {
+        setNotFound(true);
+      }
+    } catch (error) {
+      console.error("Error fetching artist:", error);
+      setNotFound(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  } catch (error) {
-    console.error("Error fetching artist:", error);
-  }
-};
+  };
 
   useEffect(() => { if (id) fetchArtist(); }, [id]);
 

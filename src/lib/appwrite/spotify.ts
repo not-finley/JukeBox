@@ -378,6 +378,7 @@ export async function SpotifyArtistById(artistId: string, token: string) {
     }
 }
 
+
 export async function SpotifyAlbumById(
     albumId: string,
     token: string
@@ -390,34 +391,49 @@ export async function SpotifyAlbumById(
         if (!response.ok) return null;
         const album: any = await response.json();
 
-        // 1. Get all track IDs from the simplified objects
-        const trackIds = album.tracks.items.map((t: any) => t.id).join(',');
+        // 1. Accumulate ALL track objects (handling pagination)
+        let allTrackItems = [...album.tracks.items];
+        let nextUrl = album.tracks.next;
 
-        // 2. Fetch "Full Track Objects" to get ISRCs and Popularity
-        // Note: This endpoint handles up to 50 IDs at once.
-        const tracksResponse = await fetch(`${SPOTIFY_API_BASE_URL}/tracks?ids=${trackIds}`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+        while (nextUrl) {
+            const nextResponse = await fetch(nextUrl, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!nextResponse.ok) break;
+            const nextData = await nextResponse.json();
+            allTrackItems = [...allTrackItems, ...nextData.items];
+            nextUrl = nextData.next;
+        }
 
-        if (!tracksResponse.ok) throw new Error("Failed to fetch full track details");
-        const fullTracksData = await tracksResponse.json();
+        const allTrackIds = allTrackItems.map((t: any) => t.id);
+        const fullTracks: SpotifyTrack[] = [];
 
-        // 3. Map the Full Track data (which contains ISRCs)
-        const tracks: SpotifyTrack[] = fullTracksData.tracks.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            external_urls: { spotify: s.external_urls.spotify },
-            popularity: s.popularity ?? 0,
-            external_ids: {
-                isrc: s.external_ids?.isrc || "", // This will now be populated!
-            },
-            artists: s.artists.map((a: any) => ({
-                id: a.id,
-                name: a.name,
-                external_urls: a.external_urls,
-            })),
-        }));
+        // 2. Fetch "Full Track Objects" in chunks of 50
+        for (let i = 0; i < allTrackIds.length; i += 50) {
+            const chunk = allTrackIds.slice(i, i + 50).join(',');
+            const tracksResponse = await fetch(`${SPOTIFY_API_BASE_URL}/tracks?ids=${chunk}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
+            if (tracksResponse.ok) {
+                const fullTracksData = await tracksResponse.json();
+                const mappedTracks = fullTracksData.tracks.map((s: any) => ({
+                    id: s.id,
+                    name: s.name,
+                    external_urls: { spotify: s.external_urls.spotify },
+                    popularity: s.popularity ?? 0,
+                    external_ids: { isrc: s.external_ids?.isrc || "" },
+                    artists: s.artists.map((a: any) => ({
+                        id: a.id,
+                        name: a.name,
+                        external_urls: a.external_urls,
+                    })),
+                }));
+                fullTracks.push(...mappedTracks);
+            }
+        }
+
+        // 3. Construct the final result with ALL tracks
         const result: SpotifyAlbumWithTracks = {
             id: album.id,
             name: album.name,
@@ -433,7 +449,7 @@ export async function SpotifyAlbumById(
             })),
             tracks: {
                 ...album.tracks,
-                items: tracks,
+                items: fullTracks,
             },
         };
 
@@ -444,79 +460,38 @@ export async function SpotifyAlbumById(
     }
 }
 
-
 export async function getArtistDiscographyFromSpotify(
     artistId: string,
     token: string
-): Promise<AlbumDetails[]> {
+): Promise<any[]> { // Change type to a partial AlbumDetails
     try {
-        const albums: SpotifyAlbum[] = [];
+        const albums: any[] = [];
         let nextUrl: string | null =
             `${SPOTIFY_API_BASE_URL}/artists/${artistId}/albums?include_groups=album,single&limit=50`;
 
-        // --- Fetch paginated album list ---
         while (nextUrl) {
-            const response: any = await fetch(nextUrl, {
+            const response : any = await fetch(nextUrl, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await response.json();
-
-            if (data.items?.length) {
-                albums.push(...data.items);
-            }
-
+            if (data.items?.length) albums.push(...data.items);
             nextUrl = data.next;
         }
 
-        // --- Deduplicate by ID ---
-        const uniqueAlbums = Array.from(new Map(
-            albums.map(a => [a.id, a])
-        ).values());
-
-        const albumDetails: AlbumDetails[] = [];
-
-        // --- Fetch full album info + tracks ---
-        for (const album of uniqueAlbums) {
-            const resp = await fetch(`${SPOTIFY_API_BASE_URL}/albums/${album.id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            const full: SpotifyAlbumWithTracks = await resp.json();
-
-            const trackItems = full.tracks?.items ?? [];
-
-            const formattedTracks: SongDetails[] = trackItems.map((track) => ({
-                songId: track.id,
-                title: track.name,
-                album: full.name,
-                album_id: full.id,
-                album_cover_url: full.images?.[0]?.url ?? "",
-                release_date: full.release_date,
-                popularity: track.popularity ?? 0,
-                reviews: [],
-                ratings: [],
-                artists: track.artists,
-                spotify_url: track.external_urls?.spotify ?? "",
-                isrc: track.external_ids?.isrc || "",
-                preview_url: ""
-            }));
-
-            albumDetails.push({
-                albumId: full.id,
-                title: full.name,
-                spotify_url: full.external_urls?.spotify ?? "",
-                album_cover_url: full.images?.[0]?.url ?? "",
-                release_date: full.release_date,
-                artists: full.artists,
-                tracks: formattedTracks,
-                reviews: [],
-                album_type: full.album_type,
-            });
-        }
-
-        return albumDetails;
+        // Deduplicate and return ONLY the basic info
+        return Array.from(new Map(albums.map(a => [a.id, a])).values()).map(full => ({
+            albumId: full.id,
+            title: full.name,
+            spotify_url: full.external_urls?.spotify ?? "",
+            album_cover_url: full.images?.[0]?.url ?? "",
+            release_date: full.release_date,
+            artists: full.artists,
+            album_type: full.album_type,
+            tracks: [], 
+            isLoaded: false 
+        }));
     } catch (error) {
-        console.error("Error fetching full discography:", error);
+        console.error("Error:", error);
         return [];
     }
 }

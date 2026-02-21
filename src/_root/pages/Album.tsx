@@ -190,16 +190,18 @@ const Album = () => {
         playAlbum(formattedTracks);
     };
 
-
     useEffect(() => {
         if (id) {
             fetchAlbum();
-            fetchListened();
-            addUpdateRatingAlbumlocal();
             fetchGlobalRaiting();
+            
+            // ONLY fetch user-specific data if the user is authenticated
+            if (isAuthenticated && user?.accountId) {
+                fetchListened();
+                addUpdateRatingAlbumlocal();
+            }
         }
-
-    }, [id]);
+    }, [id, isAuthenticated, user?.accountId]);
 
     return (
         <div className="common-container">

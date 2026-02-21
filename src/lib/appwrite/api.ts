@@ -832,206 +832,6 @@ export async function getArtistDetailsById(artistId: string): Promise<ArtistDeta
     }
 }
 
-export async function getArtistDiscographyById(artistId: string): Promise<AlbumDetails[] | null> {
-    try {
-        // Fetch artist and their albums
-        const { data: artistData, error: artistError } = await supabase
-            .from("artists")
-            .select("*, albums:artistalbum(album:albums(*))")
-            .eq("artist_id", artistId)
-            .single();
-
-        if (artistError) throw artistError;
-        if (!artistData) throw new Error("Artist not found");
-        if (artistData.discography_loaded == false) return null;
-
-        const albumIds = artistData.albums.map((a: any) => a.album.album_id);
-
-        // Fetch all songs for these albums
-        const { data: songsData, error: songsError } = await supabase
-            .from("songs")
-            .select("*")
-            .in("album_id", albumIds);
-
-        if (songsError) throw songsError;
-
-        // Group songs by album
-        const songsByAlbum = songsData.reduce((acc: any, song: any) => {
-            if (!acc[song.album_id]) acc[song.album_id] = [];
-            acc[song.album_id].push({
-                songId: song.song_id,
-                title: song.title,
-                album: song.album_id,
-                spotify_url: song.spotify_url,
-                album_cover_url: "",
-                release_date: "",
-                popularity: song.pop,
-            });
-            return acc;
-        }, {});
-
-
-        // Build full album objects
-        const albums: AlbumDetails[] = artistData.albums.map((a: any) => {
-            const album = a.album;
-            const tracks = songsByAlbum[album.album_id] || [];
-            tracks.forEach((t: any) => {
-                t.album_cover_url = album.album_cover_url;
-                t.release_date = album.release_date;
-            });
-
-            return {
-                albumId: album.album_id,
-                title: album.title,
-                spotify_url: album.spotify_url,
-                album_cover_url: album.album_cover_url,
-                release_date: album.release_date,
-                tracks,
-                artists: [],
-                reviews: [],
-                album_type: album.album_type
-            };
-        });
-
-        return albums;
-    } catch (error) {
-        console.error("Failed to fetch Artist discography:", error);
-        return null;
-    }
-}
-
-export async function addFullDiscography(albums: AlbumDetails[]) {
-    console.log("Adding full discography to DB:", albums);
-    try {
-        if (albums.length === 0) return;
-
-        // ----- BATCH INSERT ALBUMS -----
-        const albumRows = albums.map(a => ({
-            album_id: a.albumId,
-            title: a.title,
-            spotify_url: a.spotify_url,
-            album_cover_url: a.album_cover_url,
-            release_date: normalizeReleaseDate(a.release_date),
-            total_tracks: a.tracks.length,
-            album_type: a.album_type,
-            fully_loaded: true
-        }));
-
-        await supabase
-            .from("albums")
-            .upsert(albumRows, { ignoreDuplicates: true });
-
-        // ----- BATCH INSERT ARTISTS -----
-        const allArtists: any = [];
-
-        albums.forEach(a => {
-            // Album-level artists
-            a.artists.forEach(ar => {
-                allArtists.push({
-                    artist_id: ar.id,
-                    name: ar.name,
-                    spotify_url: ar.external_urls.spotify
-                });
-            });
-
-            // Track-level artists → new!
-            a.tracks.forEach(s => {
-                s.artists?.forEach(ar => {
-                    allArtists.push({
-                        artist_id: ar.id,
-                        name: ar.name,
-                        spotify_url: ar.external_urls.spotify
-                    });
-                });
-            });
-        });
-
-        // remove duplicate artists
-        const uniqueArtists = Object.values(
-            Object.fromEntries(allArtists.map((ar:any) => [ar.artist_id, ar]))
-        );
-
-        const { error: artistInsertError } = await supabase
-            .from("artists")
-            .upsert(uniqueArtists, { ignoreDuplicates: true });
-
-        if (artistInsertError) throw artistInsertError;
-        // ----- LINK ALBUM ARTISTS -----
-        const albumArtistLinks: any = [];
-        albums.forEach(a => {
-            a.artists.forEach(ar => {
-                albumArtistLinks.push({
-                    album_id: a.albumId,
-                    artist_id: ar.id
-                });
-            });
-        });
-
-        const { error: albumInsertError } = await supabase
-            .from("artistalbum")
-            .upsert(albumArtistLinks, { ignoreDuplicates: true });
-
-        if (albumInsertError) throw albumInsertError;
-
-        // ----- BATCH INSERT SONGS -----
-        const allSongs: any = [];
-        albums.forEach(a => {
-            a.tracks.forEach(s => {
-                allSongs.push({
-                    song_id: s.songId,
-                    album_id: a.albumId,
-                    title: s.title,
-                    spotify_url: s.spotify_url,
-                    pop: s.popularity,
-                });
-            });
-        });
-
-        const { error: songInsertError } = await supabase
-            .from("songs")
-            .upsert(allSongs, { ignoreDuplicates: true });
-
-
-        if (songInsertError) throw songInsertError;
-
-        // ----- LINK SONG ARTISTS -----
-        const songArtistLinks: any = [];
-        albums.forEach(a => {
-            a.tracks.forEach(s => {
-                s.artists?.forEach(ar => {
-                    songArtistLinks.push({
-                        song_id: s.songId,
-                        artist_id: ar.id
-                    });
-                });
-            });
-        });
-
-        if (songArtistLinks.length > 0) {
-            const { error: artistLinkInsertError } = await supabase
-                .from("artistsongs")
-                .upsert(songArtistLinks, { ignoreDuplicates: true });
-            if (artistLinkInsertError) throw artistLinkInsertError;
-        }
-
-        console.log(`✅ Added ${albums.length} albums + tracks to DB`);
-    } catch (error) {
-        console.error("❌ Error inserting discography:", error);
-        throw error;
-    }
-}
-
-export async function markDiscographyLoaded(artistId: string) {
-    try {
-        const { error } = await supabase
-            .from("artists")
-            .update({ discography_loaded: true })
-            .eq("artist_id", artistId);
-        if (error) throw error;
-    } catch (error) {
-        console.error("Failed to mark discography as loaded:", error);
-    }
-}
 
 export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails | null> {
     try {
@@ -1250,46 +1050,25 @@ export async function addSongToDatabase(song: SpotifySong) {
 
 export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
     try {
-        // --- Check if song exists ---
+        // 1. Ensure the Artist row exists (but keep fully_loaded: false)
         const { data: existingArtist } = await supabase
             .from("artists")
-            .select("*")
+            .select("artist_id")
             .eq("artist_id", artist.id)
             .single();
 
-
-
         if (!existingArtist) {
-            const { error: insertError } = await supabase
-                .from("artists")
-                .insert([
-                    {
-                        artist_id: artist.id,
-                        name: artist.name,
-                        spotify_url: artist.external_urls.spotify,
-                        fully_loaded: false,
-                        image_url: artist.images?.[0]?.url ?? null,
-                    },
-                ]);
-
-            if (insertError) throw insertError;
-        } else if (existingArtist.fully_loaded == true) {
-            return;
-        } else {
-            const { error: updateError } = await supabase
-                .from("artists")
-                .update({
-                    name: artist.name,
-                    spotify_url: artist.external_urls.spotify,
-                    fully_loaded: true,
-                    image_url: artist.images?.[0]?.url ?? null,
-                })
-                .eq("artist_id", artist.id);
-            if (updateError) throw updateError;
+            const { error: insError } = await supabase.from("artists").insert([{
+                artist_id: artist.id,
+                name: artist.name,
+                spotify_url: artist.external_urls.spotify,
+                fully_loaded: false, 
+                image_url: artist.images?.[0]?.url ?? null,
+            }]);
+            if (insError) throw insError;
         }
 
-        // -- Add albums if not there 
-
+        // 2. Prepare and Upsert Albums
         const { data: existingAlbums, error: fetchError } = await supabase
             .from("albums")
             .select("album_id, fully_loaded")
@@ -1299,35 +1078,45 @@ export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
 
         const existingMap = new Map(existingAlbums?.map(a => [a.album_id, a.fully_loaded]) ?? []);
 
-        const albumInserts = artist.albums.map((a: any) => {
-            const isFullyLoaded = existingMap.get(a.id) === true;
-
-            return {
-                album_id: a.id,
-                title: a.name,
-                album_cover_url: a.images[0].url,
-                release_date: normalizeReleaseDate(a.release_date),
-                total_tracks: a.total_tracks,
-                spotify_url: a.external_urls.spotify,
-                fully_loaded: isFullyLoaded ? true : false,
-                album_type: a.album_type
-            };
-        });
+        const albumInserts = artist.albums.map((a: any) => ({
+            album_id: a.id,
+            title: a.name,
+            album_cover_url: a.images[0]?.url,
+            release_date: normalizeReleaseDate(a.release_date),
+            total_tracks: a.total_tracks,
+            spotify_url: a.external_urls.spotify,
+            fully_loaded: existingMap.get(a.id) === true, // Keep its status if it exists
+            album_type: a.album_type
+        }));
 
         const { error: addingAlbums } = await supabase.from("albums").upsert(albumInserts);
+        if (addingAlbums) throw addingAlbums;
 
-        if (addingAlbums) throw addingAlbums
-
-        const albumArtistLinks = artist.albums.map((a: any) =>
-            ({ album_id: a.id, artist_id: artist.id })
-        );
-
+        // 3. Link Artist and Albums
+        const albumArtistLinks = artist.albums.map((a: any) => ({ 
+            album_id: a.id, 
+            artist_id: artist.id 
+        }));
 
         const { error: artistsalbumError } = await supabase
             .from("artistalbum")
             .upsert(albumArtistLinks);
 
         if (artistsalbumError) throw artistsalbumError;
+
+        // 4. FINAL STEP: Mark as fully loaded
+        // We also update name and image here in case they changed on Spotify
+        const { error: finalUpdate } = await supabase
+            .from("artists")
+            .update({ 
+                name: artist.name,
+                image_url: artist.images?.[0]?.url ?? null,
+                fully_loaded: true 
+            })
+            .eq("artist_id", artist.id);
+
+        if (finalUpdate) throw finalUpdate;
+
         return true;
     } catch (error) {
         console.error("Error adding artist to database:", error);
