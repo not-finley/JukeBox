@@ -1,4 +1,4 @@
-import { AlbumDetails, SpotifyAlbum, SpotifyAlbumWithTracks, SongDetails, SpotifyTrack } from '@/types';
+import {SpotifyAlbumWithTracks, SpotifyTrack } from '@/types';
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
