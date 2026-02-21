@@ -17,17 +17,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit2, Trash2, Check, Loader2 } from "lucide-react";
 import LoaderMusic from "@/components/shared/loaderMusic";
-import PlayingVisualizer from "@/components/shared/PlayingVisualizer";
+import PlaylistEntry from "@/components/PlaylistEntry";
 import { usePlayerContext } from "@/context/PlayerContext";
 import { useUserContext } from "@/lib/AuthContext";
-import { getPlaylistById, processPlaylistCover, updatePlaylistMetadata, addSongToPlaylist, updatePlaylistCover, addSongToDatabase, updateSongsOrder, deletePlaylist, removeSongFromPlaylist } from "@/lib/appwrite/api";
+import { getPlaylistById, processPlaylistCover, updatePlaylistMetadata, addItemToPlaylist, updatePlaylistCover, addSongToDatabase, updateItemsOrder, deletePlaylist, removeItemFromPlaylist, addAlbumComplex} from "@/lib/appwrite/api";
 import { Search } from "lucide-react";
-import { searchSongsInSpotify, getSpotifyToken, SpotifyTrackById } from "@/lib/appwrite/spotify";
+import { searchSpotify, getSpotifyToken, SpotifyTrackById } from "@/lib/appwrite/spotify";
 import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { GripVertical } from "lucide-react";
 import { Track } from "@/types";
-import { getDeezerPreview } from "@/lib/appwrite/deezer";
 import AuthModal from "@/components/shared/AuthModal";
 
 const PlaylistPage = () => {
@@ -53,20 +51,19 @@ const PlaylistPage = () => {
     const [isAddingSongId, setIsAddingSongId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const fetchPlaylist = async (silent = false) => {
+        if (!silent) setLoading(true); // Only show global loader on first load or ID change
+        
+        const data = await getPlaylistById(id || "");
+        setPlaylist(data);
+        
+        if (!silent) setLoading(false);
+        setEditName(data?.name || "");
+        setEditDescription(data?.description || "");
+    };
 
-    // Placeholder fetch - replace with your Supabase/Appwrite logic
+
     useEffect(() => {
-        const fetchPlaylist = async () => {
-            setLoading(true);
-            console.log("Fetching playlist with ID:", id);
-            const data = await getPlaylistById(id || "");
-            console.log("Fetched playlist data:", data);
-            setPlaylist(data);
-            setLoading(false);
-            setEditName(data?.name || "");
-            setEditDescription(data?.description || "");
-            setSearchResults([])
-        };
         fetchPlaylist();
     }, [id]);
 
@@ -79,9 +76,12 @@ const PlaylistPage = () => {
         const delayDebounce = setTimeout(async () => {
             setIsSearching(true);
             try {
-                const spotifyAccessToken = await getSpotifyToken();
-                const results = await searchSongsInSpotify(searchQuery, spotifyAccessToken);
-                setSearchResults(results || []);
+                const token = await getSpotifyToken();
+                // Call your new function
+                const { sorted } = await searchSpotify(searchQuery, token);
+                
+                // Filter out 'artist' results if you only want to add songs/albums to the playlist
+                setSearchResults(sorted.filter(item => item.type !== 'artist'));
             } catch (error) {
                 console.error(error);
                 setSearchResults([]);
@@ -94,6 +94,12 @@ const PlaylistPage = () => {
     }, [searchQuery]);
 
     const isCreator = playlist?.creators?.some((c: any) => c.accountId === user.accountId);
+    const albumCount = playlist?.items?.filter((item: any) => item.type === 'album').length || 0;
+
+    const totalTracks = playlist?.items?.reduce((acc: number, item: any) => {
+        if (item.type === 'album') return acc + (item.tracks?.length || 0);
+        return acc + 1;
+    }, 0) || 0;
 
     const handleSave = async () => {
         if (!editName.trim() || !id) return;
@@ -111,59 +117,55 @@ const PlaylistPage = () => {
         }
     };
 
-    const handleAddSong = async (song: any) => {
+    const handleAddItem = async (searchResultItem: any) => {
         if (!id) return;
 
-        // 1. Client-side check: Is it already in the local list?
-        const isDuplicate = playlist.songs.some((s: any) => s.songId === song.songId);
+        // 1. Duplicate Check
+        const isDuplicate = playlist.items.some((item: any) => 
+            (item.type === 'song' && item.songId === searchResultItem.id) || (item.type === 'album' && item.albumId === searchResultItem.id)
+        );
+        
         if (isDuplicate) {
-            toast({ title: "Song already in playlist", variant: "default" });
+            toast({ title: `${searchResultItem.type === 'album' ? 'Album' : 'Song'} already in playlist` });
             return;
         }
 
-        setIsAddingSongId(song.songId);
+        setIsAddingSongId(searchResultItem.id);
 
         try {
-            const spotifyAccessToken = await getSpotifyToken();
-            const enrichedSong = await SpotifyTrackById(song.songId, spotifyAccessToken);
-            const songToAdd = enrichedSong || song;
-            
-            await addSongToDatabase(songToAdd);
+            const token = await getSpotifyToken();
+            const type = searchResultItem.type === 'track' ? 'song' : 'album';
 
-            // 2. Capture the result of the link operation
-            const response = await addSongToPlaylist(id, song.songId, playlist.songs.length);
-
-            if (!response) {
-                throw new Error("Duplicate or failed to add");
+            // 2. Fetch Full Data & Save to Database
+            if (type === 'album') {
+                // Fetch full album to get the tracks list for addAlbumComplex
+                const response = await fetch(`https://api.spotify.com/v1/albums/${searchResultItem.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const fullAlbumData = await response.json();
+                await addAlbumComplex(fullAlbumData);
+            } else {
+                // Fetch full track to get ISRC and detailed metadata for addSongToDatabase
+                const fullTrackData = await SpotifyTrackById(searchResultItem.id, token);
+                await addSongToDatabase(fullTrackData || searchResultItem);
             }
 
-            const preview_url = await getDeezerPreview(song.title, song.artist, song.isrc);
+            // 3. Link to Playlist (Join Table)
+            const response = await addItemToPlaylist(
+                id, 
+                searchResultItem.id, 
+                type, 
+                playlist.items.length
+            );
 
+            if (!response.success) throw new Error("Failed to link item");
+
+            await fetchPlaylist(true); 
             
-
-            const formattedSong = {
-                ...song,
-                artists: enrichedSong?.artists.map((a: any) => ({ name: a.name, artistId: a.id })) || song.artists.map((a: any) => ({ name: a.name, artistId: a.id })),
-                preview_url: preview_url,
-                album_cover_url: typeof song.album === 'object' ? song.album.album_cover_url : song.album_cover_url
-            };
-
-            console.log("Adding song to playlist with data:", formattedSong)
-            // 3. Only update UI on verified success
-            setPlaylist((prev: any) => ({
-                ...prev,
-                songs: [...(prev.songs || []), formattedSong]
-            }));
-            
-            toast({ title: "Added to playlist!" });
-        } catch (err: any) {
-            console.error(err);
-
-            const message = err.message?.includes("409") 
-                ? "This song is already in the playlist." 
-                : "Failed to add song";
-                
-            toast({ title: message, variant: "destructive" });
+            toast({ title: `Added ${type} to playlist!` });
+        } catch (err) {
+            console.error("Error adding item:", err);
+            toast({ title: "Failed to add item", variant: "destructive" });
         } finally {
             setIsAddingSongId(null);
         }
@@ -192,17 +194,22 @@ const PlaylistPage = () => {
     const onDragEnd = async (result: DropResult) => {
         if (!result.destination || !isCreator) return;
 
-        const items = Array.from(playlist.songs);
+        const items = Array.from(playlist.items);
         const [reorderedItem] = items.splice(result.source.index, 1);
         items.splice(result.destination.index, 0, reorderedItem);
 
-        setPlaylist({ ...playlist, songs: items });
+        setPlaylist({ ...playlist, items });
 
         try {
-            await updateSongsOrder(id!, items.map((s: any) => s.songId));
+            // Send the new order using the unique playlist_item ID
+            await updateItemsOrder(id!, items.map((item: any) => ({
+                id: item.id,
+                type: item.type,
+                songId: item.songId,
+                albumId: item.albumId
+            })));
         } catch (err) {
             toast({ title: "Failed to save order", variant: "destructive" });
-            setPlaylist((prev: any) => ({ ...prev, songs: playlist.songs }));
         }
     };
 
@@ -215,14 +222,29 @@ const PlaylistPage = () => {
         isrc: track.isrc
     });
 
-    const handlePlayPlaylist = () => {
+    const handlePlayPlaylist = (itemIndex?: number, trackIndexInAlbum?: number) => {
         if (!isAuthenticated) {
             setShowAuthModal(true);
             return;
         }
-        if (!playlist) return;
-        const formattedTracks = playlist.songs.map(formatTrack);
-        playAlbum(formattedTracks);
+        if (!playlist?.items) return;
+
+
+        // Create a flat list of all tracks for the player
+        const flatTracks: Track[] = [];
+        let startIndex = 0;
+
+        playlist.items.forEach((item: any, idx: number) => {
+            if (item.type === 'album') {
+                if (idx === itemIndex) startIndex = flatTracks.length + (trackIndexInAlbum || 0);
+                flatTracks.push(...item.tracks.map(formatTrack));
+            } else {
+                if (idx === itemIndex) startIndex = flatTracks.length;
+                flatTracks.push(formatTrack(item));
+            }
+        });
+        console.log(flatTracks)
+        playAlbum(flatTracks, startIndex);
     };
 
     const handleDeletePlaylist = async () => {
@@ -246,15 +268,15 @@ const PlaylistPage = () => {
         }
     };
 
-    const handleRemoveSong = async (songId: string) => {
+    const handleRemoveSong = async (itemId: string) => {
         if (!id) return;
         try {
-            await removeSongFromPlaylist(id, songId);
+            await removeItemFromPlaylist(id, itemId);
             
             // Update local state to remove the song immediately
             setPlaylist((prev: any) => ({
                 ...prev,
-                songs: prev.songs.filter((s: any) => s.songId !== songId)
+                items: prev.items.filter((s: any) => s.id !== itemId)
             }));
 
             toast({ title: "Removed from playlist" });
@@ -353,7 +375,17 @@ const PlaylistPage = () => {
                                 </div>
                                 <span className="text-sm font-bold text-white">{playlist.creators[0]?.name}</span>
                                 <span className="text-gray-500">•</span>
-                                <span className="text-sm text-gray-400 font-semibold">{playlist.songs.length} songs</span>
+                                <span className="text-sm text-gray-400 font-semibold">
+                                    {albumCount > 0 ? (
+                                        <>
+                                            {albumCount} {albumCount === 1 ? 'album' : 'albums'}, {totalTracks} tracks
+                                        </>
+                                    ) : (
+                                        <>
+                                            {totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
+                                        </>
+                                    )}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -363,7 +395,7 @@ const PlaylistPage = () => {
                 <div className="flex items-center gap-6 p-6 md:px-10">
                     <Button
                         onClick={() => handlePlayPlaylist()}
-                        disabled={!playlist.songs.length}
+                        disabled={!playlist.items.length}
                         className="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_8px_15px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95"
                     >
                         <Play fill="black" size={24} />
@@ -420,100 +452,27 @@ const PlaylistPage = () => {
                             </div>
 
                             <DragDropContext onDragEnd={onDragEnd}>
-                                <Droppable droppableId="playlist-songs">
+                                <Droppable droppableId="playlist-items">
                                     {(provided) => (
-                                        <div 
-                                            {...provided.droppableProps} 
-                                            ref={provided.innerRef} 
-                                            className="flex flex-col mb-12"
-                                        >
-                                            {playlist?.songs?.map((song: any, index: number) => {
-                                                const isCurrent = currentTrack?.songId === song.songId;
-                                                const uniqueId = String(song.songId || song.song_id);
-
-                                                return (
-                                                    <Draggable 
-                                                        key={uniqueId}
-                                                        draggableId={uniqueId}
-                                                        index={index}
-                                                        isDragDisabled={!isCreator} // This prevents the actual drag logic
-                                                    >
-                                                        {(provided, snapshot) => (
-                                                            <div
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...(!isCreator ? {} : {})}
-                                                                className={`grid gap-4 py-2 px-4 rounded-md transition-all group items-center ${
-                                                                    snapshot.isDragging ? "bg-white/20 shadow-2xl z-50" : "hover:bg-white/10"
-                                                                } ${
-                                                                    isCreator 
-                                                                    ? "grid-cols-[auto_16px_1fr_auto] md:grid-cols-[auto_16px_4fr_3fr_auto]" 
-                                                                    : "grid-cols-[16px_1fr] md:grid-cols-[16px_4fr_3fr]"
-                                                                }`}
-                                                            >
-                                                                {/* 1. Conditional Drag Handle */}
-                                                                {isCreator && (
-                                                                    <div 
-                                                                        {...provided.dragHandleProps} 
-                                                                        className="text-gray-600 hover:text-white px-1 cursor-grab active:cursor-grabbing"
-                                                                    >
-                                                                        <GripVertical size={18} />
-                                                                    </div>
-                                                                )}
-
-                                                                {/* 2. Track Number / Playing Visualizer */}
-                                                                <div 
-                                                                    className="text-gray-500 text-sm cursor-pointer" 
-                                                                    onClick={() => {
-                                                                        if (!isAuthenticated) {
-                                                                            setShowAuthModal(true);
-                                                                            return;
-                                                                        }
-                                                                        const formattedTracks = playlist.songs.map(formatTrack);
-                                                                        playAlbum(formattedTracks, index); 
-                                                                    }}
-                                                                >
-                                                                    {isCurrent && isPlaying ? <PlayingVisualizer isPaused={false} /> : index + 1}
-                                                                </div>
-                                                                
-                                                                {/* 3. Title & Artist */}
-                                                                <div 
-                                                                    className="flex items-center gap-4 overflow-hidden cursor-pointer" 
-                                                                >
-                                                                    <img src={song.album_cover_url} className="w-10 h-10 rounded shadow-lg" />
-                                                                    <div className="flex flex-col truncate">
-                                                                        <Link to={'/song/' + song.songId} className={`text-sm font-semibold truncate ${isCurrent ? 'text-emerald-500' : 'text-white'} hover:text-emerald-400`}>
-                                                                            {song.title}
-                                                                        </Link>
-                                                                        {song?.artists?.map((a: any, i : number) => (
-                                                                            <Link to={`/artist/${a.artistId}`} key={a.id} className="hover:text-emerald-400 text-xs text-gray-500 font-semibold truncate">
-                                                                                {a.name}
-                                                                                {i < a.length - 1 ? ", " : ""}
-                                                                            </Link>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                                
-                                                                {/* 4. Album (Hidden on mobile) */}
-                                                                <div 
-                                                                    className="hidden md:block text-sm text-gray-400 truncate pr-4 cursor-pointer" 
-                                                                >
-                                                                    <Link to={'/album/' + song.album_id}>{typeof song.album === 'object' ? song.album?.title : song.album || "Unknown Album"}</Link>
-                                                                </div>
-                                                                {isCreator && (
-                                                                    <button
-                                                                        onClick={() => handleRemoveSong(song.songId)}
-                                                                        className="p-2 text-gray-500 hover:text-red-500 md:opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                        aria-label="Remove song"
-                                                                    >
-                                                                        <Trash2 size={16} />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </Draggable>
-                                                );
-                                            })}
+                                        <div {...provided.droppableProps} ref={provided.innerRef}>
+                                            {playlist?.items?.map((item: any, index: number) => (
+                                                <Draggable key={String(item.id)} draggableId={String(item.id)} index={index} isDragDisabled={!isCreator}>
+                                                    {(provided) => (
+                                                        <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                                                            <PlaylistEntry 
+                                                                item={item}
+                                                                index={index}
+                                                                isCreator={isCreator}
+                                                                isCurrent={currentTrack?.songId === item.songId}
+                                                                isPlaying={isPlaying}
+                                                                onPlay={handlePlayPlaylist}
+                                                                onRemove={handleRemoveSong}
+                                                                formatTrack={formatTrack}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
                                             {provided.placeholder}
                                         </div>
                                     )}
@@ -532,7 +491,7 @@ const PlaylistPage = () => {
                     <div className="relative max-w-xl mb-10">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                     <Input 
-                        placeholder="Search for songs or artists..."
+                        placeholder="Search for songs, albums, or artists..."
                         className="bg-white/10 border-none pl-12 h-14 rounded-full text-lg focus:bg-white/20 transition-all focus-visible:ring-emerald-500/50"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -544,24 +503,32 @@ const PlaylistPage = () => {
                         <div className="col-span-full flex justify-center py-10"><LoaderMusic /></div>
                     ) : (
                         searchResults.map((result) => (
-                        <div key={result.songId} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-lg group transition-all">
-                            <div className="flex items-center gap-4">
-                            <img src={result.album_cover_url} className="w-12 h-12 rounded-md shadow-md" />
-                            <div className="flex flex-col">
-                                <p className="text-sm font-bold text-white">{result.title}</p>
-                                <p className="text-xs text-gray-400">{result.artist}</p>
+                            <div key={result.id} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-lg group">
+                                <div className="flex items-center gap-4">
+                                    <div className="relative">
+                                        <img src={result.album_cover_url} className="w-12 h-12 rounded-md shadow-md" />
+                                        {result.type === 'album' && (
+                                            <div className="absolute -top-2 -left-2 bg-emerald-500 text-[8px] font-black px-1.5 py-0.5 rounded text-black uppercase">
+                                                Album
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <p className="text-sm font-bold text-white">{result.title}</p>
+                                        <p className="text-xs text-gray-400">
+                                            {result.artists?.map((a: any) => a.name).join(", ")}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    disabled={isAddingSongId === result.id}
+                                    onClick={() => handleAddItem(result)} // Use the new generic handler
+                                >
+                                    {isAddingSongId === result.id ? <Loader2 className="animate-spin" /> : "Add"}
+                                </Button>
                             </div>
-                            </div>
-                            <Button 
-                            variant="outline" 
-                            size="sm"
-                            disabled={isAddingSongId === result.songId}
-                            className="rounded-full border-gray-600 hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10 px-6"
-                            onClick={() => handleAddSong(result)}
-                            >
-                            {isAddingSongId === result.songId ? <Loader2 className="animate-spin" /> : "Add"}
-                            </Button>
-                        </div>
                         ))
                     )}
                     </div>

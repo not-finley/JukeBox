@@ -10,10 +10,11 @@ import LoaderMusic from '@/components/shared/loaderMusic';
 import { useUserContext } from '@/lib/AuthContext';
 import { FaSpotify } from "react-icons/fa";
 import ReviewItem from '@/components/ReviewItem';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, Plus } from 'lucide-react';
 import { usePlayerContext } from '@/context/PlayerContext';
 import PlayingVisualizer from '@/components/shared/PlayingVisualizer';
 import AuthModal from '@/components/shared/AuthModal';
+import PlaylistModal from "@/components/shared/PlaylistModal"
 
 
 const Album = () => {
@@ -30,6 +31,7 @@ const Album = () => {
     const [songRatings, setSongRatings] = useState<number[]>([]);
     const { playAlbum, currentTrack, isPlaying, togglePlay } = usePlayerContext();
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
 
     const addAlbum = async () => {
@@ -95,6 +97,15 @@ const Album = () => {
         }
 
     };
+
+    const handleAddToPlaylist = () => {
+        if (!isAuthenticated) {
+        setShowAuthModal(true);
+        return;
+        }
+        setShowPlaylistModal(true);
+    };
+
 
     const fetchGlobalRaiting = async () => {
         const { counts, average, total } = await getAllRatingsOfAlbum(id || '');
@@ -239,6 +250,14 @@ const Album = () => {
                                         >
                                             <Play fill="black" size={18} />
                                             <span>Play Album</span>
+                                        </Button>
+
+                                        <Button
+                                            onClick={handleAddToPlaylist}
+                                            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg border border-gray-700"
+                                        >
+                                            <Plus size={20} />
+                                            <span>Add to Playlist</span>
                                         </Button>
 
                                         {/* Spotify Link Button */}
@@ -473,6 +492,12 @@ const Album = () => {
                             )}
                         </section>
                         <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+                        <PlaylistModal 
+                            isOpen={showPlaylistModal} 
+                            onClose={() => setShowPlaylistModal(false)} 
+                            itemId={id || ''} 
+                            type = "album"
+                        />
                     </div>
 
                 )
