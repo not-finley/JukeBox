@@ -249,15 +249,13 @@ const Album = () => {
                                             className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg"
                                         >
                                             <Play fill="black" size={18} />
-                                            <span>Play Album</span>
                                         </Button>
 
                                         <Button
                                             onClick={handleAddToPlaylist}
                                             className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-bold h-11 px-6 rounded-md transition-all active:scale-95 shadow-lg border border-gray-700"
                                         >
-                                            <Plus size={20} />
-                                            <span>Add to Playlist</span>
+                                            <Plus size={50} />
                                         </Button>
 
                                         {/* Spotify Link Button */}

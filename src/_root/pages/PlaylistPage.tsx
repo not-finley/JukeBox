@@ -295,7 +295,7 @@ const PlaylistPage = () => {
         {playlist && !loading && (
             <div className="w-full max-w-6xl">
                 {/* --- HEADER SECTION --- */}
-                <div className="h-[40vh] relative w-full overflow-hidden rounded-b-3xl">
+                <div className={`${isEditing? "h-[60vh]": "h-[50vh]"} md:h-[40vh] relative w-full overflow-hidden rounded-b-3xl`}>
                     <img
                         src={playlist.coverUrl || '/assets/icons/music-placeholder.png'}
                         alt={playlist.name}
