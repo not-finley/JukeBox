@@ -6,7 +6,7 @@ import AuthLayout from './_auth/AuthLayout';
 import RootLayout from './_root/RootLayout';
 import SigninForm from './_auth/forms/SigninForm';
 import SignupForm from './_auth/forms/SignupForm';
-import { Home, Songs, Library, Profile, UpdateProfile, AddReviewSong, AddReviewAlbum, Artist, Album, Discography, ReviewPage } from './_root/pages';
+import { Home, Songs, Library, UpdateProfile, AddReviewSong, AddReviewAlbum, Artist, Album, Discography, ReviewPage } from './_root/pages';
 import { Toaster } from "@/components/ui/toaster"
 import Search from './_root/pages/Search';
 import { Helmet } from 'react-helmet';
@@ -20,6 +20,7 @@ import SignedInLayout from './_root/SignedInLayout';
 import SelectAuth from './_auth/forms/SelectAuth';
 import PlaylistPage from './_root/pages/PlaylistPage';
 import CreatePlaylist from './_root/pages/CreatePlaylist';
+import NewProfile from './_root/pages/NewProfile';
 
 const App = () => {
   return (
@@ -39,7 +40,7 @@ const App = () => {
 
             <Route element={<RootLayout />}>
               <Route path="/trending" element={<Songs />}/>
-              <Route path="/profile/:id/*" element={<Profile />}/>
+              <Route path="/profile/:id/*" element={<NewProfile />}/>
               <Route path="/song/:id" element={<SongDetailsSection />}/>
               <Route path="/review/:id" element={<ReviewPage />}/>
               <Route path="/artist/:id" element={<Artist />}/>

@@ -102,7 +102,6 @@ const ProfileComponent = ({
           imageFile
         });
 
-        // If you want, you can use the returned URL from Supabase instead of local preview
         updatedImageUrl = updatedUserData.profile_url ?? previewUrl;
       }
 

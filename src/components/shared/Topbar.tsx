@@ -25,6 +25,7 @@ const Topbar = () => {
                         alt="logo"
                         width={130}
                         height={325}
+                        
                     />
                 </Link>
                 {isAuthenticated ? (
@@ -40,6 +41,12 @@ const Topbar = () => {
                                 src={user.imageUrl || defaultAvatar}
                                 alt="profile"
                                 className="h-8 w-8 rounded-full object-cover"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    if (target.src !== window.location.origin + "/assets/icons/profile-placeholder.svg") {
+                                        target.src = "/assets/icons/profile-placeholder.svg";
+                                    }
+                                }}
                             />
                         </Link>
                     </div> ) : 

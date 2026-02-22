@@ -41,6 +41,7 @@ export type IUser = {
   bio: string;
   followersCount?: number | null;
   followingCount?: number | null;
+  top_five?: Album[]
 };
 
 

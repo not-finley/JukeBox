@@ -155,22 +155,22 @@ function processProfileImage(file: File, maxSize = 500): Promise<Blob> {
         };
     });
 }
+
 export async function updateUser({
     accountId,
     bio,
     imageFile,
+    topFive, 
 }: {
     accountId: string;
     bio: string;
     imageFile?: File | null;
+    topFive?: any[]; 
 }) {
     try {
-
-        // Upload profile image if provided
         if (imageFile) {
             const processedImage = await processProfileImage(imageFile);
-
-            const fileName = `profile.jpg`; // normalized name
+            const fileName = `profile.jpg`;
             const filePath = `${accountId}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
@@ -180,18 +180,18 @@ export async function updateUser({
             if (uploadError) throw uploadError;
         }
 
-        // Update user info in the database
+        // Update user info including the new top_five column
         const { data, error } = await supabase
             .from("users")
             .update({
                 bio,
+                top_five: topFive, 
             })
             .eq("user_id", accountId)
             .select()
             .single();
 
         if (error) throw error;
-
         return data;
     } catch (err) {
         console.error("Error updating user:", err);
@@ -653,7 +653,8 @@ export async function getUserById(userId: string): Promise<IUser | null> {
             imageUrl: await getProfileUrl(userId),
             bio: userData.bio,
             followersCount,
-            followingCount
+            followingCount, 
+            top_five: userData.top_five
         };
 
         return user;
