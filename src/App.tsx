@@ -21,6 +21,7 @@ import SelectAuth from './_auth/forms/SelectAuth';
 import PlaylistPage from './_root/pages/PlaylistPage';
 import CreatePlaylist from './_root/pages/CreatePlaylist';
 import NewProfile from './_root/pages/NewProfile';
+import Settings from './_root/pages/Settings'
 
 const App = () => {
   return (
@@ -60,6 +61,7 @@ const App = () => {
               <Route path="/song/:id/add-review" element={<AddReviewSong />}/>
               <Route path="/album/:id/add-review" element={<AddReviewAlbum />}/>
               <Route path="/create-playlist" element={<CreatePlaylist />}/>
+              <Route path="/settings" element={<Settings />}/>
             </Route>
         </Routes>
         <Toaster />
