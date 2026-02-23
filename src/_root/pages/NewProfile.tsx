@@ -5,7 +5,7 @@ import { getListened, getRated, getReviewed, getUserById, updateUser, addFollow,
 import { Listened, RatingGeneral, Review, IUser, Playlist } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import AuthModal from "@/components/shared/AuthModal";
-import { Edit2, Star, Disc, Music } from "lucide-react";
+import { Edit2, Star, Disc, Music, Settings } from "lucide-react";
 
 type profileProps = {
     userid: string;
@@ -43,7 +43,6 @@ const ProfileComponent = ({
     loadingRatings
 }: profileProps) => {
 
-    console.log(profileuser);
     const fallbackImage = "/assets/icons/profile-placeholder.svg";
     const { setUser, isAuthenticated } = useUserContext();
     
@@ -268,6 +267,15 @@ const ProfileComponent = ({
                             >
                                 Cancel
                             </button>
+                        )}
+
+                        {!editing && (
+                            <Link 
+                                to="/settings"
+                                className="p-2 bg-gray-800 hover:bg-gray-700 rounded-md transition text-gray-400 hover:text-white"
+                            >
+                                <Settings size={18} />
+                            </Link>
                         )}
                     </>
                 ) : (
@@ -716,7 +724,6 @@ const NewProfile = () => {
         setReviewed(newReviews);
         setRated(newRatings);
         setPlaylists(newPlaylists);
-        console.log(newPlaylists)
 
         setLoadingListens(false);
         setLoadingReviews(false);

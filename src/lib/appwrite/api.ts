@@ -199,6 +199,29 @@ export async function updateUser({
     }
 }
 
+export async function updateUsername(userId: string, newUsername: string) {
+    try {
+        const { data, error: tableError } = await supabase
+        .from("users") 
+        .update({ username: newUsername })
+        .eq("user_id", userId)
+        .select()
+        .single();
+
+    if (tableError) throw tableError;
+
+    const { error: authError } = await supabase.auth.updateUser({
+        data: { username: newUsername }
+    });
+
+    if (authError) console.error("Auth metadata sync failed, but table updated.");
+
+    return data;
+    } catch (error) {
+        throw error;
+    }
+}
+
 export async function searchUsers(query: string): Promise<ISearchUser[]> {
     try {
         if (!query) return [];
