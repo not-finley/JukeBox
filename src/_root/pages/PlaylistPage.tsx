@@ -52,7 +52,7 @@ const PlaylistPage = () => {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchPlaylist = async (silent = false) => {
-        if (!silent) setLoading(true); // Only show global loader on first load or ID change
+        if (!silent) setLoading(true); 
         
         const data = await getPlaylistById(id || "");
         setPlaylist(data);
@@ -77,10 +77,8 @@ const PlaylistPage = () => {
             setIsSearching(true);
             try {
                 const token = await getSpotifyToken();
-                // Call your new function
                 const { sorted } = await searchSpotify(searchQuery, token);
                 
-                // Filter out 'artist' results if you only want to add songs/albums to the playlist
                 setSearchResults(sorted.filter(item => item.type !== 'artist'));
             } catch (error) {
                 console.error(error);
@@ -145,7 +143,6 @@ const PlaylistPage = () => {
                 const fullAlbumData = await response.json();
                 await addAlbumComplex(fullAlbumData);
             } else {
-                // Fetch full track to get ISRC and detailed metadata for addSongToDatabase
                 const fullTrackData = await SpotifyTrackById(searchResultItem.id, token);
                 await addSongToDatabase(fullTrackData || searchResultItem);
             }
@@ -295,7 +292,7 @@ const PlaylistPage = () => {
         {playlist && !loading && (
             <div className="w-full max-w-6xl">
                 {/* --- HEADER SECTION --- */}
-                <div className={`${isEditing? "h-[60vh]": "h-[50vh]"} md:h-[40vh] relative w-full overflow-hidden rounded-b-3xl`}>
+                <div className={`${isEditing? "h-[60dvh]": "h-[50dvh]"} md:h-[40dvh] relative w-full overflow-hidden rounded-b-3xl`}>
                     <img
                         src={playlist.coverUrl || '/assets/icons/music-placeholder.png'}
                         alt={playlist.name}
