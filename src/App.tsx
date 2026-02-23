@@ -9,7 +9,7 @@ import SignupForm from './_auth/forms/SignupForm';
 import { Home, Songs, Library, UpdateProfile, AddReviewSong, AddReviewAlbum, Artist, Album, Discography, ReviewPage } from './_root/pages';
 import { Toaster } from "@/components/ui/toaster"
 import Search from './_root/pages/Search';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 import SongDetailsSection from './_root/pages/SongDetails';
 import LibraryReviews from './_root/pages/LibraryReviews';
 import LibraryRatings from './_root/pages/LibraryRatings';

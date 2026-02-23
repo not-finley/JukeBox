@@ -6,7 +6,6 @@ import { Listened, RatingGeneral, Review, IUser, Playlist } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import AuthModal from "@/components/shared/AuthModal";
 import { Edit2, Star, Disc, Music, Settings } from "lucide-react";
-import { Helmet } from 'react-helmet-async';
 
 type profileProps = {
     userid: string;
@@ -191,15 +190,6 @@ const ProfileComponent = ({
     };
 
     return (
-        <>
-        <Helmet>
-            <title>{profileuser.name} (@{profileuser.username}) | JukeBoxd</title>
-            <meta property="og:title" content={`${profileuser.name}'s Music Profile`} />
-            <meta property="og:description" content={`Check out ${profileuser.name}'s top 5 albums and music reviews on JukeBoxd.`} />
-            <meta property="og:image" content={profileuser.imageUrl || "/default-preview.png"} />
-            <meta property="og:url" content={`https://jukeboxd.ca/profile/${profileuser.accountId}`} />
-            <meta name="twitter:card" content="summary_large_image" />
-        </Helmet>
         <div className="w-full max-w-6xl mx-auto p-4 text-gray-100">
         
         {/* --- HEADER SECTION --- */}
@@ -666,7 +656,6 @@ const ProfileComponent = ({
         )}
         <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
         </div>
-        </>
     );
 };
 
