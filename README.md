@@ -2,7 +2,7 @@
 
 A modern social music discovery platform where users can share reviews, rate albums and songs, create playlists, and connect with other music lovers. Powered by Spotify's vast music library and built with cutting-edge web technologies.
 
-**Live Demo:** [jukeboxd.ca]((https://www.jukeboxd.ca/)
+**Live Demo:** [jukeboxd.ca](https://www.jukeboxd.ca/)
 
 ---
 
