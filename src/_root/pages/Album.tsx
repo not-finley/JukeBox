@@ -15,6 +15,7 @@ import { usePlayerContext } from '@/context/PlayerContext';
 import PlayingVisualizer from '@/components/shared/PlayingVisualizer';
 import AuthModal from '@/components/shared/AuthModal';
 import PlaylistModal from "@/components/shared/PlaylistModal"
+import Suggestions from '@/components/Suggestions';
 
 
 const Album = () => {
@@ -478,9 +479,13 @@ const Album = () => {
                                 </div>
                                 </div>
                             </section>
+                        </div>
 
-
-
+                        <div className="px-4">
+                            <Suggestions 
+                                currentAlbumId={album.albumId} 
+                                artistId={album.artists[0]?.artist_id || ""} 
+                            />
                         </div>
                         <section className=" bg-black px-4 py-12">
                             <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Reviews</h2>
