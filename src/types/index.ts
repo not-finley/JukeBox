@@ -354,3 +354,10 @@ export type Playlist = {
     albumCount: number;
     totalTracks: number;
 };
+
+export interface SuggestedAlbum {
+  id: string;
+  title: string;
+  artist_name: string;
+  album_cover_url: string;
+}

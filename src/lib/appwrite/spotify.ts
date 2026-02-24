@@ -1,4 +1,4 @@
-import {SpotifyAlbumWithTracks, SpotifyTrack } from '@/types';
+import {SpotifyAlbumWithTracks, SpotifyTrack, SuggestedAlbum } from '@/types';
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
@@ -492,6 +492,33 @@ export async function getArtistDiscographyFromSpotify(
         }));
     } catch (error) {
         console.error("Error:", error);
+        return [];
+    }
+}
+
+export async function getArtistDiscographySuggestions(
+    artistId: string, 
+    currentAlbumId: string, 
+    limit: number = 4
+): Promise<SuggestedAlbum[]> {
+    try {
+        const token = await getSpotifyToken();
+        const resp = await fetch(`https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album&limit=20`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await resp.json();
+
+        const albums = (data.items || [])
+            .filter((a: any) => a.id !== currentAlbumId)
+            .map((a: any) => ({
+                id: a.id,
+                title: a.name,
+                artist_name: a.artists[0]?.name || "",
+                album_cover_url: a.images[0]?.url || ""
+            }));
+
+        return albums.sort(() => Math.random() - 0.5).slice(0, limit);
+    } catch (error) {
         return [];
     }
 }
