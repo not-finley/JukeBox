@@ -227,7 +227,7 @@ const ProfileComponent = ({
             </div>
 
             {/* Edit/Cancel Toggle Button */}
-            <button 
+            {isCurrentUser && (<button 
                 onClick={() => editing ? handleCancel() : setEditing(true)}
                 className={`absolute -bottom-2 -right-2 p-2 rounded-full transition shadow-lg z-10 ${
                     editing ? 'bg-red-500 hover:bg-red-400' : 'bg-emerald-500 hover:bg-emerald-400'
@@ -238,7 +238,7 @@ const ProfileComponent = ({
                 ) : (
                     <Edit2 size={14} className="text-black" />
                 )}
-            </button>
+            </button> )}
         </div>
 
             <div className="flex-1 text-center md:text-left">
