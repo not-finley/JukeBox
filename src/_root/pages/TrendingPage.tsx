@@ -49,6 +49,10 @@ const TrendingPage = () => {
                 <h2 className="text-xl font-semibold text-white flex items-center gap-2">
                   <span className="text-emerald-500 text-2xl">#</span> Top Songs
                 </h2>
+                {/* SEE ALL LINK */}
+                <Link to="/trending/songs" className="text-xs font-bold text-gray-500 hover:text-emerald-400 uppercase tracking-widest transition-colors flex items-center gap-1">
+                  See All <span>&rarr;</span>
+                </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {trending?.topSongs.map((song, index) => (
@@ -80,9 +84,15 @@ const TrendingPage = () => {
 
             {/* Top Albums Section */}
             <section>
-                <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                  <span className="text-emerald-500 text-2xl">#</span> Buzzing Albums
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                    <span className="text-emerald-500 text-2xl">#</span> Buzzing Albums
+                  </h2>
+                  {/* SEE ALL LINK */}
+                  <Link to="/trending/albums" className="text-xs font-bold text-gray-500 hover:text-emerald-400 uppercase tracking-widest transition-colors flex items-center gap-1">
+                    See All <span>&rarr;</span>
+                  </Link>
+                </div>
                 <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
                   {trending?.topAlbums.map((album) => (
                     <Link 
@@ -106,9 +116,16 @@ const TrendingPage = () => {
 
           {/* RIGHT COLUMN: Recent Reviews Feed */}
           <aside className="lg:col-span-1">
-            <div className="p-6 rounded-2xl border border-gray-800 bg-gray-900/40 h-fit sticky top-6">
-              <h2 className="text-lg font-semibold mb-6 text-white">Latest Buzz</h2>
-              <div className="flex flex-col gap-6" >
+              <div className="p-6 rounded-2xl border border-gray-800 bg-gray-900/40 h-full md:h-[900px] flex flex-col sticky top-6">
+                <div className="flex items-center justify-between mb-6 shrink-0">
+                  <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                    <span className="text-emerald-500 text-2xl">#</span> Latest Buzz
+                  </h2>
+                  <Link to="/trending/reviews" className="text-xs font-bold text-gray-500 hover:text-emerald-400 uppercase tracking-widest transition-colors flex items-center gap-1">
+                    See All <span>&rarr;</span>
+                  </Link>
+                </div>
+              <div className="flex flex-col gap-6 overflow-y-auto pr-2">
                 {trending?.recentReviews.map((review) => (
                   <Link to={`/review/${review.reviewId}`} key={review.reviewId} className="flex flex-col gap-3 p-4 rounded-xl bg-gray-800/30 border border-gray-700/50">
                     <div className="flex justify-between items-start">

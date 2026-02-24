@@ -22,6 +22,9 @@ import PlaylistPage from './_root/pages/PlaylistPage';
 import CreatePlaylist from './_root/pages/CreatePlaylist';
 import NewProfile from './_root/pages/NewProfile';
 import Settings from './_root/pages/Settings'
+import TrendingSongsPage from './_root/pages/TrendingSongsPage';
+import TrendingAlbumsPage from './_root/pages/TrendingAlbumsPage';
+import TrendingReviewsPage from './_root/pages/TrendingReviewsPage';
 
 const App = () => {
   return (
@@ -41,6 +44,9 @@ const App = () => {
 
             <Route element={<RootLayout />}>
               <Route path="/trending" element={<Songs />}/>
+              <Route path="/trending/songs" element={<TrendingSongsPage/>}/>
+              <Route path="/trending/albums" element={<TrendingAlbumsPage/>}/>
+              <Route path="/trending/reviews" element={<TrendingReviewsPage/>}/>
               <Route path="/profile/:id/*" element={<NewProfile />}/>
               <Route path="/song/:id" element={<SongDetailsSection />}/>
               <Route path="/review/:id" element={<ReviewPage />}/>
