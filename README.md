@@ -1,63 +1,105 @@
-# JukeBox
+# 🎵 JukeBox
 
-JukeBox is a social media platform designed for music lovers to share, rate, and discover music. Built using modern web development frameworks, JukeBox integrates the Spotify API to enhance music discovery and provides a seamless, user-friendly experience.
+A modern social music discovery platform where users can share reviews, rate albums and songs, create playlists, and connect with other music lovers. Powered by Spotify's vast music library and built with cutting-edge web technologies.
+
+**Live Demo:** [jukebox-app.vercel.app](https://jukebox-app.vercel.app)
+
+---
+
+## ✨ Features
+
+- **Music Reviews & Ratings** – Post detailed reviews and rate tracks and albums
+- **Spotify Integration** – Access millions of songs and albums directly through Spotify
+- **Playlist Management** – Create custom playlists 
+- **User Profiles & Discovery** – Follow other users and discover their music taste
+- **Drag-and-Drop Playlist Editing** – Seamless playlist organization with Hello Pangea DnD
+- **Secure Authentication** – Supabase auth with session management
+- **Cross-Platform** – Web app with mobile support via Capacitor (iOS & Android)
+- **Real-Time Interactions** – React Query for optimized data fetching and caching
+- **Responsive Design** – TailwindCSS ensures beautiful UI across all devices
 
 ---
 
-## Features
+## 🚀 Quick Start
 
-- **Dynamic Music Reviews:** Users can post reviews, rate albums, and interact with others' opinions.
-- **Spotify Integration:** Search and explore music directly from Spotify's extensive library.
-- **User Authentication:** Secure login and account management through Appwrite.
-- **Responsive Design:** Optimized for desktop and mobile for an enhanced user experience.
-
----
-## Usage
-
-1. **Sign Up/Login:** Create an account or log in securely using the Appwrite authentication system.
-2. **Discover Music:** Search for tracks and albums directly via the Spotify API.
-3. **Write Reviews:** Post your thoughts, rate music, and engage with other users.
+1. **Sign Up/Login** – Create an account with Supabase authentication
+2. **Discover Music** – Search Spotify's library or browse recommendations
+3. **Write Reviews** – Rate songs and albums, share your thoughts
+4. **Create Playlists** – Build custom playlists with drag-and-drop ease
+5. **Connect & Share** – Follow users and explore their music collections
 ---
 ## Screenshots
-![Home_Phone](https://github.com/user-attachments/assets/efffe66b-0db8-4f01-9efa-0443d9558e7c)
-![Home_Desktop](https://github.com/user-attachments/assets/b60e1fcb-27b1-42c3-8a90-8726d7fad46e)
-
-![search](https://github.com/user-attachments/assets/24a8b76e-086e-45fc-9e2f-8688abebba00)
-
-![library](https://github.com/user-attachments/assets/5e8de02b-c956-4064-9686-5ebb11520875)
-![song_details](https://github.com/user-attachments/assets/ad1d7151-66ca-424b-8cd9-db2817e76e97)
-
-
-
-![Log-in](https://github.com/user-attachments/assets/e7bf31eb-76f9-4692-b851-cdcbd92b47c1)
----
-
-## Tech Stack
-
-### Frontend:
-- **React**: A JavaScript library for building user interfaces.
-- **TailWind CSS**: Ensures responsive and visually appealing design.
-
-### Backend:
-- **Appwrite**: Manages database and user authentication.
-- **Spotify API**: Powers music search and discovery features.
 
 ---
 
-## Installation
+## 🛠️ Tech Stack
 
-### Prerequisites:
-1. Node.js and npm installed.
-2. An Appwrite instance set up.
-3. Spotify API credentials (client ID and secret).
+### Frontend
+- **React 18** – Modern UI library with hooks and concurrent rendering
+- **TypeScript** – Type-safe development experience
+- **Vite** – Lightning-fast build tool and dev server
+- **TailwindCSS** – Utility-first styling with PostCSS
+- **Shadcn/ui** – Component library built on Radix UI
+- **React Router v7** – Client-side routing
+📦 Installation
 
-### Steps:
+### Prerequisites
+- Node.js 18+ and npm/yarn
+- Spotify Developer Account ([create here](https://developer.spotify.com/dashboard))
+- Supabase Project ([create here](https://supabase.com))
 
-1. Clone the repository:
+### Setup Steps
+
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/not-finley/jukebox.git
    cd jukebox
    ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables:**
+   Create a `.env.local` file in the root directory:
+   ```env
+   VITE_SPOTIFY_CLIENT_ID=your_spotify_client_id
+   VITE_SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_APPWRITE_ENDPOINT=your_appwrite_endpoint
+   VITE_APPWRITE_PROJECT_ID=your_appwrite_project_id
+   ```
+
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:5173](http://localhost:5173) in your browser
+🗺️ Roadmap
+
+- [x] User authentication and profiles
+- [x] Music reviews and ratings
+- [x] Spotify integration
+- [x] Playlist creation and management
+- [x] Enhanced social features (follow, activity feed)
+- [ ] Personalized recommendations engine
+- [ ] Advanced user analytics (Wrapped-style insights)
+- [ ] Collaborative playlists
+- [ ] Music statistics and listening trends
+- [ ] Mobile app optimization (iOS/Android)
+   ```
+
+### Mobile Development
+
+To build iOS/Android apps:
+```bash
+npx cap add ios
+npx cap add android
+npx cap build ios
+npx cap build android
+```
 
 2. Install dependencies:
    ```bash
