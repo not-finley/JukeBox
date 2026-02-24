@@ -552,7 +552,7 @@ const ProfileComponent = ({
                 {activeTab === "Playlists" && (
                 loadingListens ? (
                     <LoaderMusic />
-                ) : (listened.length === 0? 
+                ) : (playlists.length === 0? 
                     (<div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="bg-dark-3 p-6 rounded-full mb-4">
                         <img src="/assets/icons/music.svg" className="w-10 h-10 opacity-20 grayscale" alt="No listens" />
