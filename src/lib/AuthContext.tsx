@@ -129,7 +129,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   if (isLoading) {
-    return <div className='flex-center'><LoaderMusic /></div>;
+    return  <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
+              <LoaderMusic /> 
+            </div>;
   }
 
   return (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useUserContext } from "@/lib/AuthContext";
 import LoaderMusic from "@/components/shared/loaderMusic";
@@ -8,53 +8,189 @@ import { Listened, RatingGeneral, Review } from "@/types/index";
 import { Plus, Music } from "lucide-react";
 
 const Library = () => {
-  const { user } = useUserContext();
+const { user } = useUserContext();
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(""); // 1. New State
+  const [searchQuery, setSearchQuery] = useState("");
   const [reviewed, setReviewed] = useState<Review[]>([]);
   const [rated, setRated] = useState<RatingGeneral[]>([]);
   const [listened, setListened] = useState<Listened[]>([]);
   const [playlists, setPlaylists] = useState<any[]>([]);
+  
+  // These states now drive our API calls
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "rating">("newest");
+  const [filterType, setFilterType] = useState<"all" | "song" | "album">("all");
+  
   const [activeSection, setActiveSection] = useState<"reviews" | "ratings" | "listens" | "playlists">("reviews");
+  const [offset, setOffset] = useState({ reviews: 0, ratings: 0, listens: 0 });
+  const [hasMore, setHasMore] = useState({ reviews: true, ratings: true, listens: true });
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+  const LIMIT = 40;
+
+  // Debounce search query to prevent excessive API calls
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // 500ms debounce
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!user?.accountId) return;
-    const load = async () => {
+
+    const loadInitialData = async () => {
       setLoading(true);
+      // Reset pagination on filter change
+      setOffset({ reviews: 0, ratings: 0, listens: 0 });
+
       const [r1, r2, r3, r4] = await Promise.all([
-        getReviewedWithLimit(user.accountId, 50),
-        getRatedWithLimit(user.accountId, 100),
-        getListenedWithLimit(user.accountId, 100),
+        getReviewedWithLimit(user.accountId, LIMIT, 0, sortBy, filterType, debouncedSearchQuery),
+        getRatedWithLimit(user.accountId, LIMIT, 0, sortBy, filterType, debouncedSearchQuery),
+        getListenedWithLimit(user.accountId, LIMIT, 0, sortBy as "newest" | "oldest", filterType, debouncedSearchQuery),
         getPlaylists(user.accountId)
       ]);
+      
       setReviewed(r1);
       setRated(r2);
       setListened(r3);
       setPlaylists(r4);
+
+      setHasMore({
+        reviews: r1.length === LIMIT,
+        ratings: r2.length === LIMIT,
+        listens: r3.length === LIMIT,
+      });
+
       setLoading(false);
     };
-    load();
-  }, [user]);
 
-  // 2. Filter Logic: Only show items that match name or text
-  const filteredReviews = reviewed.filter(r => 
-    r.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    r.text.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    loadInitialData();
+  }, [user, sortBy, filterType, debouncedSearchQuery]);
 
-  const filteredRated = rated.filter(r => 
-    r.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const loadMore = async (type: string) => {
+    if (isFetchingMore) return;
+    setIsFetchingMore(true);
+    
+    try {
+      let newData: any[] = [];
+      const currentOffset = offset[type as keyof typeof offset] + LIMIT;
 
-  const filteredListened = listened.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      if (type === "reviews") {
+        newData = await getReviewedWithLimit(user.accountId, LIMIT, currentOffset, sortBy, filterType, debouncedSearchQuery);
+        setReviewed(prev => [...prev, ...newData]);
+      } else if (type === "ratings") {
+        newData = await getRatedWithLimit(user.accountId, LIMIT, currentOffset, sortBy, filterType, debouncedSearchQuery);
+        setRated(prev => [...prev, ...newData]);
+      } else if (type === "listens") {
+        newData = await getListenedWithLimit(user.accountId, LIMIT, currentOffset, sortBy as "newest" | "oldest", filterType, debouncedSearchQuery);
+        setListened(prev => [...prev, ...newData]);
+      }
 
-  const filteredPlaylists = playlists.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      setOffset(prev => ({ ...prev, [type]: currentOffset }));
+      if (newData.length < LIMIT) {
+        setHasMore(prev => ({ ...prev, [type]: false }));
+      }
+    } catch (error) {
+      console.error("Error loading more:", error);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  };
 
-  if (loading) return <div className="common-container flex justify-center items-center min-h-[80vh]"><LoaderMusic /></div>;
+  const getFilteredData = (data: any[]) => {
+    return data.filter(item => 
+      (item.name || item.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  const filteredReviews = reviewed;
+  const filteredRated = rated;
+  const filteredListened = listened;
+  const filteredPlaylists = useMemo(() => getFilteredData(playlists), [playlists, searchQuery]);
+
+
+  const groupData = (items: any[]) => {
+    if (items.length === 0) return {};
+
+    const groups: { [key: string]: any[] } = {};
+
+    // Grouping by Rating (Stars)
+    if (sortBy === "rating" && activeSection === "ratings") {
+      [5, 4, 3, 2, 1].forEach(star => {
+        const match = items.filter(item => Math.floor(item.rating) === star);
+        if (match.length > 0) groups[`${star} Stars`] = match;
+      });
+      return groups;
+    }
+
+    // Grouping by Date (Newest/Oldest)
+    if (sortBy === "newest" || sortBy === "oldest") {
+      const now = new Date();
+      items.forEach(item => {
+        const date = new Date(item.createdAt|| item.rating_date || item.listen_date || Date.now());
+        const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
+
+        let label = "Older";
+        if (diffInDays === 0) label = "Today";
+        else if (diffInDays === 1) label = "Yesterday";
+        else if (diffInDays <= 7) label = "This Week";
+        else if (diffInDays <= 30) label = "This Month";
+
+        if (!groups[label]) groups[label] = [];
+        groups[label].push(item);
+      });
+      return groups;
+    }
+
+    return { "": items }; // Default (no headers)
+  };
+
+  const RenderSection = ({ items, renderItem, gridClass, sectionType, showLoadMore }: any) => {
+    const grouped = groupData(items);
+    const keys = Object.keys(grouped);
+
+    if (keys.length === 0) return null; // Logic for "No Matches" is handled in main return
+
+    return (
+      <div className="space-y-12">
+        {keys.map(groupLabel => (
+          <div key={groupLabel} className="space-y-6">
+            {groupLabel && (
+              <div className="flex items-center gap-4">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-emerald-500 whitespace-nowrap">
+                  {groupLabel}
+                </h3>
+                <div className="h-[1px] w-full bg-gray-800" />
+              </div>
+            )}
+            <div className={gridClass}>
+              {grouped[groupLabel].map((item: any, idx: number) => renderItem(item, idx))}
+            </div>
+          </div>
+        ))}
+        {showLoadMore && (
+          <button 
+            onClick={() => loadMore(sectionType)}
+            disabled={isFetchingMore}
+            className="w-full py-4 mt-8 flex items-center justify-center gap-3 border border-gray-800 rounded-xl text-gray-400 hover:text-emerald-500 hover:border-emerald-500/50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isFetchingMore ? (
+              <>
+                <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                Loading...
+              </>
+            ) : (
+              `Load More ${sectionType}`
+            )}
+          </button>
+        )}
+      </div>
+    );
+  };
+
 
   const SECTIONS = [
     { key: "reviews", label: "Reviews" },
@@ -74,7 +210,7 @@ const Library = () => {
             <p className="text-gray-400">Manage your reviews, ratings, and music history.</p>
           </div>
 
-          {/* 3. SEARCH INPUT UI */}
+          <div className="flex gap-3 w-full md:max-w-md">
           <div className="relative w-full md:max-w-xs">
             <input 
               type="text"
@@ -97,6 +233,16 @@ const Library = () => {
               </button>
             )}
           </div>
+          <select 
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-gray-900 border border-gray-800 text-gray-400 text-xs rounded-xl px-3 focus:outline-none"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              {activeSection === "ratings" && <option value="rating">Stars (High-Low)</option>}
+            </select>
+            </div>
         </div>
 
         {/* NAVIGATION TABS */}
@@ -119,120 +265,99 @@ const Library = () => {
           ))}
         </div>
 
-        {/* ---- CONTENT SECTIONS (using filtered variables) ---- */}
+        
         <div className="min-h-[50vh]">
+          {activeSection !== "playlists" && (
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              {["all", "song", "album"].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setFilterType(type as any)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                    filterType === type 
+                      ? "bg-emerald-500 border-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.2)]" 
+                      : "bg-transparent border-gray-800 text-gray-400 hover:border-gray-600"
+                  }`}
+                >
+                  {type === 'all' ? 'All' : type === 'song' ? 'Songs' : 'Albums'}
+                </button>
+              ))}
+            </div>
+          </div>)}
+
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-10">
+              <LoaderMusic /> 
+            </div>
+          ) : null}
+
+          
           
           {/* REVIEWS */}
           {activeSection === "reviews" && (
-            filteredReviews.length === 0 ? (
-              /* Case 1: Search returned nothing */
-              searchQuery.length > 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <p className="text-gray-500 italic">No matches found for "{searchQuery}"</p>
-                </div>
-              ) : (
-                /* Case 2: The list is actually empty (No reviews created yet) */
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="bg-dark-3 p-6 rounded-full mb-4">
-                    <img src="/assets/icons/pen-nib.svg" className="w-10 h-10 opacity-20 invert" alt="No reviews" />
-                  </div>
-                  <p className="text-gray-400 font-medium">You haven't written any reviews yet.</p>
-                  <Link to="/search" className="text-emerald-500 text-sm mt-2 hover:underline">
-                    Explore music to start reviewing
-                  </Link>
-                </div>
-              )
+            filteredReviews.length > 0 ? (
+              <RenderSection 
+                sectionType={"reviews"}
+                showLoadMore={hasMore.reviews}
+                items={filteredReviews}
+                gridClass="grid grid-cols-1 xl:grid-cols-2 gap-6"
+                renderItem={(r: any) => <ReviewItemLibrary key={r.reviewId} review={r} />}
+              />
             ) : (
-              /* Case 3: We have reviews to show */
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {filteredReviews.map(r => <ReviewItemLibrary key={r.reviewId} review={r} />)}
-              </div>
+              /* Search/Empty Logic */
+              <p className="text-gray-500 text-center py-20">No reviews found.</p>
             )
           )}
 
           {/* RATINGS */}
-
           {activeSection === "ratings" && (
-            filteredRated.length === 0 ? (
-              searchQuery.length > 0 ? (
-                <p className="text-gray-500 italic text-center py-10">No matches found for "{searchQuery}"</p>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="bg-dark-3 p-6 rounded-full mb-4">
-                    <span className="text-4xl opacity-20">★</span>
-                  </div>
-                  <p className="text-gray-400 font-medium">No ratings yet.</p>
-                  <Link to="/trending" className="text-emerald-500 text-sm mt-2 hover:underline">
-                    Rate your first track
-                  </Link>
-                </div>
-              )
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredRated.map((rating, i) => (
+            filteredRated.length > 0 ? (
+              <RenderSection 
+                sectionType={"ratings"}
+                items={filteredRated}
+                gridClass="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                showLoadMore={hasMore.ratings}
+                renderItem={(rating: any, i: number) => (
                   <Link 
                     key={i} 
                     to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
                     className="flex items-center gap-4 p-3 rounded-xl bg-gray-900/40 border border-gray-800 hover:border-emerald-500/50 transition-all group"
                   >
-                    <img
-                      src={rating.album_cover_url || "/assets/icons/music-placeholder.png"}
-                      className="w-14 h-14 rounded-lg object-cover shadow-md"
-                    />
+                    <img src={rating.album_cover_url || "/assets/icons/music-placeholder.png"} className="w-14 h-14 rounded-lg object-cover" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium truncate group-hover:text-emerald-400 transition-colors">
-                        {rating.title}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <div className="flex">
-                          {[...Array(5)].map((_, star) => (
-                            <span key={star} className={`text-[10px] ${star < rating.rating ? "text-emerald-400" : "text-gray-700"}`}>★</span>
-                          ))}
-                        </div>
-                        <span className="text-[10px] text-gray-500 uppercase tracking-wider">{rating.type}</span>
+                      <p className="text-white font-medium truncate group-hover:text-emerald-400">{rating.title}</p>
+                      <div className="flex">
+                        {[...Array(5)].map((_, star) => (
+                          <span key={star} className={`text-[10px] ${star < rating.rating ? "text-emerald-400" : "text-gray-700"}`}>★</span>
+                        ))}
                       </div>
                     </div>
                   </Link>
-                ))}
-              </div>
+                )}
+              />
+            ) : (
+              <p className="text-gray-500 text-center py-20">No ratings found.</p>
             )
           )}
 
+          {/* HISTORY (LISTENS) */}
           {activeSection === "listens" && (
-            filteredListened.length === 0 ? (
-              searchQuery.length > 0 ? (
-                <p className="text-gray-500 italic text-center py-10">No matches found for "{searchQuery}"</p>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <div className="bg-dark-3 p-6 rounded-full mb-4">
-                    <img src="/assets/icons/headphones.svg" className="w-10 h-10 opacity-20 invert" alt="No listens" />
-                  </div>
-                  <p className="text-gray-400 font-medium">Your listening history is empty.</p>
-                  <p className="text-gray-600 text-sm max-w-[250px] mt-1">Start playing music to track your journey.</p>
-                </div>
-              )
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                {filteredListened.map(item => (
-                  <Link
-                    key={item.id}
-                    to={item.type === "song" ? `/song/${item.id}` : `/album/${item.id}`}
-                    className="flex flex-col gap-3 group"
-                  >
-                    <div className="relative overflow-hidden rounded-2xl">
-                      <img
-                        src={item.album_cover_url || "/assets/icons/music-placeholder.png"}
-                        className="w-full aspect-square object-cover shadow-lg group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
-                    </div>
-                    <div>
-                      <p className="text-white text-sm font-semibold truncate">{item.name}</p>
-                      <p className="text-gray-500 text-xs capitalize">{item.type}</p>
-                    </div>
+            filteredListened.length > 0 ? (
+              <RenderSection 
+                sectionType={"listens"}
+                showLoadMore={hasMore.listens}
+                items={filteredListened}
+                gridClass="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"
+                renderItem={(item: any) => (
+                  <Link key={item.id} to={item.type === "song" ? `/song/${item.id}` : `/album/${item.id}`} className="flex flex-col gap-3 group">
+                    <img src={item.album_cover_url || "/assets/icons/music-placeholder.png"} className="w-full aspect-square object-cover rounded-2xl group-hover:scale-105 transition-transform shadow-lg" />
+                    <p className="text-white text-sm font-semibold truncate">{item.name}</p>
                   </Link>
-                ))}
-              </div>
+                )}
+              />
+            ) : (
+              <p className="text-gray-500 text-center py-20">No history found.</p>
             )
           )}
 
@@ -304,6 +429,7 @@ const Library = () => {
             </div>
           )
         )}
+        
         </div>
       </div>
     </div>
