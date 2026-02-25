@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUserContext, } from "@/lib/AuthContext";
-import { ChevronLeft, User, Lock, LogOut, Moon, X } from "lucide-react";
+import { ChevronLeft, User, Lock, LogOut, Moon, Sun, X } from "lucide-react";
 import { useSignOutAccount } from '@/lib/react-query/queriesAndMutations';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { updateUsername } from "@/lib/appwrite/api";
+import { useThemeContext } from '@/context/ThemeContext';
 
 const SettingsPage = () => {
     const { user, setUser } = useUserContext();
+    const { theme } = useThemeContext();
     const { mutate: signOut } = useSignOutAccount();
     const [modalType, setModalType] = useState<"username" | "password" | null>(null);
     const [newUsername, setNewUsername] = useState(user.username);
@@ -16,6 +18,8 @@ const SettingsPage = () => {
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
     const redirectUrl = "https://jukeboxd.ca/reset-password";
+    const isDark = theme === 'dark';
+    const cls = (dark: string, light: string) => isDark ? dark : light;
 
     const handleUsernameUpdate = async () => {
         if (newUsername.trim().length < 3) {
@@ -76,11 +80,11 @@ const SettingsPage = () => {
     }
 
     return (
-        <div className="common-container bg-black min-h-screen w-full text-gray-100 p-6">
+        <div className={`common-container min-h-screen w-full p-6 ${isDark ? 'text-gray-100' : 'text-slate-900'}`}>
             <div className="max-w-2xl mx-auto w-full">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-10">
-                    <Link to={`/profile/${user.accountId}`} className="p-2 hover:bg-gray-900 rounded-full transition">
+                    <Link to={`/profile/${user.accountId}`} className={`p-2 rounded-full transition ${cls('hover:bg-gray-900','hover:bg-gray-100')}`}>
                         <ChevronLeft size={24} />
                     </Link>
                     <h1 className="text-3xl font-black tracking-tight">Settings</h1>
@@ -90,7 +94,7 @@ const SettingsPage = () => {
                     {/* Section: Account */}
                     <section>
                         <h2 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 px-2">Account</h2>
-                        <div className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden">
+                        <div className={`${cls('bg-gray-900/40','bg-gray-100/40')} border ${cls('border-gray-800','border-gray-200')} rounded-2xl overflow-hidden`}>
                             <div onClick={() => setModalType("username")}>
                                 <SettingsItem 
                                     icon={<User size={18}/>} 
@@ -112,8 +116,8 @@ const SettingsPage = () => {
                     {/* Section: Privacy (Static for now) */}
                     <section>
                         <h2 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 px-2">Experience</h2>
-                        <div className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden">
-                            <SettingsItem icon={<Moon size={18}/>} label="Appearance" description="Dark mode (Lighter Coming Soon)" />
+                        <div className={`${isDark? 'bg-gray-900/40': 'bg-off-white/40'} border border-gray-800 rounded-2xl overflow-hidden`}>
+                            <AppearanceToggle />
                             {/* <SettingsItem icon={<Shield size={18}/>} label="Privacy" description="Control who sees your listens" isLast /> */}
                         </div>
                     </section>
@@ -196,3 +200,22 @@ const SettingsItem = ({ icon, label, description, isLast = false }: any) => (
 );
 
 export default SettingsPage;
+
+const AppearanceToggle = () => {
+    const { theme, toggleTheme } = useThemeContext();
+
+    return (
+        <div className={`flex items-center justify-between p-4 hover:bg-gray-800/50 cursor-pointer transition-colors border-b border-gray-800`}>
+            <div className="flex items-center gap-4">
+                <div className="te  xt-emerald-500">{theme === 'dark' ? <Moon size={18}/> : <Sun size={18}/> }</div>
+                <div>
+                    <p className="font-bold text-sm">Appearance</p>
+                    <p className="text-xs text-gray-500">{theme === 'dark' ? 'Dark' : 'Light'}</p>
+                </div>
+            </div>
+            <button onClick={() => toggleTheme()} className="w-14 h-8 rounded-full bg-gray-700/40 flex items-center p-1 appearance-toggle">
+                <div className={`w-6 h-6 rounded-full appearance-toggle-dot transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-0'}`} />
+            </button>
+        </div>
+    );
+};

@@ -7,17 +7,19 @@ import { PreviewPlayer } from '@/components/shared/PreviewPlayer'
 import { useUserContext } from '@/lib/AuthContext';
 import { usePlayerContext } from '@/context/PlayerContext';
 import LoaderMusic from '@/components/shared/loaderMusic';
+import { useThemeContext } from '@/context/ThemeContext';
 
 
 const RootLayout = () => {
   const { isLoading } = useUserContext();
   const { currentTrack } = usePlayerContext();
+  const { theme } = useThemeContext();
   
   if (isLoading) return <div className='common-container'><LoaderMusic/></div>;
 
   return (
     // min-h-dvh ensures the background covers the full screen without being static
-    <div className="relative w-full min-h-dvh md:flex bg-dark-1">
+    <div className={`relative w-full min-h-dvh md:flex ${theme === 'dark' ? 'bg-dark-1 text-white' : 'bg-white text-slate-900'}`}>
       <Topbar />
       
       <LeftSidebar />

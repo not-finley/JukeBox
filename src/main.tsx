@@ -7,6 +7,7 @@ import AuthProvider from '@/lib/AuthContext';
 import { QueryProvider } from './lib/react-query/QueryProvider';
 import { Analytics } from "@vercel/analytics/react"
 import { PlayerProvider } from './context/PlayerContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -14,9 +15,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <QueryProvider>
             <AuthProvider>
                 <Analytics/>
-                    <PlayerProvider>
-                        <App/>
-                    </PlayerProvider>
+                    <ThemeProvider>
+                        <PlayerProvider>
+                            <App/>
+                        </PlayerProvider>
+                    </ThemeProvider>
             </AuthProvider>
         </QueryProvider>
     </BrowserRouter>

@@ -1,0 +1,107 @@
+:root {
+  /* Dark Mode (Default) */
+  --bg-main: #09090a;
+  --bg-side: #101012; /* Your bg-dark-2 equivalent */
+  --text-main: #ffffff;
+  --text-muted: #64748b;
+  --border-color: #1f1f22;
+}
+
+[data-theme="light"] {
+  /* Light Mode Overrides */
+  --bg-main: #f8fafc;
+  --bg-side: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --border-color: #e6edf3;
+}
+
+
+/* Override commonly used dark utility classes to reasonable light equivalents. */
+[data-theme="light"] .bg-dark-1 { background-color: var(--bg-1) !important; }
+[data-theme="light"] .bg-dark-2 { background-color: var(--bg-2) !important; }
+[data-theme="light"] .bg-dark-3 { background-color: var(--bg-3) !important; }
+[data-theme="light"] .bg-dark-4 { background-color: var(--bg-4) !important; }
+
+[data-theme="light"] .text-white { color: var(--text-primary) !important; }
+[data-theme="light"] .text-gray-100 { color: var(--text-primary) !important; }
+[data-theme="light"] .text-light-4 { color: var(--muted) !important; }
+
+[data-theme="light"] .border-dark-4 { border-color: var(--border) !important; }
+[data-theme="light"] .border-gray-800 { border-color: var(--border) !important; }
+
+[data-theme="light"] .bg-black { background-color: var(--bg-1) !important; }
+[data-theme="light"] .bg-gray-900\/40 { background-color: rgba(15,23,42,0.04) !important; }
+
+[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+[data-theme="light"] .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); }
+
+/* Topbar / Sidebar text and link colors */
+[data-theme="light"] .leftsidebar { color: var(--text-primary); }
+[data-theme="light"] .leftsidebar a { color: var(--text-primary); }
+
+/* ShadCN overrides */
+[data-theme="light"] .shad-form_label { color: var(--text-primary) !important; }
+[data-theme="light"] .shad-input { background-color: var(--bg-1) !important; color: var(--text-primary) !important; }
+[data-theme="light"] .shad-textarea { background-color: var(--bg-1) !important; color: var(--text-primary) !important; }
+
+/* Appearance toggle specifics */
+[data-theme="light"] .appearance-toggle { background-color: rgba(2,6,23,0.04); }
+[data-theme="light"] .appearance-toggle-dot { background-color: var(--text-primary); }
+
+/* Common gray / black backgrounds used throughout the app */
+[data-theme="light"] .bg-gray-900 { background-color: var(--bg-2) !important; }
+[data-theme="light"] .bg-gray-800 { background-color: var(--bg-2) !important; }
+[data-theme="light"] .bg-gray-700 { background-color: var(--bg-3) !important; }
+
+[data-theme="light"] .bg-gray-900\/40 { background-color: rgba(2,6,23,0.04) !important; }
+[data-theme="light"] .bg-gray-900\/50 { background-color: rgba(2,6,23,0.06) !important; }
+[data-theme="light"] .bg-gray-900\/60 { background-color: rgba(2,6,23,0.08) !important; }
+[data-theme="light"] .bg-gray-900\/80 { background-color: rgba(2,6,23,0.12) !important; }
+
+[data-theme="light"] .bg-gray-800\/30 { background-color: rgba(2,6,23,0.03) !important; }
+[data-theme="light"] .bg-gray-800\/40 { background-color: rgba(2,6,23,0.04) !important; }
+
+[data-theme="light"] .bg-black\/50 { background-color: rgba(2,6,23,0.06) !important; }
+[data-theme="light"] .bg-black\/40 { background-color: rgba(2,6,23,0.05) !important; }
+[data-theme="light"] .bg-black\/20 { background-color: rgba(2,6,23,0.02) !important; }
+[data-theme="light"] .bg-black\/10 { background-color: rgba(2,6,23,0.01) !important; }
+
+/* Border & backdrop variants */
+[data-theme="light"] .border-white\/10 { border-color: rgba(15,23,42,0.06) !important; }
+[data-theme="light"] .border-white\/5 { border-color: rgba(15,23,42,0.03) !important; }
+[data-theme="light"] .border-gray-700 { border-color: var(--border) !important; }
+[data-theme="light"] .border-gray-800 { border-color: var(--border) !important; }
+
+/* Text opacity / variants */
+[data-theme="light"] .text-white\/40 { color: rgba(15,23,42,0.4) !important; }
+[data-theme="light"] .text-white\/30 { color: rgba(15,23,42,0.3) !important; }
+[data-theme="light"] .text-white\/70 { color: rgba(15,23,42,0.7) !important; }
+[data-theme="light"] .text-gray-100 { color: var(--text-primary) !important; }
+
+/* Utilities used for small dark-ish backgrounds */
+[data-theme="light"] .bg-dark-3 { background-color: var(--bg-3) !important; }
+[data-theme="light"] .bg-dark-2 { background-color: var(--bg-2) !important; }
+[data-theme="light"] .bg-dark-1 { background-color: var(--bg-1) !important; }
+
+
+/* Slight adjustments for other text-muted classes used in settings */
+[data-theme="light"] .text-gray-500 { color: var(--text-subtle) !important; }
+[data-theme="light"] .text-gray-600 { color: var(--muted) !important; }
+[data-theme="light"] .text-gray-400 { color: #94a3b8 !important; }
+
+/* Global body adjustments when light theme is active */
+[data-theme="light"] body { background-color: var(--bg-1); color: var(--text-primary); }
+
+/* Broad attribute-match fallbacks to catch Tailwind variant classes (e.g. bg-gray-900/40, text-white/70) */
+[data-theme="light"] [class*="bg-gray-900"] { background-color: var(--bg-2) !important; }
+[data-theme="light"] [class*="bg-gray-800"] { background-color: var(--bg-2) !important; }
+[data-theme="light"] [class*="bg-gray-700"] { background-color: var(--bg-3) !important; }
+[data-theme="light"] [class*="bg-black"] { background-color: rgba(2,6,23,0.04) !important; }
+
+[data-theme="light"] [class*="text-white"] { color: var(--text-primary) !important; }
+[data-theme="light"] [class*="text-gray-100"] { color: var(--text-primary) !important; }
+
+[data-theme="light"] [class*="border-gray-700"] { border-color: var(--border) !important; }
+[data-theme="light"] [class*="border-gray-800"] { border-color: var(--border) !important; }
+[data-theme="light"] [class*="border-white"] { border-color: rgba(15,23,42,0.06) !important; }

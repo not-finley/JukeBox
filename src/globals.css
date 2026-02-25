@@ -1,5 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
-
+@import "./theme.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -28,23 +28,13 @@
   --swiper-pagination-bullet-vertical-gap: 5px;
 }
 
-
 @layer base {
-  * {
-    @apply box-border list-none p-0 m-0 scroll-smooth;
-  }
-
-  html, body {
-    /* This is the magic fix for mobile 'bounce' */
-    overscroll-behavior-y: none; 
-    /* Ensures content stays within the dynamic viewport */
-    height: 100dvh;
-  }
-
   body {
-    @apply bg-dark-1 text-white font-inter custom-scrollbar;
+    background-color: var(--bg-main);
+    color: var(--text-main);
   }
 }
+
 
 @layer utilities {
   /* TYPOGRAPHY */
@@ -342,22 +332,25 @@
 
   /* Left sidebar */
   .leftsidebar {
-  @apply hidden md:flex px-6 py-10 flex-col justify-between min-w-[270px] bg-dark-2;
-  /* Add these critical lines */
-  position: sticky;
-  top: 0;
-  height: 100dvh; 
-  overflow-y: auto; /* In case the nav links are too long for a small laptop screen */
-}
+    @apply hidden md:flex px-6 py-10 flex-col justify-between min-w-[270px];
+      background-color: var(--bg-side); /* Use the variable! */
+      color: var(--text-main);
+    position: sticky;
+    top: 0;
+    height: 100dvh; 
+    overflow-y: auto; /* In case the nav links are too long for a small laptop screen */
+  }
 
   .leftsidebar-link {
     @apply rounded-lg base-medium hover:bg-emerald-500 transition;
   }
 
-  /* Post Card */
+
   .post-card {
-    @apply bg-dark-2 rounded-3xl border border-dark-4 p-5 lg:p-7 w-full max-w-screen-sm;
-  }
+      background-color: var(--bg-side);
+      border: 1px solid var(--border-color);
+      @apply rounded-3xl p-5 lg:p-7 w-full max-w-screen-sm;
+    }
 
   .post-card_img {
     @apply h-64 xs:h-[400px] lg:h-[450px] w-full rounded-[24px] object-cover mb-5;
@@ -387,7 +380,9 @@
   }
 
   .shad-input {
-    @apply h-12 bg-dark-4 border-none placeholder:text-light-4 focus-visible:ring-1 focus-visible:ring-offset-1 ring-offset-light-3 !important;
+    background-color: var(--bg-main) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
   }
 
   .shad-textarea {
