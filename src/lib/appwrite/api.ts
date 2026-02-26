@@ -725,6 +725,35 @@ export async function getFollowersList(userId: string, type: 'followers' | 'foll
     return usersWithImages;
 }
 
+export async function getNotifications(userId: string) {
+    const { data, error } = await supabase
+        .from('notifications')
+        .select(`
+            id,
+            type,
+            created_at,
+            is_read,
+            entity_id,
+            actor_id,
+            actor:users!notifications_actor_id_fkey ( username )
+        `)
+        .eq('recipient_id', userId)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(n => ({
+        id: n.id,
+        type: n.type,
+        createdAt: n.created_at,
+        isRead: n.is_read,
+        entityId: n.entity_id,
+        actorId: n.actor_id,
+        actorUsername: (n.actor as any)?.username || "Someone",
+        actorAvatar: getProfileUrl(n.actor_id)
+    }));
+}
+
 export async function getSongDetailsById(songId: string): Promise<SongDetails | null> {
     try {
         // Fetch the song

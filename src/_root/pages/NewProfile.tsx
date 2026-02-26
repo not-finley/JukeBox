@@ -6,6 +6,10 @@ import { Listened, RatingGeneral, Review, IUser, Playlist } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import AuthModal from "@/components/shared/AuthModal";
 import { Edit2, Star, Disc, Music, Settings } from "lucide-react";
+import NotificationDropdown from "@/components/NotificationDropdown";
+
+
+
 
 type profileProps = {
     userid: string;
@@ -268,7 +272,7 @@ const ProfileComponent = ({
                                 Cancel
                             </button>
                         )}
-
+                        {!editing && <NotificationDropdown userId={profileuser.accountId} />}
                         {!editing && (
                             <Link 
                                 to="/settings"
