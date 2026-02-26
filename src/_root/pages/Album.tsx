@@ -16,6 +16,7 @@ import PlayingVisualizer from '@/components/shared/PlayingVisualizer';
 import AuthModal from '@/components/shared/AuthModal';
 import PlaylistModal from "@/components/shared/PlaylistModal"
 import Suggestions from '@/components/Suggestions';
+import StarIcon from '@/components/shared/StarIcon';
 
 
 const Album = () => {
@@ -55,17 +56,22 @@ const Album = () => {
     }
 
 
-    const handleRating = async (value: number) => {
+    const handleRating = async (e: React.MouseEvent<HTMLButtonElement>, value: number) => {
         if (!isAuthenticated) {
             setShowAuthModal(true);
             return;
         }
-        if (value == rating) {
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left; 
+        const finalValue = x < rect.width / 2 ? value - 0.5 : value;
+
+        if (finalValue == rating) {
             setRating(0);
             await deleteRaitingAlbum(id ? id : '', user.accountId)
         } else {
-            setRating(value);
-            await addUpdateRatingAlbum(id ? id : '', user.accountId, value);
+            setRating(finalValue);
+            await addUpdateRatingAlbum(id ? id : '', user.accountId, finalValue);
             setListened(true);
         }
 
@@ -78,25 +84,31 @@ const Album = () => {
     }
 
 
-    const handleSongRating = async (value: number, trackIndex: number) => {
+    const handleSongRating = async (e: React.MouseEvent<HTMLButtonElement>, value: number, trackIndex: number) => {
         if (!isAuthenticated) {
             setShowAuthModal(true);
             return;
         }
-        if (value === songRatings[trackIndex]) {
-            value = 0;
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left; 
+        const finalValue = x < rect.width / 2 ? value - 0.5 : value;
+
+        let newValue = finalValue;
+        
+        if (finalValue === songRatings[trackIndex]) {
+            newValue = 0;
         }
+
         const newRatings = [...songRatings];
-        newRatings[trackIndex] = value;
+        newRatings[trackIndex] = newValue;
         setSongRatings(newRatings);
 
-        if (value == 0) {
+        if (newValue === 0) {
             await deleteRaitingSong(album?.tracks[trackIndex].songId || "", user.accountId);
-
         } else {
-            await addUpdateRatingSong(album?.tracks[trackIndex].songId || "", user.accountId, value);
+            await addUpdateRatingSong(album?.tracks[trackIndex].songId || "", user.accountId, newValue);
         }
-
     };
 
     const handleAddToPlaylist = () => {
@@ -345,27 +357,21 @@ const Album = () => {
                                                 }`}>
                                                     <div className="flex gap-0.5">
                                                         {[...Array(5)].map((_, starIndex) => {
-                                                            const value = starIndex + 1;
-                                                            const isActive = songRatings[index] >= value;
+                                                            const starValue = starIndex + 1;
+                                                            const fillLevel = songRatings[index] >= starValue 
+                                                                ? 1 
+                                                                : songRatings[index] >= starValue - 0.5 
+                                                                    ? 0.5 
+                                                                    : 0;
+
                                                             return (
                                                                 <button
-                                                                    key={value}
+                                                                    key={starValue}
                                                                     type="button"
-                                                                    onClick={() => handleSongRating(value, index)}
+                                                                    onClick={(e) => handleSongRating(e, starValue, index)}
                                                                     className="transition-transform active:scale-125 hover:scale-110"
                                                                 >
-                                                                    <img
-                                                                        src={isActive 
-                                                                            ? "/assets/icons/cute-star_full.svg" 
-                                                                            : "/assets/icons/cute-star.svg"
-                                                                        }
-                                                                        className={`w-5 h-5 md:w-6 md:h-6 transition-all ${
-                                                                            isActive 
-                                                                            ? 'drop-shadow-[0_0_5px_rgba(16,185,129,0.4)]' 
-                                                                            // If not active, we invert the black to white and dim it
-                                                                            : 'invert opacity-20 group-hover:opacity-40 hover:!opacity-100'
-                                                                        }`}
-                                                                        />
+                                                                    <StarIcon fillLevel={fillLevel} sizeClass="w-7 h-7 md:w-8 md:h-8" />
                                                                 </button>
                                                             );
                                                         })}
@@ -396,9 +402,22 @@ const Album = () => {
                                                 <p className="text-2xl text-gray-200 text-center">{globalAverage.toFixed(1)}</p>
                                                 <p className="text-sm text-gray-400 text-center">Stars</p>
                                             </div>
-                                            <BarChart width={250} height={150} data={globalRatings}>
-                                                <XAxis dataKey="rating" />
-                                                <Bar dataKey="count" fill="#82ca9d" />
+                                            <BarChart 
+                                                width={250} 
+                                                height={150} 
+                                                data={globalRatings}
+                                                barCategoryGap={1} 
+                                            >
+                                                <XAxis 
+                                                    dataKey="rating" 
+                                                    ticks={[1, 2, 3, 4, 5]} 
+                                                    tick={{fontSize: 12, fill: '#9ca3af'}}
+                                                />
+                                                <Bar 
+                                                    dataKey="count" 
+                                                    fill="#10b981"
+                                                    radius={[2, 2, 0, 0]} 
+                                                />
                                             </BarChart>
                                         </div>
                                     )}
@@ -449,30 +468,25 @@ const Album = () => {
                                     <div className="relative flex items-center justify-between px-4 h-12 bg-black/40 border border-white/5 rounded-xl backdrop-blur-md">
                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">Your Rating</span>
                                     <div className="flex gap-1.5">
-                                        {[...Array(5)].map((_, index) => {
-                                        const value = index + 1;
-                                        const isActive = rating >= value;
-                                        return (
-                                            <button
-                                            key={value}
-                                            type="button"
-                                            className="transition-transform active:scale-125 hover:scale-110"
-                                            onClick={() => handleRating(value)}
-                                            >
-                                            <img
-                                                src={isActive 
-                                                    ? "/assets/icons/cute-star_full.svg" 
-                                                    : "/assets/icons/cute-star.svg"
-                                                }
-                                                className={`w-5 h-5 md:w-6 md:h-6 transition-all ${
-                                                    isActive 
-                                                    ? 'drop-shadow-[0_0_5px_rgba(16,185,129,0.4)]' 
-                                                    // If not active, we invert the black to white and dim it
-                                                    : 'invert opacity-20 group-hover:opacity-40 hover:!opacity-100'
-                                                }`}
-                                            />
-                                            </button>
-                                        );
+
+                                        {[...Array(5)].map((_, starIndex) => {
+                                            const value = starIndex + 1;
+                                            const fillLevel = rating >= value 
+                                                ? 1 
+                                                : rating >= value - 0.5 
+                                                    ? 0.5 
+                                                    : 0;
+
+                                            return (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    onClick={(e) => handleRating(e, value)}
+                                                    className="transition-transform active:scale-125 hover:scale-110"
+                                                >
+                                                    <StarIcon fillLevel={fillLevel} sizeClass="w-7 h-7 md:w-8 md:h-8" />
+                                                </button>
+                                            );
                                         })}
                                     </div>
                                     </div>

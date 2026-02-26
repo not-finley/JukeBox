@@ -6,6 +6,7 @@ import ReviewItemLibrary from "@/components/ReviewItemLibrary";
 import { getReviewedWithLimit, getRatedWithLimit, getListenedWithLimit, getPlaylists } from "@/lib/appwrite/api";
 import { Listened, RatingGeneral, Review } from "@/types/index";
 import { Plus, Music } from "lucide-react";
+import StarIcon from '@/components/shared/StarIcon';
 
 const Library = () => {
 const { user } = useUserContext();
@@ -324,13 +325,39 @@ const { user } = useUserContext();
                     to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`}
                     className="flex items-center gap-4 p-3 rounded-xl bg-gray-900/40 border border-gray-800 hover:border-emerald-500/50 transition-all group"
                   >
-                    <img src={rating.album_cover_url || "/assets/icons/music-placeholder.png"} className="w-14 h-14 rounded-lg object-cover" />
+                    <img 
+                      src={rating.album_cover_url || "/assets/icons/music-placeholder.png"} 
+                      className="w-14 h-14 rounded-lg object-cover" 
+                      alt={rating.title}
+                    />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium truncate group-hover:text-emerald-400">{rating.title}</p>
-                      <div className="flex">
-                        {[...Array(5)].map((_, star) => (
-                          <span key={star} className={`text-[10px] ${star < rating.rating ? "text-emerald-400" : "text-gray-700"}`}>★</span>
-                        ))}
+                      <p className="text-white font-medium truncate group-hover:text-emerald-400">
+                        {rating.title}
+                      </p>
+                      
+                      {/* UPDATED STAR DISPLAY */}
+                      <div className="flex gap-0.5 mt-1">
+                        {[...Array(5)].map((_, starIndex) => {
+                          const starValue = starIndex + 1;
+                          // Determine fill: 1 for full, 0.5 for half, 0 for empty
+                          const fillLevel = rating.rating >= starValue 
+                            ? 1 
+                            : rating.rating >= starValue - 0.5 
+                              ? 0.5 
+                              : 0;
+
+                          return (
+                            <StarIcon 
+                              key={starIndex} 
+                              fillLevel={fillLevel} 
+                              sizeClass="w-3.5 h-3.5" // Small size for the library list
+                            />
+                          );
+                        })}
+                        {/* Optional: Add numeric text for clarity */}
+                        <span className="text-[10px] text-gray-500 ml-1 font-bold">
+                          {Number(rating.rating).toFixed(1)}
+                        </span>
                       </div>
                     </div>
                   </Link>

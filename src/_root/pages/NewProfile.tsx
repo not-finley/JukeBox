@@ -7,9 +7,7 @@ import LoaderMusic from "@/components/shared/loaderMusic";
 import AuthModal from "@/components/shared/AuthModal";
 import { Edit2, Star, Disc, Music, Settings } from "lucide-react";
 import NotificationDropdown from "@/components/NotificationDropdown";
-
-
-
+import StarIcon from '@/components/shared/StarIcon';
 
 type profileProps = {
     userid: string;
@@ -454,16 +452,25 @@ const ProfileComponent = ({
                                 <div className="flex justify-between items-start">
                                 <Link to={rating.type === "song" ? `/song/${rating.id}` : `/album/${rating.id}`} className="font-bold text-lg hover:text-emerald-400 transition">{rating.title} • {rating.type === "song"? "Song" : "Album"}</Link>
                                 </div>
-                                <div className="flex items-center">
-                                    {[...Array(5)].map((_, i) => (
-                                    <span
-                                        key={i}
-                                        className={`text-md font-bold ${i < rating.rating ? "text-emerald-400" : "text-gray-500"
-                                        }`}
-                                    >
-                                        ★
+                                <div className="flex items-center gap-1 mt-1">
+                                    {[...Array(5)].map((_, i) => {
+                                        const starValue = i + 1;
+                                        const fillLevel = rating.rating >= starValue 
+                                            ? 1 
+                                            : rating.rating >= starValue - 0.5 
+                                                ? 0.5 
+                                                : 0;
+
+                                        return (
+                                            <div key={i} className="w-4 h-4 md:w-5 md:h-5">
+                                                <StarIcon fillLevel={fillLevel} sizeClass="w-4 h-4 md:w-5 md:h-5" />
+                                            </div>
+                                        );
+                                    })}
+                                    {/* Optional: Add the numeric value next to stars like Letterboxd */}
+                                    <span className="text-xs text-gray-500 ml-1 font-medium">
+                                        {Number(rating.rating).toFixed(1)}
                                     </span>
-                                    ))}
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                     {new Date(rating.rating_date).toLocaleDateString(undefined, {

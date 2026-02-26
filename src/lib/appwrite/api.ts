@@ -1500,23 +1500,6 @@ export async function getRatingSong(songId: string, userId: string): Promise<num
     }
 }
 
-
-// export async function getAllRatingsOfaSong(songId: string): Promise<Rating[]> {
-//     try {
-//         const { data: ratings } = await supabase
-//             .from("song_rating")
-//             .select("*")
-//             .eq("song_id", songId)
-
-//         if (!ratings) return [];
-
-
-//         return ratings;
-//     } catch (error) {
-//         console.error('Failed to fetch ratings:', error);
-//         return [];
-//     }
-// }
 export async function getAllRatingsOfaSong(songId: string): Promise<{
     counts: { rating: number; count: number }[];
     average: number;
@@ -1529,28 +1512,38 @@ export async function getAllRatingsOfaSong(songId: string): Promise<{
             .eq("song_id", songId);
 
         if (error) throw error;
-        if (!ratings) return { counts: [], average: 0, total: 0 };
+        if (!ratings || ratings.length === 0) return { counts: [], average: 0, total: 0 };
 
-        // Initialize count map
-        const counts = [1, 2, 3, 4, 5].map((r) => ({ rating: r, count: 0 }));
+        // 1. Initialize all 10 Letterboxd-style buckets (0.5 to 5.0)
+        const possibleRatings = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+        const countsMap = new Map(possibleRatings.map(r => [r, 0]));
 
-        // Count each rating
+        let sum = 0;
+        const total = ratings.length;
+
         ratings.forEach((r) => {
-            if (r.rating >= 1 && r.rating <= 5) {
-                counts[r.rating - 1].count++;
+            // Postgres numeric types often return as strings, so cast to Number
+            const val = Number(r.rating); 
+            sum += val;
+
+            // Increment the specific bucket
+            if (countsMap.has(val)) {
+                countsMap.set(val, (countsMap.get(val) || 0) + 1);
             }
         });
 
-        // Total count
-        const total = ratings.length;
+        // 2. Format for Recharts
+        const counts = possibleRatings.map((r) => ({
+            rating: r,
+            count: countsMap.get(r) || 0,
+        }));
 
-        // Average rating
-        const sum = counts.reduce((acc, c) => acc + c.rating * c.count, 0);
-        const average = total > 0 ? sum / total : 0;
+        // 3. Calculate accurate decimal average
+        const average = sum / total;
 
         return { counts, average, total };
     } catch (error) {
-        console.error("Failed to fetch ratings:", error);
+        console.error("Failed to fetch song ratings:", error);
         return { counts: [], average: 0, total: 0 };
     }
 }
@@ -1632,24 +1625,32 @@ export async function getAllRatingsOfAlbum(albumId: string): Promise<{
             .eq("album_id", albumId);
 
         if (error) throw error;
-        if (!ratings) return { counts: [], average: 0, total: 0 };
+        if (!ratings || ratings.length === 0) return { counts: [], average: 0, total: 0 };
 
-        // Initialize count map
-        const counts = [1, 2, 3, 4, 5].map((r) => ({ rating: r, count: 0 }));
+        // 1. Initialize all 10 Letterboxd-style buckets (0.5 to 5.0)
+        const possibleRatings = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
+        const countsMap = new Map(possibleRatings.map(r => [r, 0]));
 
-        // Count each rating
+        let sum = 0;
+        const total = ratings.length;
+
         ratings.forEach((r) => {
-            if (r.rating >= 1 && r.rating <= 5) {
-                counts[r.rating - 1].count++;
+            const val = Number(r.rating); 
+            sum += val;
+
+            // Increment the specific half-star bucket
+            if (countsMap.has(val)) {
+                countsMap.set(val, (countsMap.get(val) || 0) + 1);
             }
         });
 
-        // Total count
-        const total = ratings.length;
+        // 2. Format for Recharts
+        const counts = possibleRatings.map((r) => ({
+            rating: r,
+            count: countsMap.get(r) || 0,
+        }));
 
-        // Average rating
-        const sum = counts.reduce((acc, c) => acc + c.rating * c.count, 0);
-        const average = total > 0 ? sum / total : 0;
+        const average = sum / total;
 
         return { counts, average, total };
     } catch (error) {
