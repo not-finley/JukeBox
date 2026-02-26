@@ -13,7 +13,8 @@ import { usePlayerContext } from "@/context/PlayerContext";
 import { Play, Plus } from "lucide-react";
 import PlayingVisualizer from "@/components/shared/PlayingVisualizer";
 import AuthModal from "@/components/shared/AuthModal";
-import PlaylistModal from "@/components/shared/PlaylistModal"
+import PlaylistModal from "@/components/shared/PlaylistModal";
+import StarIcon from '@/components/shared/StarIcon';
 
 
 
@@ -42,17 +43,23 @@ const SongDetailsSection = () => {
     setGlobalTotal(total);
   };
 
-  const handleRating = async (value: number) => {
+  const handleRating = async (e: React.MouseEvent<HTMLButtonElement>, value: number) => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
-    if (value == rating) {
+
+    // Calculate half-star vs full-star
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const finalValue = x < rect.width / 2 ? value - 0.5 : value;
+
+    if (finalValue === rating) {
       setRating(0);
-      await deleteRaitingSong(id ? id : '', user.accountId)
+      await deleteRaitingSong(id ? id : '', user.accountId);
     } else {
-      setRating(value);
-      await addUpdateRatingSong(id ? id : '', user.accountId, value);
+      setRating(finalValue);
+      await addUpdateRatingSong(id ? id : '', user.accountId, finalValue);
       setListened(true);
     }
 
@@ -251,27 +258,22 @@ const SongDetailsSection = () => {
                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-tight">Rating</span>
                   <div className="flex gap-1.5">
                     {[...Array(5)].map((_, index) => {
-                      const value = index + 1;
-                      const isActive = rating >= value;
+                      const starValue = index + 1;
+                      // Determine fill: 1 for full, 0.5 for half, 0 for empty
+                      const fillLevel = rating >= starValue 
+                          ? 1 
+                          : rating >= starValue - 0.5 
+                              ? 0.5 
+                              : 0;
+
                       return (
                         <button
-                          key={value}
+                          key={starValue}
                           type="button"
                           className="transition-transform active:scale-125 hover:scale-110"
-                          onClick={() => handleRating(value)}
+                          onClick={(e) => handleRating(e, starValue)}
                         >
-                          <img
-                            src={isActive 
-                                ? "/assets/icons/cute-star_full.svg" 
-                                : "/assets/icons/cute-star.svg"
-                            }
-                            className={`w-5 h-5 md:w-6 md:h-6 transition-all ${
-                                isActive 
-                                ? 'drop-shadow-[0_0_5px_rgba(16,185,129,0.4)]' 
-                                // If not active, we invert the black to white and dim it
-                                : 'invert opacity-20 group-hover:opacity-40 hover:!opacity-100'
-                            }`}
-                        />
+                          <StarIcon fillLevel={fillLevel} sizeClass="w-7 h-7 md:w-8 md:h-8" />
                         </button>
                       );
                     })}
@@ -354,10 +356,23 @@ const SongDetailsSection = () => {
                     <p className="text-2xl text-gray-200 text-center">{globalAverage.toFixed(1)}</p>
                     <p className="text-sm text-gray-400 text-center">Stars</p>
                   </div>
-                  <BarChart width={250} height={150} data={globalRatings}>
-                    <XAxis dataKey="rating" />
-                    <Bar dataKey="count" fill="#82ca9d" />
-                  </BarChart>
+                    <BarChart 
+                        width={250} 
+                        height={150} 
+                        data={globalRatings}
+                        barCategoryGap={1} 
+                    >
+                        <XAxis 
+                            dataKey="rating" 
+                            ticks={[1, 2, 3, 4, 5]} 
+                            tick={{fontSize: 12, fill: '#9ca3af'}}
+                        />
+                        <Bar 
+                            dataKey="count" 
+                            fill="#10b981"
+                            radius={[2, 2, 0, 0]} 
+                        />
+                    </BarChart>
                 </div>
               )}
 
