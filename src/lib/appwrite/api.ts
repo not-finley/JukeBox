@@ -1101,6 +1101,65 @@ export async function addSongToDatabase(song: SpotifySong) {
     }
 }
 
+export async function batchSyncSongsToDatabase(songs: any[]) {
+    try {
+        // 1. Prepare unique Albums
+        const uniqueAlbums = Array.from(new Map(songs.map(s => [s.album.id, {
+        album_id: s.album.id,
+        title: s.album.name,
+        spotify_url: s.album.external_urls.spotify,
+        album_cover_url: s.album.images?.[0]?.url || s.album_cover_url,
+        release_date: normalizeReleaseDate(s.album.release_date),
+        total_tracks: s.album.total_tracks,
+        }])).values());
+
+        // 2. Prepare Songs
+        const songsToUpsert = songs.map(s => ({
+        song_id: s.id,
+        title: s.name || s.title,
+        album_id: s.album.id,
+        spotify_url: s.external_urls?.spotify,
+        pop: s.popularity,
+        isrc: s.external_ids?.isrc,
+        preview_url: s.preview_url,
+        track_number: s.track_number
+        }));
+
+        // 3. Prepare Artists (Flattened unique list)
+        const artistMap = new Map();
+        const artistLinks: any[] = [];
+        
+        songs.forEach(s => {
+        s.artists.forEach((a: any) => {
+            artistMap.set(a.id, {
+            artist_id: a.id,
+            name: a.name,
+            spotify_url: a.external_urls?.spotify
+            });
+            artistLinks.push({ song_id: s.id, artist_id: a.id });
+        });
+        });
+
+        // EXECUTE BATCHES
+        const { error: albErr } = await supabase.from("albums").upsert(uniqueAlbums, { onConflict: 'album_id' });
+        if (albErr) throw albErr;
+
+        const { error: songErr } = await supabase.from("songs").upsert(songsToUpsert, { onConflict: 'song_id' });
+        if (songErr) throw songErr;
+
+        const { error: artErr } = await supabase.from("artists").upsert(Array.from(artistMap.values()), { onConflict: 'artist_id' });
+        if (artErr) throw artErr;
+
+        const { error: linkErr } = await supabase.from("artistsongs").upsert(artistLinks, { onConflict: 'song_id, artist_id' });
+        if (linkErr) throw linkErr;
+
+        return { success: true };
+    } catch (error) {
+        console.error("Batch sync failed:", error);
+        throw error;
+    }
+}
+
 export async function addUpdateArtist(artist: SpotifyArtistDetailed) {
     try {
         // 1. Ensure the Artist row exists (but keep fully_loaded: false)
@@ -2713,6 +2772,26 @@ export async function addItemToPlaylist(
     }
 
     return { success: true };
+}
+
+export async function batchAddItemsToPlaylist(items: { 
+    id: string,
+    playlist_id: string, 
+    song_id: string, 
+    type: string, 
+    order: number 
+}[]) {
+    try {
+        const { data, error } = await supabase
+            .from("playlist_items")
+            .insert(items);
+
+        if (error) throw error;
+        return { success: true, data };
+    } catch (error) {
+        console.error("Error batch adding to playlist:", error);
+        throw error;
+    }
 }
 
 // Update the remove function to handle the generic item ID

@@ -10,19 +10,27 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { Play, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit2, Trash2, Check, Loader2 } from "lucide-react";
+import { Edit2, Trash2, Check, Loader2, Settings2, Download, Import  } from "lucide-react";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import PlaylistEntry from "@/components/PlaylistEntry";
 import { usePlayerContext } from "@/context/PlayerContext";
 import { useUserContext } from "@/lib/AuthContext";
-import { getPlaylistById, processPlaylistCover, updatePlaylistMetadata, addItemToPlaylist, updatePlaylistCover, addSongToDatabase, updateItemsOrder, deletePlaylist, removeItemFromPlaylist, addAlbumComplex} from "@/lib/appwrite/api";
+import { getPlaylistById, processPlaylistCover, updatePlaylistMetadata, addItemToPlaylist, updatePlaylistCover, addSongToDatabase, updateItemsOrder, deletePlaylist, removeItemFromPlaylist, addAlbumComplex, batchSyncSongsToDatabase, batchAddItemsToPlaylist} from "@/lib/appwrite/api";
 import { Search } from "lucide-react";
-import { searchSpotify, getSpotifyToken, SpotifyTrackById } from "@/lib/appwrite/spotify";
+import { searchSpotify, getSpotifyToken, SpotifyTrackById, getSpotifyPlaylistTracks } from "@/lib/appwrite/spotify";
 import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Track } from "@/types";
@@ -50,6 +58,9 @@ const PlaylistPage = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [isAddingSongId, setIsAddingSongId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const [importUrl, setImportUrl] = useState("");
+    const [isImporting, setIsImporting] = useState(false);
 
     const fetchPlaylist = async (silent = false) => {
         if (!silent) setLoading(true); 
@@ -281,7 +292,101 @@ const PlaylistPage = () => {
             toast({ title: "Failed to remove song", variant: "destructive" });
         }
     };
+
+    const handleImportPlaylist = async () => {
+        const playlistId = importUrl.split("playlist/")[1]?.split("?")[0];
+        if (!playlistId || !id) return;
+
+        setIsImporting(true);
+        try {
+            const token = await getSpotifyToken();
+            
+            const rawTracks = await getSpotifyPlaylistTracks(playlistId, token);
+
+            const chunkSize = 100;
+            for (let i = 0; i < rawTracks.length; i += chunkSize) {
+                const chunk = rawTracks.slice(i, i + chunkSize);
+                
+                await batchSyncSongsToDatabase(chunk);
+
+                const playlistLinks = chunk.map((track: any, index: number) => ({
+                    id: track.id,
+                    playlist_id: id,
+                    song_id: track.id,
+                    type: 'song',
+                    order: playlist.items.length + i + index
+                }));
+
+                await batchAddItemsToPlaylist(playlistLinks);
+            }
+
+            await fetchPlaylist(true);
+            setImportUrl("");
+            toast({ title: `Successfully imported ${rawTracks.length} tracks!` });
+        } catch (err: any) {
+            toast({ title: "Import failed", variant: "destructive" });
+        } finally {
+            setIsImporting(false);
+        }
+    };
+
+
+    const exportToCSV = () => {
+        if (!playlist?.items?.length) return;
+
+        // 1. Define Headers
+        const headers = ["Track Name", "Artist", "Album", "ISRC", "Spotify ID"];
+        const rows: string[] = [];
+
+        // Helper to extract artist names from strings or arrays of objects
+        const formatArtist = (artistData: any) => {
+            if (Array.isArray(artistData)) {
+                return artistData.map((a: any) => a.name || a).join(", ");
+            }
+            return artistData || "Unknown Artist";
+        };
+
+        // 2. Process Items (Flatten Albums)
+        playlist.items.forEach((item: any) => {
+            if (item.type === 'song') {
+                // Standard Song Row
+                rows.push([
+                    `"${item.title?.replace(/"/g, '""')}"`,
+                    `"${formatArtist(item.artist)?.replace(/"/g, '""')}"`,
+                    `"${item.album?.title?.replace(/"/g, '""') || ''}"`,
+                    item.isrc || "",
+                    item.songId || ""
+                ].join(","));
+            } else if (item.type === 'album') {
+                // Expand Album into multiple Track Rows
+                item.tracks?.forEach((track: any) => {
+                    rows.push([
+                        `"${track.title?.replace(/"/g, '""')}"`,
+                        `"${formatArtist(track.artist || item.artist)?.replace(/"/g, '""')}"`,
+                        `"${item.title?.replace(/"/g, '""')}"`, // Using parent album title
+                        track.isrc || "",
+                        track.songId || ""
+                    ].join(","));
+                });
+            }
+        });
+
+        // 3. Create Blob and Download
+        const csvContent = [headers.join(","), ...rows].join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
         
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${playlist.name.replace(/\s+/g, '_')}_backup.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({ title: "CSV Exported!", description: `Included ${rows.length} total tracks.` });
+    };
+            
     if (loading) return <div className="common-container"><LoaderMusic /></div>;
 
 
@@ -389,47 +494,109 @@ const PlaylistPage = () => {
                 </div>
 
                 {/* --- ACTION BAR --- */}
-                <div className="flex items-center gap-6 p-6 md:px-10">
-                    <Button
-                        onClick={() => handlePlayPlaylist()}
-                        disabled={!playlist.items.length}
-                        className="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_8px_15px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95"
-                    >
-                        <Play fill="black" size={24} />
-                    </Button>
-                    
-                    {isCreator && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" className="text-gray-400 hover:text-red-500 rounded-full">
-                                    <Trash2 size={24} />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-dark-2 border-white/10 text-white">
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle className="text-xl font-bold">
-                                        Delete "{playlist.name}"?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription className="text-gray-400">
-                                        This action cannot be undone. This will permanently delete your
-                                        playlist and remove the cover image from our servers.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel className="bg-transparent border-white/10 hover:bg-white/5">
-                                        Cancel
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction 
-                                        onClick={handleDeletePlaylist}
-                                        disabled={isDeleting}
-                                        className="bg-red-600 hover:bg-red-700 text-white"
-                                    >
-                                        {isDeleting ? "Deleting..." : "Delete Playlist"}
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+
+                <div className="flex items-center justify-between p-6 md:px-10">
+                    <div className="flex items-center gap-6">
+                        <Button
+                            onClick={() => handlePlayPlaylist()}
+                            disabled={!playlist.items.length}
+                            className="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_8px_15px_rgba(16,185,129,0.3)] transition-all hover:scale-105 active:scale-95"
+                        >
+                            <Play fill="black" size={24} />
+                        </Button>
+
+                        {isCreator && (
+                            <div className="flex items-center gap-2">
+                                {/* IMPORT/EXPORT MODAL */}
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="ghost" className="text-gray-400 hover:text-white rounded-full p-2">
+                                            <Settings2 size={24} />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="bg-dark-2 border-white/10 text-white sm:max-w-[500px]">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-2xl font-bold">Playlist Tools</DialogTitle>
+                                            <DialogDescription className="text-gray-400">
+                                                Import tracks from Spotify or export your playlist data.
+                                            </DialogDescription>
+                                        </DialogHeader>
+
+                                        <div className="space-y-8 py-4">
+                                            {/* Import Section */}
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-2 text-emerald-500">
+                                                    <Import size={18} />
+                                                    <h4 className="font-bold uppercase text-xs tracking-widest">Spotify Import</h4>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <Input 
+                                                        placeholder="Paste Spotify Playlist URL..."
+                                                        value={importUrl}
+                                                        onChange={(e) => setImportUrl(e.target.value)}
+                                                        className="bg-dark-1 border-white/10 focus-visible:ring-emerald-500"
+                                                    />
+                                                    <Button 
+                                                        onClick={handleImportPlaylist} 
+                                                        disabled={isImporting || !importUrl}
+                                                        className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
+                                                    >
+                                                        {isImporting ? <Loader2 className="animate-spin" /> : "Import"}
+                                                    </Button>
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 italic">
+                                                    * This will batch-add all public tracks to your current playlist.
+                                                </p>
+                                            </div>
+
+                                            <div className="h-[1px] bg-white/5 w-full" />
+
+                                            {/* Export Section */}
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-2 text-gray-400">
+                                                    <Download size={18} />
+                                                    <h4 className="font-bold uppercase text-xs tracking-widest">Data Portability</h4>
+                                                </div>
+                                                <Button 
+                                                    onClick={exportToCSV}
+                                                    variant="outline"
+                                                    className="w-full border-white/10 hover:bg-white/5 flex items-center justify-center gap-2"
+                                                >
+                                                    Export to CSV
+                                                </Button>
+                                                <p className="text-[10px] text-gray-500">
+                                                    Download a spreadsheet of your tracks to re-import into other platforms.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+
+                                {/* DELETE ALERT DIALOG */}
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" className="text-gray-400 hover:text-red-500 rounded-full p-2">
+                                            <Trash2 size={24} />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent className="bg-dark-2 border-white/10 text-white">
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle className="text-xl font-bold">Delete "{playlist.name}"?</AlertDialogTitle>
+                                            <AlertDialogDescription className="text-gray-400">
+                                                This action cannot be undone. This will permanently delete your playlist and metadata.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel className="bg-transparent border-white/10 hover:bg-white/5">Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={handleDeletePlaylist} disabled={isDeleting} className="bg-red-600 hover:bg-red-700 text-white">
+                                                {isDeleting ? "Deleting..." : "Delete Playlist"}
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
                         )}
+                    </div>
                 </div>
 
                 {/* --- SONG LIST --- */}
@@ -478,6 +645,29 @@ const PlaylistPage = () => {
                         </>
                     )}
                 </div>
+
+
+                { isCreator  && playlist.items.length == 0 && (
+                    <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10 max-w-7xl mx-auto w-full">
+                        <h3 className="text-lg font-bold text-white mb-2">Import from Spotify</h3>
+                        <p className="text-sm text-gray-400 mb-4">Paste a public Spotify playlist link to add all its songs here.</p>
+                        <div className="flex gap-3">
+                            <Input 
+                                placeholder="https://open.spotify.com/playlist/..."
+                                className="bg-dark-1 border-white/10"
+                                value={importUrl}
+                                onChange={(e) => setImportUrl(e.target.value)}
+                            />
+                            <Button 
+                                onClick={handleImportPlaylist}
+                                disabled={isImporting || !importUrl}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
+                            >
+                                {isImporting ? <Loader2 className="animate-spin" /> : "Import"}
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
 
                 {/* --- SEARCH SECTION --- */}
