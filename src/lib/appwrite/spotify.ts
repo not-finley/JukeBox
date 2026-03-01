@@ -522,3 +522,35 @@ export async function getArtistDiscographySuggestions(
         return [];
     }
 }
+
+export const getSpotifyPlaylistTracks = async (playlistId: string, token: string) => {
+    let allTracks: any[] = [];
+    // Start with the initial URL
+    let nextUrl: string | null = `https://open.spotify.com/playlist/{playlistId}/tracks`;
+
+    while (nextUrl) {
+        const response : any = await fetch(nextUrl, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch Spotify playlist page");
+        
+        const data = await response.json();
+        
+        const tracks = data.items
+            .filter((item: any) => item.track) 
+            .map((item: any) => ({
+                ...item.track,
+                title: item.track.name,
+                songId: item.track.id, 
+                album_cover_url: item.track.album?.images[0]?.url,
+                spotify_url: item.track.external_urls?.spotify,
+            }));
+
+        allTracks = [...allTracks, ...tracks];
+
+        nextUrl = data.next;
+    }
+
+    return allTracks;
+};
