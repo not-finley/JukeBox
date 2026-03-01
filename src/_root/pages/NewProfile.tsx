@@ -327,7 +327,7 @@ const ProfileComponent = ({
         <section className="mb-12">
             <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-2">
                 <h2 className="text-sm uppercase tracking-[0.2em] font-bold text-gray-500">
-                    On Heavy Rotation{editing && <span className="text-emerald-500 normal-case ml-2">- Select up to 5 albums from your Listens below</span>}
+                    Current Fav's{editing && <span className="text-emerald-500 normal-case ml-2">- Select up to 5 albums from your Listens below</span>}
                 </h2>
             </div>
             
