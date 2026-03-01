@@ -97,7 +97,7 @@ const SettingsPage = () => {
             if (dbError) throw dbError;
 
             // 2. Call the Edge Function instead of Discord directly
-            const { data, error: funcError } = await supabase.functions.invoke('discord-support', {
+            const { error: funcError } = await supabase.functions.invoke('discord-support', {
                 body: { 
                     user: { username: user.username, email: user.email },
                     supportType,
