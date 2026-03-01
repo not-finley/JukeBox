@@ -526,7 +526,7 @@ export async function getArtistDiscographySuggestions(
 export const getSpotifyPlaylistTracks = async (playlistId: string, token: string) => {
     let allTracks: any[] = [];
     // Start with the initial URL
-    let nextUrl: string | null = `https://open.spotify.com/playlist/{playlistId}/tracks`;
+    let nextUrl: string | null = `https://open.spotify.com/playlist/${playlistId}/tracks`;
 
     while (nextUrl) {
         const response : any = await fetch(nextUrl, {
