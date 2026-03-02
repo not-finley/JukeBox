@@ -8,35 +8,45 @@ const Bottombar = () => {
   const { pathname } = useLocation();
   const { isAuthenticated } = useUserContext();
   const [showAuthModal, setShowAuthModal] = useState(false);
+
   return (
     <>
-    <section className="bottom-bar">
-      {bottombarLinks.map((link) => {
-            const isActive = pathname === link.route;
-            if (link.authRequired && !isAuthenticated) return (
-              <div key={link.label} className={`bottombar-link group hover:cursor-pointer`} onClick={() => setShowAuthModal(true)}>
-                <div className="flex flex-col items-center p-2">
-                  <img
-                    width={25}
-                    src={link.imgURL}
-                    className={`${isActive && 'invert-white'}`}
-                  />
-                </div>
+    <section className="bottom-bar pb-safe"> 
+      <div className="flex-between w-full px-2 py-0.5"> 
+        {bottombarLinks.map((link) => {
+          const isActive = pathname === link.route;
+          
+          const iconContent = (
+            <img
+              width={22}
+              src={link.imgURL}
+              className={`${isActive && 'invert-white'} transition-all`}
+            />
+          );
+
+          if (link.authRequired && !isAuthenticated) {
+            return (
+              <div 
+                key={link.label} 
+                className="flex-center flex-1 p-2 cursor-pointer" 
+                onClick={() => setShowAuthModal(true)}
+              >
+                {iconContent}
               </div>
             );
-            return (
-              <Link
-                to={link.route}
-                key={link.label} className={`${isActive && 'bg-emerald-500 rounded-[10px]'} flex-center flex-col gap-1 p-2 transition`}
-              >
-                <img
-                  width={25}
-                  src={link.imgURL}
-                  className={`${isActive && 'invert-white'}`}
-                />
-              </Link>
-            )
-          })}
+          }
+
+          return (
+            <Link
+              to={link.route}
+              key={link.label} 
+              className={`${isActive && 'bg-emerald-500 rounded-xl'} flex-center flex-1 flex-col py-2 px-3 transition-all duration-300`}
+            >
+              {iconContent}
+            </Link>
+          )
+        })}
+      </div>
     </section>
     <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
