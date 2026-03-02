@@ -7,6 +7,8 @@ import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import defaultAvatar from "/assets/icons/profile-placeholder.svg"; 
 import { Button } from '../ui/button';
 import  AuthModal from './AuthModal';
+import { Bug } from 'lucide-react';
+import SupportModal from './SupportModal';
 
 const LeftSidebar = () => {
   const { pathname } = useLocation();
@@ -14,6 +16,7 @@ const LeftSidebar = () => {
   const { mutate: signOut, isSuccess } = useSignOutAccount();
   const { user, isAuthenticated } = useUserContext();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
 
   useEffect(() => {
     if(isSuccess) {
@@ -95,20 +98,40 @@ const LeftSidebar = () => {
         </ul>
       </div>
         {isAuthenticated && (
-      <Button 
-        variant="ghost" 
-        className="w-14 shad-button_ghost" 
-        onClick={() => signOut()}>
-          <img 
-              src="/assets/icons/leave.svg"
-              alt="logout"
-          />
-          <p className="small-medium lg:base-medium">Logout</p>
-      </Button>
+          <div className="mt-auto flex items-center justify-between w-full pt-6 border-t border-gray-800">
+            {/* Logout Button */}
+            <Button 
+              variant="ghost" 
+              className="shad-button_ghost gap-4 px-2" 
+              onClick={() => signOut()}
+            >
+              <img 
+                src="/assets/icons/leave.svg"
+                alt="logout"
+                width={24}
+                height={24}
+              />
+              <p className="small-medium lg:base-medium">Logout</p>
+            </Button>
+
+            {/* Small Bug Button beside it */}
+            <Button 
+              variant="ghost" 
+              className="hover:bg-emerald-500/10 p-2 rounded-lg transition group" 
+              onClick={() => setIsSupportOpen(true)}
+              title="Report a bug"
+            >
+              <Bug size={20} className="text-emerald-500/50 group-hover:text-emerald-500" />
+            </Button>
+          </div>
         )}
         
     </nav>
     <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+            <SupportModal 
+        isOpen={isSupportOpen} 
+        onClose={() => setIsSupportOpen(false)} 
+      />
     </>
   )
 }
