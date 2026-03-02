@@ -25,8 +25,24 @@ import Settings from './_root/pages/Settings'
 import TrendingSongsPage from './_root/pages/TrendingSongsPage';
 import TrendingAlbumsPage from './_root/pages/TrendingAlbumsPage';
 import TrendingReviewsPage from './_root/pages/TrendingReviewsPage';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { useEffect } from 'react';
 
 const App = () => {
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+      
+        await StatusBar.setStyle({ style: Style.Dark });
+        
+        await StatusBar.setOverlaysWebView({ overlay: true });
+      } catch (error) {
+        console.log("Capacitor StatusBar not available in browser");
+      }
+    };
+
+    initializeApp();
+  }, []);
   return (
   <main className="flex flex-col min-h-screen">
         <Helmet>

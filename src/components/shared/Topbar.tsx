@@ -21,7 +21,7 @@ const Topbar = () => {
 
     return (
         <>
-        <section className="topbar sticky top-0 z-30 w-full bg-black/80 backdrop-blur-md border-b border-white/5">
+        <section className="topbar sticky top-0 z-30 w-full bg-black/80 backdrop-blur-md border-b border-white/5 pt-safe">
             <div className="flex justify-between items-center py-3 px-5">
                 {/* Logo */}
                 <Link to="/" className="flex gap-3 items-center hover:opacity-80 transition">

@@ -16,6 +16,7 @@
 }
 
 
+
 :root {
   --swiper-pagination-color: #0f9736;
   --swiper-pagination-bullet-size: 10px;
@@ -47,6 +48,20 @@
 }
 
 @layer utilities {
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* 2. Only apply the fallback if we are in the "App" build / Standalone */
+  @media (display-mode: standalone) {
+    .pb-safe {
+      padding-bottom: max(env(safe-area-inset-bottom), 20px);
+    }
+    .pt-safe {
+      padding-top: max(env(safe-area-inset-top), 32px);
+    }
+  }
   /* TYPOGRAPHY */
   .h1-bold {
     @apply text-[36px] font-bold leading-[140%] tracking-tighter;
