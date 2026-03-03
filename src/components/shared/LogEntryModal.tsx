@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Edit2, X, Search, Loader2 } from "lucide-react";
 import { getSpotifyToken, searchSpotify, SpotifyTrackById } from "@/lib/appwrite/spotify";
 import { addUpdateRatingAlbum, addUpdateRatingSong, addAlbumComplex, addSongToDatabase, addReviewAlbum, addReviewSong } from "@/lib/appwrite/api";
@@ -15,43 +15,50 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const { user } = useUserContext();
     
-    // Search States (Matched to PlaylistPage)
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [isSearching, setIsSearching] = useState(false);
-    
-    // Selection & Rating States
     const [selectedItem, setSelectedItem] = useState<any>(null);
     const [rating, setRating] = useState(0);
     const [review, setReview] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // 1. Handle Keyboard and Body Scroll Lock
     useEffect(() => {
-        if (!window.visualViewport) return;
+        if (!isOpen) return;
 
-        const handleResize = () => {
-            const viewport = window.visualViewport!;
-            // Calculate how much the viewport has shrunk from the bottom
+        // Prevent background scrolling
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+
+        const handleVisualResize = () => {
+            const viewport = window.visualViewport;
+            if (!viewport) return;
+            
+            // Calculate how much space the keyboard is taking
             const offset = window.innerHeight - viewport.height;
             setKeyboardHeight(offset > 0 ? offset : 0);
-            
-            // Scroll the active element into view if it's an input/textarea
-            if (offset > 0 && document.activeElement instanceof HTMLElement) {
+
+            // If keyboard is open, ensure active element is visible
+            if (offset > 0 && document.activeElement) {
                 setTimeout(() => {
-                    document.activeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.activeElement?.scrollIntoView({ behavior: "smooth", block: "center" });
                 }, 100);
             }
         };
 
-        window.visualViewport.addEventListener("resize", handleResize);
-        window.visualViewport.addEventListener("scroll", handleResize);
+        window.visualViewport?.addEventListener("resize", handleVisualResize);
+        
         return () => {
-            window.visualViewport?.removeEventListener("resize", handleResize);
-            window.visualViewport?.removeEventListener("scroll", handleResize);
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+            window.visualViewport?.removeEventListener("resize", handleVisualResize);
         };
-    }, []);
+    }, [isOpen]);
 
-    // Debounced Search Logic (Synced with PlaylistPage)
+    // 2. Debounced Search Logic
     useEffect(() => {
         if (searchQuery.trim().length === 0) {
             setSearchResults([]);
@@ -63,7 +70,6 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             try {
                 const token = await getSpotifyToken();
                 const { sorted } = await searchSpotify(searchQuery, token);
-                // Filter out artists as per PlaylistPage logic
                 setSearchResults(sorted.filter(item => item.type !== 'artist'));
             } catch (error) {
                 console.error(error);
@@ -78,7 +84,6 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
 
     const handleSelect = (item: any) => {
         setSelectedItem(item);
-        console.log("Selected item:", item);
         setSearchQuery("");
         setSearchResults([]);
     };
@@ -90,150 +95,109 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
         setRating(finalValue === rating ? 0 : finalValue);
     };
 
-    const handleAddItem = async (searchResultItem: any) => {
+    const handleSubmit = async () => {
+        if (!selectedItem || rating === 0) return;
+        setIsSubmitting(true);
         try {
             const token = await getSpotifyToken();
-            const type = searchResultItem.type === 'track' ? 'song' : 'album';
-
-            if (type === 'album') {
-                const response = await fetch(`https://api.spotify.com/v1/albums/${searchResultItem.id}`, {
+            if (selectedItem.type === 'album') {
+                const response = await fetch(`https://api.spotify.com/v1/albums/${selectedItem.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const fullAlbumData = await response.json();
                 await addAlbumComplex(fullAlbumData);
-            } else {
-                const fullTrackData = await SpotifyTrackById(searchResultItem.id, token);
-
-                console.log("Full track data:", fullTrackData);
-                await addSongToDatabase(fullTrackData || searchResultItem);
-            }
-        } catch (err) {
-            console.error("Error adding item:", err);
-            toast({ title: "Failed to add item", variant: "destructive" });
-        } 
-    };
-
-    const handleSubmit = async () => {
-        if (!selectedItem || rating === 0) return;
-        setIsSubmitting(true);
-
-        try {
-            await handleAddItem(selectedItem);
-            if (selectedItem.type === 'album') {
                 await addUpdateRatingAlbum(selectedItem.id, user.accountId, rating);
-                if (review.trim()) {
-                    await addReviewAlbum(selectedItem.id, user.accountId, review);
-                }
+                if (review.trim()) await addReviewAlbum(selectedItem.id, user.accountId, review);
             } else {
+                const fullTrackData = await SpotifyTrackById(selectedItem.id, token);
+                await addSongToDatabase(fullTrackData || selectedItem);
                 await addUpdateRatingSong(selectedItem.id, user.accountId, rating);
-                if (review.trim()) {
-                    await addReviewSong(selectedItem.id, user.accountId, review);
-                }
+                if (review.trim()) await addReviewSong(selectedItem.id, user.accountId, review);
             }
-
             onClose();
         } catch (error) {
-            console.error("Failed to log:", error);
+            toast({ title: "Failed to log entry", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-
     if (!isOpen) return null;
 
     return (
-        <div 
-            className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden"
-            // Ensure the container doesn't move, only the inner modal
-            style={{ height: '100dvh' }} 
-        >
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end overflow-hidden">
+            {/* Backdrop */}
             <motion.div 
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                    if (keyboardHeight === 0) onClose();
+                    else (document.activeElement as HTMLElement)?.blur();
+                }} 
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             />
 
+            {/* Modal Container */}
             <motion.div
-                drag="y"
+                drag={keyboardHeight === 0 ? "y" : false} // Disable drag when typing
                 dragConstraints={{ top: 0 }}
-                // Reset Y to 0, but use bottom padding for keyboard
-                animate={{ 
-                    y: 0,
-                    marginBottom: keyboardHeight, 
-                }}
-                onDragEnd={(_, info) => { 
-                    // Prevent closing if dragging while keyboard is open
-                    if (info.offset.y > 100 && keyboardHeight === 0) onClose(); 
-                }}
-                initial={{ y: "100%" }}
+                onDragEnd={(_, info) => { if (info.offset.y > 100) onClose(); }}
+                initial={{ y: "100%" }} 
+                animate={{ y: 0 }} 
                 exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative w-full max-w-lg bg-dark-1 rounded-t-[32px] p-6 shadow-2xl border-t border-white/10 touch-none flex flex-col"
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
                 style={{ 
-                    // Adjust max-height so it doesn't get squashed too small
-                    maxHeight: keyboardHeight > 0 ? `calc(100dvh - ${keyboardHeight}px - 20px)` : '90dvh' 
+                    maxHeight: `calc(100dvh - ${keyboardHeight}px - 10px)`,
+                    paddingBottom: keyboardHeight > 0 ? 0 : 'env(safe-area-inset-bottom)'
                 }}
+                className="relative w-full max-w-lg mx-auto bg-dark-1 rounded-t-[32px] shadow-2xl border-t border-white/10 flex flex-col overflow-hidden"
             >
-                <div className="w-12 h-1.5 bg-gray-800 rounded-full mx-auto mb-6 shrink-0" />
+                {/* Drag Handle */}
+                <div className="w-full py-4 shrink-0 cursor-grab active:cursor-grabbing">
+                    <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto" />
+                </div>
 
-                <div className="flex justify-between items-center mb-6 shrink-0" onPointerDown={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="px-6 flex justify-between items-center mb-4 shrink-0">
                     <h2 className="text-xl font-black text-white uppercase tracking-tight">Quick Log</h2>
-                    <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors">
+                    <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-gray-400">
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="space-y-6 overflow-y-auto custom-scrollbar pb-4" onPointerDown={e => e.stopPropagation()} ref={scrollContainerRef}>
-                    {/* 1. SELECTION AREA (PlaylistPage Style Search) */}
+                {/* Scrollable Form Content */}
+                <div 
+                    ref={scrollContainerRef}
+                    className="px-6 pb-8 space-y-6 overflow-y-auto custom-scrollbar flex-1"
+                    onPointerDown={(e) => e.stopPropagation()}
+                >
+                    {/* Search / Selection Section */}
                     {!selectedItem ? (
                         <div className="relative">
-                            <div className="relative w-full p-2">
-                                <Search 
-                                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" 
-                                    size={18} 
-                                />
+                            <div className="relative w-full">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 <Input
-                                    autoFocus
-                                    placeholder="Search for songs or albums..."
+                                    placeholder="Search songs or albums..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="bg-white/10 border-none pl-12 pr-12 h-14 rounded-full text-md focus:bg-white/20 transition-all focus-visible:ring-emerald-500/50 w-full"
+                                    className="bg-white/10 border-none pl-12 pr-12 h-14 rounded-full text-md focus:bg-white/20 transition-all w-full"
                                 />
                                 {isSearching && (
-                                    <div className="absolute right-4 top-0 bottom-0 flex items-center">
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
                                         <Loader2 className="animate-spin text-emerald-500" size={18} />
                                     </div>
                                 )}
                             </div>
 
-                            {/* Results Dropdown (PlaylistPage result item style) */}
                             {searchResults.length > 0 && (
-                                <div className="mt-2 bg-dark-2 border border-white/10 rounded-2xl overflow-hidden shadow-2xl divide-y divide-white/5">
+                                <div className="mt-2 bg-dark-2 border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5">
                                     {searchResults.map((result) => (
-                                        <div 
-                                            key={result.id} 
-                                            onClick={() => handleSelect(result)}
-                                            className="flex items-center gap-4 p-3 hover:bg-white/5 cursor-pointer transition-colors group"
-                                        >
-                                            <div className="relative shrink-0">
-                                                <img 
-                                                    src={result.album_cover_url || '/assets/icons/music-placeholder.png'} 
-                                                    className="w-12 h-12 rounded-md object-cover shadow-md" 
-                                                    alt={result.title} 
-                                                />
-                                                {result.type === 'album' && (
-                                                    <div className="absolute -top-1 -left-1 bg-emerald-500 text-[7px] font-black px-1 py-0.5 rounded text-black uppercase tracking-tighter">
-                                                        Album
-                                                    </div>
-                                                )}
-                                            </div>
+                                        <div key={result.id} onClick={() => handleSelect(result)} className="flex items-center gap-4 p-3 hover:bg-white/5 cursor-pointer">
+                                            <img src={result.album_cover_url || '/assets/icons/music-placeholder.png'} className="w-12 h-12 rounded-md object-cover" alt="" />
                                             <div className="flex flex-col min-w-0">
-                                                <span className="text-white text-sm font-bold truncate group-hover:text-emerald-400 transition-colors">
-                                                    {result.title}
-                                                </span>
-                                                <span className="text-gray-500 text-xs truncate">
-                                                    {result.artists?.map((a: any) => a.name).join(", ")}
-                                                </span>
+                                                <span className="text-white text-sm font-bold truncate">{result.title}</span>
+                                                <span className="text-gray-500 text-xs truncate">{result.artists?.map((a: any) => a.name).join(", ")}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -241,42 +205,24 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                             )}
                         </div>
                     ) : (
-                        /* SELECTED ITEM (PlaylistPage Header-mini style) */
-                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 relative overflow-hidden group">
-                            <img 
-                                src={selectedItem.album_cover_url || '/assets/icons/music-placeholder.png'} 
-                                className="w-16 h-16 rounded-xl shadow-lg object-cover" 
-                                alt={selectedItem.title} 
-                            />
+                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/10">
+                            <img src={selectedItem.album_cover_url || '/assets/icons/music-placeholder.png'} className="w-16 h-16 rounded-xl object-cover" alt="" />
                             <div className="flex flex-col flex-1 min-w-0">
-                                <span className="text-white font-black truncate text-lg leading-tight">
-                                    {selectedItem.title}
-                                </span>
-                                <span className="text-emerald-500 font-bold text-sm truncate uppercase tracking-wider">
-                                    {selectedItem.artists?.map((a: any) => a.name).join(", ")}
-                                </span>
+                                <span className="text-white font-black truncate text-lg">{selectedItem.title}</span>
+                                <span className="text-emerald-500 font-bold text-sm truncate uppercase">{selectedItem.artists?.[0]?.name}</span>
                             </div>
-                            <button 
-                                onClick={() => setSelectedItem(null)}
-                                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all active:scale-90"
-                            >
-                                <Edit2 size={16} /> 
-                            </button>
+                            <button onClick={() => setSelectedItem(null)} className="p-2 bg-white/10 rounded-full text-white"><Edit2 size={16} /></button>
                         </div>
                     )}
 
-                    {/* 2. RATING AREA (Album Page Style) */}
-                    <div className={`flex flex-col items-center gap-4 py-2 transition-all duration-500 ${!selectedItem ? 'opacity-20 blur-sm pointer-events-none' : 'opacity-100 blur-0'}`}>
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Your Rating</p>
+                    {/* Rating Section */}
+                    <div className={`flex flex-col items-center gap-4 transition-all ${!selectedItem ? 'opacity-20 blur-sm pointer-events-none' : ''}`}>
+                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Your Rating</p>
                         <div className="flex gap-2">
                             {[1, 2, 3, 4, 5].map((star) => {
                                 const fillLevel = rating >= star ? 1 : rating >= star - 0.5 ? 0.5 : 0;
                                 return (
-                                    <button 
-                                        key={star} 
-                                        onClick={(e) => handleRatingClick(e, star)} 
-                                        className="transition-transform active:scale-125 hover:scale-110"
-                                    >
+                                    <button key={star} onClick={(e) => handleRatingClick(e, star)} className="active:scale-125 transition-transform">
                                         <StarIcon fillLevel={fillLevel} sizeClass="w-11 h-11" />
                                     </button>
                                 );
@@ -284,29 +230,27 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                         </div>
                     </div>
 
-                    {/* 3. REVIEW TEXT */}
-                    <div className={`transition-all duration-500 p-2 ${!selectedItem ? 'opacity-20 blur-sm pointer-events-none' : 'opacity-100 blur-0'}`}>
+                    {/* Review Section */}
+                    <div className={`transition-all ${!selectedItem ? 'opacity-20 blur-sm pointer-events-none' : ''}`}>
                         <Textarea
-                            placeholder="Write your thoughts (optional)..."
+                            placeholder="Add a review..."
                             value={review}
                             onChange={(e) => setReview(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white min-h-[120px] outline-none focus:ring-2 focus:ring-emerald-600/50 resize-none transition-all"
+                            className="w-full bg-white/5 border-white/10 rounded-2xl p-4 text-white min-h-[120px] focus:ring-emerald-500/50 resize-none"
                         />
                     </div>
 
                     <Button
                         disabled={!selectedItem || rating === 0 || isSubmitting}
                         onClick={handleSubmit}
-                        variant="default"
-                        className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-white/5 disabled:text-gray-600 text-black font-black py-4 rounded-2xl transition-all active:scale-[0.98] flex justify-center items-center shadow-lg shadow-emerald-500/20"
+                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black py-7 rounded-2xl shadow-lg shadow-emerald-500/10"
                     >
-                        {isSubmitting ? (
-                            <Loader2 className="animate-spin" size={24} />
-                        ) : (
-                            <span className="uppercase tracking-widest text-sm">Log</span>
-                        )}
+                        {isSubmitting ? <Loader2 className="animate-spin" size={24} /> : <span className="uppercase tracking-widest">Log</span>}
                     </Button>
                 </div>
+                
+                {/* Keyboard Spacer */}
+                <div style={{ height: keyboardHeight }} className="transition-[height] duration-100" />
             </motion.div>
         </div>
     );
