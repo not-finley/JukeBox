@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Edit2, X, Search, Loader2 } from "lucide-react";
 import { getSpotifyToken, searchSpotify, SpotifyTrackById } from "@/lib/appwrite/spotify";
@@ -11,6 +11,8 @@ import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 
 const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const { user } = useUserContext();
     
     // Search States (Matched to PlaylistPage)
@@ -23,6 +25,31 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     const [rating, setRating] = useState(0);
     const [review, setReview] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (!window.visualViewport) return;
+
+        const handleResize = () => {
+            const viewport = window.visualViewport!;
+            // Calculate how much the viewport has shrunk from the bottom
+            const offset = window.innerHeight - viewport.height;
+            setKeyboardHeight(offset > 0 ? offset : 0);
+            
+            // Scroll the active element into view if it's an input/textarea
+            if (offset > 0 && document.activeElement instanceof HTMLElement) {
+                setTimeout(() => {
+                    document.activeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+        };
+
+        window.visualViewport.addEventListener("resize", handleResize);
+        window.visualViewport.addEventListener("scroll", handleResize);
+        return () => {
+            window.visualViewport?.removeEventListener("resize", handleResize);
+            window.visualViewport?.removeEventListener("scroll", handleResize);
+        };
+    }, []);
 
     // Debounced Search Logic (Synced with PlaylistPage)
     useEffect(() => {
@@ -116,7 +143,11 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div 
+            className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden"
+            // Ensure the container doesn't move, only the inner modal
+            style={{ height: '100dvh' }} 
+        >
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={onClose} className="absolute inset-0 bg-black/80 backdrop-blur-md"
@@ -125,9 +156,23 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             <motion.div
                 drag="y"
                 dragConstraints={{ top: 0 }}
-                onDragEnd={(_, info) => { if (info.offset.y > 100) onClose(); }}
-                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-                className="relative w-full max-w-lg bg-dark-1 rounded-t-[32px] p-6 shadow-2xl border-t border-white/10 touch-none flex flex-col max-h-[90vh]"
+                // Reset Y to 0, but use bottom padding for keyboard
+                animate={{ 
+                    y: 0,
+                    marginBottom: keyboardHeight, 
+                }}
+                onDragEnd={(_, info) => { 
+                    // Prevent closing if dragging while keyboard is open
+                    if (info.offset.y > 100 && keyboardHeight === 0) onClose(); 
+                }}
+                initial={{ y: "100%" }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="relative w-full max-w-lg bg-dark-1 rounded-t-[32px] p-6 shadow-2xl border-t border-white/10 touch-none flex flex-col"
+                style={{ 
+                    // Adjust max-height so it doesn't get squashed too small
+                    maxHeight: keyboardHeight > 0 ? `calc(100dvh - ${keyboardHeight}px - 20px)` : '90dvh' 
+                }}
             >
                 <div className="w-12 h-1.5 bg-gray-800 rounded-full mx-auto mb-6 shrink-0" />
 
@@ -138,7 +183,7 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                     </button>
                 </div>
 
-                <div className="space-y-6 overflow-y-auto custom-scrollbar pb-4" onPointerDown={e => e.stopPropagation()}>
+                <div className="space-y-6 overflow-y-auto custom-scrollbar pb-4" onPointerDown={e => e.stopPropagation()} ref={scrollContainerRef}>
                     {/* 1. SELECTION AREA (PlaylistPage Style Search) */}
                     {!selectedItem ? (
                         <div className="relative">
