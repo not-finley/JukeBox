@@ -175,7 +175,7 @@ const LogEntryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                     {/* Search / Selection Section */}
                     {!selectedItem ? (
                         <div className="relative">
-                            <div className="relative w-full">
+                            <div className="relative w-full mt-1">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                 <Input
                                     placeholder="Search songs or albums..."
