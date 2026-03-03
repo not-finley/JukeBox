@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Edit2, X, Search, Loader2 } from "lucide-react";
 import { getSpotifyToken, searchSpotify, SpotifyTrackById } from "@/lib/appwrite/spotify";
 import { addUpdateRatingAlbum, addUpdateRatingSong, addAlbumComplex, addSongToDatabase, addReviewAlbum, addReviewSong } from "@/lib/appwrite/api";
