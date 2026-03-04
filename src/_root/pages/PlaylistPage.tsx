@@ -397,7 +397,10 @@ const PlaylistPage = () => {
         {playlist && !loading && (
             <div className="w-full max-w-6xl">
                 {/* --- HEADER SECTION --- */}
-                <div className={`${isEditing? "h-[60dvh]": "h-[50dvh]"} md:h-[40dvh] relative w-full overflow-hidden rounded-b-3xl`}>
+                <div className={`relative w-full overflow-hidden rounded-b-3xl transition-all ${
+                    isEditing ? "min-h-[60dvh]" : "min-h-[50dvh] md:h-[40dvh]"
+                }`}>
+                    {/* Background Image - Absolute stays the same */}
                     <img
                         src={playlist.coverUrl || '/assets/icons/music-placeholder.png'}
                         alt={playlist.name}
@@ -406,7 +409,8 @@ const PlaylistPage = () => {
 
                     <div className="absolute inset-0 bg-gradient-to-t from-dark-1 via-dark-1/40 to-transparent"></div>
                     
-                    <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row items-center md:items-end gap-6">
+                    {/* CHANGE: Changed bottom-6 to pt-12 pb-8 to handle content growth */}
+                    <div className="relative pt-12 pb-8 px-6 md:pt-0 md:pb-6 md:absolute md:bottom-6 md:left-6 md:right-6 flex flex-col md:flex-row items-center md:items-end gap-6">
                         <input 
                             type="file" 
                             id="cover-upload" 
@@ -414,7 +418,9 @@ const PlaylistPage = () => {
                             onChange={handleCoverUpdate} 
                             accept="image/*" 
                         />
-                        <div className="group relative w-40 h-40 md:w-52 md:h-52 flex-shrink-0 shadow-2xl transition-transform hover:scale-[1.02]">
+                        
+                        {/* Cover Image Wrapper */}
+                        <div className="group relative w-48 h-48 md:w-52 md:h-52 flex-shrink-0 shadow-2xl transition-transform hover:scale-[1.02]">
                             <img
                                 src={playlist.coverUrl || '/assets/icons/music-placeholder.png'}
                                 alt={playlist.name}
@@ -429,7 +435,8 @@ const PlaylistPage = () => {
                             )}
                         </div>
 
-                        <div className="flex flex-col text-center md:text-left flex-1 min-w-0">
+                        {/* Text Metadata Wrapper */}
+                        <div className="flex flex-col text-center md:text-left flex-1 min-w-0 w-full">
                             <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
                                 <h3 className="text-emerald-500 text-xs font-black uppercase tracking-[0.2em]">Playlist</h3>
                                 {isCreator && !isEditing && (
@@ -440,33 +447,36 @@ const PlaylistPage = () => {
                             </div>
 
                             {isEditing ? (
-                                <div className="flex flex-col gap-3 mt-1 max-w-xl">
+                                <div className="flex flex-col gap-3 mt-1 w-full max-w-xl mx-auto md:mx-0">
                                     <Input 
                                         value={editName}
                                         onChange={(e) => setEditName(e.target.value)}
-                                        className="text-3xl md:text-5xl font-black bg-white/10 border-none h-auto py-1 focus-visible:ring-emerald-500"
+                                        className="text-2xl md:text-5xl font-black bg-white/10 border-none h-auto py-1 focus-visible:ring-emerald-500"
                                     />
                                     <Textarea 
                                         value={editDescription}
                                         onChange={(e) => setEditDescription(e.target.value)}
-                                        className="bg-white/10 border-none resize-none min-h-[60px] text-sm"
+                                        className="bg-white/10 border-none resize-none min-h-[80px] text-sm"
                                     />
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2 justify-center md:justify-start">
                                         <Button onClick={handleSave} className="bg-emerald-500 text-black font-bold h-9 px-4 rounded-full"><Check size={16} className="mr-1" /> Save</Button>
                                         <Button onClick={() => setIsEditing(false)} variant="ghost" className="h-9 px-4 text-white">Cancel</Button>
                                     </div>
                                 </div>
                             ) : (
-                                <>
-                                    <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-normal pb-2 truncate">
+                                <div className="w-full overflow-hidden">
+                                    {/* CHANGE: Removed truncate and added break-words for mobile titles */}
+                                    <h1 className="text-3xl md:text-6xl font-black text-white tracking-tighter leading-tight pb-2 break-words">
                                         {playlist.name}
                                     </h1>
-                                    <p className="text-gray-300 bg-transparent text-sm md:text-base mt-2 line-clamp-2 max-w-2xl font-medium opacity-80">
+                                    {/* CHANGE: Increased line-clamp to 3 for better mobile descriptions */}
+                                    <p className="text-gray-300 bg-transparent text-sm md:text-base mt-2 line-clamp-3 md:line-clamp-2 max-w-2xl font-medium opacity-80">
                                         {playlist.description || ""}
                                     </p>
-                                </>
+                                </div>
                             )}
 
+                            {/* Stats Section */}
                             <div className="flex items-center justify-center md:justify-start gap-3 mt-4">
                                 <div className="flex -space-x-2">
                                     {playlist.creators.map((creator: any) => (
@@ -478,15 +488,7 @@ const PlaylistPage = () => {
                                 <span className="text-sm font-bold text-white">{playlist.creators[0]?.name}</span>
                                 <span className="text-gray-500">•</span>
                                 <span className="text-sm text-gray-400 font-semibold">
-                                    {albumCount > 0 ? (
-                                        <>
-                                            {albumCount} {albumCount === 1 ? 'album' : 'albums'}, {totalTracks} tracks
-                                        </>
-                                    ) : (
-                                        <>
-                                            {totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
-                                        </>
-                                    )}
+                                    {totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
                                 </span>
                             </div>
                         </div>
@@ -609,12 +611,12 @@ const PlaylistPage = () => {
                     ) : (
                         <>
                             {/* RESPONSIVE GRID: Album hidden on mobile */}
-                            <div className="grid grid-cols-[16px_1fr] md:grid-cols-[110px_2.7fr_2.6fr] gap-4 py-2 px-4 border-b border-white/10 text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
+                            <div className="grid grid-cols-[16px_1fr_40px] md:grid-cols-[110px_2.7fr_2.6fr] gap-4 py-2 px-4 border-b border-white/10 text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
                                 <div>#</div>
                                 <div>Title</div>
                                 <div className="hidden md:block">Album</div>
+                                <div className="md:hidden"></div> {/* Empty header for the delete column on mobile */}
                             </div>
-
                             <DragDropContext onDragEnd={onDragEnd}>
                                 <Droppable droppableId="playlist-items">
                                     {(provided) => (
