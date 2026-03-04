@@ -62,7 +62,7 @@ const PlaylistEntry = ({
             <div className={`grid gap-3 py-2 px-4 rounded-md transition-all group items-center 
                 ${isCreator 
                     ? "grid-cols-[20px_24px_1fr_40px] md:grid-cols-[auto_16px_4fr_3fr_auto]" 
-                    : "grid-cols-[24px_1fr_40px] md:grid-cols-[16px_4fr_3fr]"} 
+                    : "grid-cols-[24px_1fr] md:grid-cols-[16px_4fr_3fr]"} 
                 hover:bg-white/10 mb-1`}>
                 
                 {isCreator && <div className="text-gray-600 px-1 flex-shrink-0"><GripVertical size={18} /></div>}

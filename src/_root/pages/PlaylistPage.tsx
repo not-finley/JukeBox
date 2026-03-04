@@ -488,7 +488,15 @@ const PlaylistPage = () => {
                                 <span className="text-sm font-bold text-white">{playlist.creators[0]?.name}</span>
                                 <span className="text-gray-500">•</span>
                                 <span className="text-sm text-gray-400 font-semibold">
-                                    {totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
+                                    {albumCount > 0 ? (
+                                        <>
+                                        {albumCount} {albumCount === 1 ? 'album' : 'albums'}, {totalTracks} tracks
+                                        </>
+                                    ) : (
+                                        <>
+                                        {totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
+                                        </>
+                                    )} 
                                 </span>
                             </div>
                         </div>
