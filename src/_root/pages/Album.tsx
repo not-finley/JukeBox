@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
 import { BarChart, Bar, XAxis } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { isMobile, isTablet } from "react-device-detect";
 import { getSpotifyToken, SpotifyAlbumById } from '@/lib/appwrite/spotify';
 import LoaderMusic from '@/components/shared/loaderMusic';
 import { useUserContext } from '@/lib/AuthContext';
@@ -301,80 +300,82 @@ const Album = () => {
                                         return (
                                             <li
                                                 key={index}
-                                                className="group grid grid-cols-[30px_1fr_auto] items-center gap-4 p-3 hover:bg-white/5 transition-all rounded-xl mt-1 mb-1"
+                                                className="group flex flex-col p-3 hover:bg-white/5 transition-all rounded-xl mt-1 mb-1"
                                             >
-                                                {/* 1. Track Number or Play Icon */}
-                                                <div className="relative w-6 h-6 flex items-center justify-center">
-                                                    {/* 1. Show number or visualizer */}
-                                                    {isCurrent ? (
-                                                        <div className="group-hover:opacity-0 transition-opacity">
-                                                            <PlayingVisualizer isPaused={!isPlaying} />
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-gray-500 group-hover:opacity-0 transition-opacity text-sm">
-                                                            {index + 1}
-                                                        </span>
-                                                    )}
-
-                                                    {/* 2. The Toggle Button */}
-                                                    <button 
-                                                        onClick={() => {
-                                                            if (!isAuthenticated) {
-                                                                setShowAuthModal(true);
-                                                                return;
-                                                            }
-                                                            if (isCurrent) {
-                                                                togglePlay(); // If it's the active track, just play/pause
-                                                            } else {
-                                                                const formattedTracks = album.tracks.map(formatTrack);
-                                                                playAlbum(formattedTracks, index); // If different track, start the album from here
-                                                            }
-                                                        }}
-                                                        className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center text-emerald-400 transition-opacity"
-                                                    >
-                                                        {isCurrent && isPlaying ? (
-                                                            <Pause size={18} fill="currentColor" />
+                                                <div className="flex items-center gap-4">
+                                                    {/* 1. Track Number or Play Icon */}
+                                                    <div className="relative w-6 h-6 flex-shrink-0 flex items-center justify-center">
+                                                        {isCurrent ? (
+                                                            <div className="group-hover:opacity-0 transition-opacity">
+                                                                <PlayingVisualizer isPaused={!isPlaying} />
+                                                            </div>
                                                         ) : (
-                                                            <Play size={18} fill="currentColor" />
+                                                            <span className="text-gray-500 group-hover:opacity-0 transition-opacity text-sm font-medium">
+                                                                {index + 1}
+                                                            </span>
                                                         )}
-                                                    </button>
-                                                </div>
 
-                                                {/* 2. Title */}
-                                                <Link to={`/song/${track.songId}`} className="flex flex-col min-w-0">
-                                                    <span className={`font-medium truncate transition-colors ${
-                                                        isCurrent ? 'text-emerald-400' : 'text-white group-hover:text-emerald-400'
-                                                    }`}>
-                                                        {track.title}
-                                                    </span>
-                                                </Link>
+                                                        <button 
+                                                            onClick={() => {
+                                                                if (!isAuthenticated) { setShowAuthModal(true); return; }
+                                                                if (isCurrent) { togglePlay(); } 
+                                                                else { playAlbum(album.tracks.map(formatTrack), index); }
+                                                            }}
+                                                            className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-center justify-center text-emerald-400 transition-opacity"
+                                                        >
+                                                            {isCurrent && isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}
+                                                        </button>
+                                                    </div>
 
-                                                {/* 3. Stars Logic */}
-                                                <div className={`flex items-center gap-1 transition-all duration-300 ${
-                                                    !isMobile && !isTablet 
-                                                        ? `opacity-0 group-hover:opacity-100 ${hasRating ? 'opacity-100' : ''}` 
-                                                        : 'opacity-100' 
-                                                }`}>
-                                                    <div className="flex gap-0.5">
+                                                    {/* 2. Title - Takes full remaining width on mobile */}
+                                                    <Link to={`/song/${track.songId}`} className="flex-1 min-w-0">
+                                                        <span className={`font-medium block truncate transition-colors ${
+                                                            isCurrent ? 'text-emerald-400' : 'text-white group-hover:text-emerald-400'
+                                                        }`}>
+                                                            {track.title}
+                                                        </span>
+                                                    </Link>
+
+                                                    {/* Desktop-only stars (pushed to the right) */}
+                                                    <div className="hidden md:flex items-center gap-0.5 transition-opacity">
                                                         {[...Array(5)].map((_, starIndex) => {
                                                             const starValue = starIndex + 1;
-                                                            const fillLevel = songRatings[index] >= starValue 
-                                                                ? 1 
-                                                                : songRatings[index] >= starValue - 0.5 
-                                                                    ? 0.5 
-                                                                    : 0;
+                                                            const fillLevel = songRatings[index] >= starValue ? 1 : songRatings[index] >= starValue - 0.5 ? 0.5 : 0;
+                                                            return (
+                                                                <button key={starValue} type="button" onClick={(e) => handleSongRating(e, starValue, index)}>
+                                                                    <StarIcon fillLevel={fillLevel} sizeClass="w-6 h-6" />
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* BOTTOM ROW: Rating bar (Mobile only) */}
+                                                <div className={`md:hidden flex items-center mt-3 pl-10 transition-all duration-300 ${
+                                                    hasRating ? 'opacity-100' : 'opacity-60'
+                                                }`}>
+                                                    <div className="flex gap-2 items-center">
+                                                        {[...Array(5)].map((_, starIndex) => {
+                                                            const starValue = starIndex + 1;
+                                                            const fillLevel = songRatings[index] >= starValue ? 1 : songRatings[index] >= starValue - 0.5 ? 0.5 : 0;
 
                                                             return (
                                                                 <button
                                                                     key={starValue}
                                                                     type="button"
                                                                     onClick={(e) => handleSongRating(e, starValue, index)}
-                                                                    className="transition-transform active:scale-125 hover:scale-110"
+                                                                    className="transition-transform active:scale-125"
                                                                 >
-                                                                    <StarIcon fillLevel={fillLevel} sizeClass="w-7 h-7 md:w-8 md:h-8" />
+                                                                    {/* Slightly smaller icons for the mobile row to keep it clean */}
+                                                                    <StarIcon fillLevel={fillLevel} sizeClass="w-7 h-7" />
                                                                 </button>
                                                             );
                                                         })}
+                                                        {hasRating && (
+                                                            <span className="text-[10px] font-bold text-emerald-500 ml-2 uppercase tracking-widest">
+                                                                {songRatings[index]} / 5
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </li>
