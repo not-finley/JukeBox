@@ -507,7 +507,7 @@ const Album = () => {
 
                             {album?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet - be the first to start the conversation!</p>) : ''}
                             {album?.reviews.map((r) => (
-                                <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} album={r.album} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
+                                <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} album={r.album} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} title={r.title} key={r.reviewId} />
                             )
                             )}
                         </section>

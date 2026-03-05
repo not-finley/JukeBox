@@ -222,6 +222,7 @@ export type ArtistDetails = {
 export type SongReview = {
   reviewId: string;
   text: string;
+  title?: string;
   creator: IUser;
   song: Song;
   likes: number;
@@ -232,6 +233,7 @@ export type SongReview = {
 export type AlbumReview = {
   reviewId: string;
   text: string;
+  title?: string;
   creator: IUser;
   album: Album;
   likes: number;
@@ -252,6 +254,7 @@ export type Review = {
   reviewId: string;
   text: string;
   id: string;
+  title?: string;
   name: string;
   album_cover_url: string | null;
   createdAt: string;

@@ -12,6 +12,8 @@ import { Heart } from "lucide-react";
 import AuthModal from "@/components/shared/AuthModal"; // Import your modal
 
 const ReviewItem = (review: SongReview | AlbumReview) => {
+
+  console.log("Rendering ReviewItem with review:", review); // Debug log to check review data
   const [showFull, setShowFull] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(review.likes ?? 0);
@@ -83,6 +85,12 @@ const ReviewItem = (review: SongReview | AlbumReview) => {
                 {review.creator.username}
               </Link>
             </p>
+
+            {review.title && (
+              <h1 className="text-lg font-bold text-white italic">
+                {review.title}
+              </h1>
+            )}
 
             <p className="text-gray-200 text-sm leading-relaxed">
               {isLong && !showFull

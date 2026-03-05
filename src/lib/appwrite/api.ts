@@ -380,7 +380,7 @@ export async function fetchSongs(page = 1, limit = 20): Promise<Song[]> {
 }
 
 
-export async function addReviewSong(songId: string, userId: string, reviewText: string) {
+export async function addReviewSong(songId: string, userId: string, reviewText: string, reviewTitle?: string) {
     const id = nanoid();
     const now = new Date();
     const isoString = now.toISOString();
@@ -394,6 +394,7 @@ export async function addReviewSong(songId: string, userId: string, reviewText: 
                 user_id: userId,
                 review_type: "song",
                 review_text: reviewText,
+                review_title: reviewTitle,
                 created_at: isoString,
             })
             .select()
@@ -425,7 +426,7 @@ export async function addReviewSong(songId: string, userId: string, reviewText: 
 }
 
 
-export async function addReviewAlbum(albumId: string, userId: string, reviewText: string) {
+export async function addReviewAlbum(albumId: string, userId: string, reviewText: string, reviewTitle?: string) {
     const id = nanoid();
     const now = new Date();
     const isoString = now.toISOString();
@@ -439,6 +440,7 @@ export async function addReviewAlbum(albumId: string, userId: string, reviewText
                 user_id: userId,
                 review_type: "album",
                 review_text: reviewText,
+                review_title: reviewTitle,
                 created_at: isoString,
             })
             .select()
@@ -541,6 +543,7 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
         return {
             reviewId: reviewData.review_id,
             text: reviewData.review_text,
+            title: reviewData.review_title,
             id: reviewData.song_id ?? reviewData.album_id,
             type: reviewType,
             createdAt: reviewData.created_at,
@@ -814,6 +817,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
                 reviews.map(async (r: any) => ({
                     reviewId: r.review_id,
                     text: r.review_text,
+                    title: r.review_title,
                     creator: {
                         accountId: r.creator.user_id,
                         name: r.creator.name,
@@ -999,6 +1003,7 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                     return {
                         reviewId: r.review_id,
                         text: r.review_text,
+                        title: r.review_title,
                         creator: {
                             accountId: r.creator.user_id,
                             name: r.creator.name,
@@ -1966,7 +1971,7 @@ export async function getReviewedWithLimit(
 
         // 2. Search logic (Now this works perfectly because everything is in one table)
         if (searchQuery) {
-            query = query.or(`review_text.ilike.%${searchQuery}%, song_title.ilike.%${searchQuery}%, album_title.ilike.%${searchQuery}%`);
+            query = query.or(`review_text.ilike.%${searchQuery}%, song_title.ilike.%${searchQuery}%, album_title.ilike.%${searchQuery}%, review_title.ilike.%${searchQuery}%`);
         }
 
         // 3. Filtering
@@ -1988,6 +1993,7 @@ export async function getReviewedWithLimit(
             userId: r.user_id,
             type: r.song_id ? "song" : "album",
             createdAt: r.created_at,
+            title: r.review_title,
             rating: r.rating,
             album_cover_url: r.effective_cover_url ?? "",
             likes: r.reviewlikes?.[0]?.count || 0,
@@ -2005,6 +2011,7 @@ export async function getReviewed(userId: string): Promise<Review[]> {
             .select(`
                 review_id,
                 review_text,
+                review_title,
                 song_id,
                 album_id,
                 created_at,
@@ -2046,6 +2053,7 @@ export async function getReviewed(userId: string): Promise<Review[]> {
                     reviewId: r.review_id,
                     text: r.review_text,
                     id: r.song_id ?? r.album_id,
+                    title: r.review_title,
                     name: name,
                     userId: r.user_id,
                     type: reviewType,

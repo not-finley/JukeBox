@@ -22,6 +22,7 @@ import Loader from "@/components/shared/loader";
 import { FaSpotify } from "react-icons/fa";
 
 const formSchema = z.object({
+  title: z.string().max(100, "Title is too long!").optional(),
   text: z.string().min(1, "Review cannot be empty.").max(10000, "Too long!"),
 });
 
@@ -34,13 +35,16 @@ const AddReviewAlbum = () => {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { text: "" },
+    defaultValues: { 
+      title: "",
+      text: "" 
+    },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setLoading(true);
-      const review = await addReviewAlbum(album?.albumId || "", user.accountId, values.text);
+      const review = await addReviewAlbum(album?.albumId || "", user.accountId, values.text, values.title);
 
       if (!review) {
         toast({ title: "Failed to add review. Please try again." });
@@ -130,6 +134,23 @@ const AddReviewAlbum = () => {
           <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-300">Title (Optional)</FormLabel>
+                      <FormControl>
+                        <input
+                          className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-emerald-500"
+                          placeholder="Summarize your review..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="text"

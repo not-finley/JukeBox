@@ -184,6 +184,12 @@ export default function ReviewPage() {
             </div>
           </Link>
 
+          {review.title && (
+            <h1 className="text-2xl font-bold text-white mb-2 italic">
+              {review.title}
+            </h1>
+          )}
+
           {/* Review Text */}
           <p className="text-gray-100 text-lg mb-4">{review.text}</p>
 

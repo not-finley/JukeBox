@@ -23,6 +23,7 @@ import { toast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   text: z.string().min(1).max(100000),
+  title: z.string().max(100).optional(),
 })
 
 const AddReviewSong = () => {
@@ -36,13 +37,14 @@ const AddReviewSong = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       text: "",
+      title: "",
     },
   })
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    const review = await addReviewSong(song ? song.songId : '', user.accountId, values.text);
+    const review = await addReviewSong(song ? song.songId : '', user.accountId, values.text, values.title);
     if (!review) {
       return toast({ title: "Failed to add review. Please try again." })
     }
@@ -94,6 +96,24 @@ const AddReviewSong = () => {
           </p>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-300">Title (Optional)</FormLabel>
+                    <FormControl>
+                      <input
+                        className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-emerald-500"
+                        placeholder="Summarize your review..."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="text"

@@ -419,7 +419,8 @@ const ProfileComponent = ({
                             <div className="flex justify-between items-start">
                             <Link to={review.type === "song" ? `/song/${review.id}` : `/album/${review.id}`} className="font-bold text-lg hover:text-emerald-400 transition">{review.name} • {review.type === "song"? "Song" : "Album"}</Link>
                             </div>
-                            <p className="text-gray-300 text-sm mt-2 line-clamp-2">{review.text}</p>
+                            <p className="text-md font-bold text-white italic mt-2">{review.title}</p>
+                            <p className="text-gray-300 text-sm line-clamp-2">{review.text}</p>
                             <p className="text-xs text-gray-500 mt-1">
                                 {new Date(review.createdAt).toLocaleDateString(undefined, {
                                 year: "numeric",

@@ -17,6 +17,8 @@ const ReviewItemLibrary = ({ review }: ReviewItemProps) => {
         setExpanded(!expanded);
     };
 
+    console.log("Rendering ReviewItemLibrary with review:", review); // Debug log to check review data
+
     const isLong = review.text.length > 250;
     const displayText = !expanded && isLong ? review.text.slice(0, 250) + "..." : review.text;
 
@@ -43,6 +45,9 @@ const ReviewItemLibrary = ({ review }: ReviewItemProps) => {
 
             {/* Middle: The Review Text */}
             <Link to={`/review/${review.reviewId}`} className="block">
+                <h1 className="text-lg font-bold text-white italic">
+                    {review.title}
+                </h1>
                 <p className="text-gray-200 text-sm leading-relaxed italic italic-font">
                     "{displayText}"
                 </p>

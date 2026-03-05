@@ -398,7 +398,7 @@ const SongDetailsSection = () => {
                 </div>
                 {song?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet. Be the first to review this track!</p>) : ''}
                 {song?.reviews.map((r) => (
-                  <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} song={r.song} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} key={r.reviewId} />
+                  <ReviewItem reviewId={r.reviewId} text={r.text} creator={r.creator} song={r.song} likes={r.likes} createdAt={r.createdAt} updatedAt={r.updatedAt} title={r.title} key={r.reviewId} />
                 )
                 )}
               </ul>
