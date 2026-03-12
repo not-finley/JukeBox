@@ -28,7 +28,7 @@ import LoaderMusic from "@/components/shared/loaderMusic";
 import PlaylistEntry from "@/components/PlaylistEntry";
 import { usePlayerContext } from "@/context/PlayerContext";
 import { useUserContext } from "@/lib/AuthContext";
-import { getPlaylistById, processPlaylistCover, updatePlaylistMetadata, addItemToPlaylist, updatePlaylistCover, addSongToDatabase, updateItemsOrder, deletePlaylist, removeItemFromPlaylist, addAlbumComplex, batchSyncSongsToDatabase, batchAddItemsToPlaylist} from "@/lib/appwrite/api";
+import { getPlaylistById, processPlaylistCover, updatePlaylistMetadata, addItemToPlaylist, updatePlaylistCover, addSongToDatabase, updateItemsOrder, deletePlaylist, removeItemFromPlaylist, addAlbumComplex, batchSyncSongsToDatabase, batchAddItemsToPlaylist, getAlbumTracks} from "@/lib/appwrite/api";
 import { Search } from "lucide-react";
 import { searchSpotify, getSpotifyToken, SpotifyTrackById, getSpotifyPlaylistTracks } from "@/lib/appwrite/spotify";
 import { useToast } from "@/hooks/use-toast";
@@ -103,12 +103,6 @@ const PlaylistPage = () => {
     }, [searchQuery]);
 
     const isCreator = playlist?.creators?.some((c: any) => c.accountId === user.accountId);
-    const albumCount = playlist?.items?.filter((item: any) => item.type === 'album').length || 0;
-
-    const totalTracks = playlist?.items?.reduce((acc: number, item: any) => {
-        if (item.type === 'album') return acc + (item.tracks?.length || 0);
-        return acc + 1;
-    }, 0) || 0;
 
     const handleSave = async () => {
         if (!editName.trim() || !id) return;
@@ -221,39 +215,78 @@ const PlaylistPage = () => {
         }
     };
 
-    const formatTrack = (track: any): Track => ({
-        title: track.title,
-        songId: track.songId,
-        artist: track.artist,
-        album_cover_url: track.album_cover_url,
-        preview_url: track.preview_url,
-        isrc: track.isrc
-    });
+    const formatTrack = (item: any): Track => {
+        // 1. Determine if we are looking at a playlist_item wrapper or a raw song object
+        const trackData = item.song ? item.song : item;
+        
+        // 2. Resolve the cover URL (checking both nested and flat locations)
+        const coverUrl = trackData.album?.album_cover_url || 
+                        item.album_cover_url || 
+                        trackData.album_cover_url || 
+                        "/assets/icons/default-album.png";
 
-    const handlePlayPlaylist = (itemIndex?: number, trackIndexInAlbum?: number) => {
+        // 3. Resolve the artist (handling array of objects vs. pre-joined string)
+        const artistName = Array.isArray(trackData.artists)
+            ? trackData.artists.map((a: any) => a.name).join(", ")
+            : trackData.artist || "Unknown Artist";
+
+        return {
+            title: trackData.title || "Unknown Title",
+            songId: trackData.song_id || trackData.songId,
+            artist: artistName,
+            album_cover_url: coverUrl,
+            preview_url: trackData.preview_url || "",
+            isrc: trackData.isrc || ""
+        };
+    };
+
+    const handlePlayPlaylist = async (itemIndex: number = 0, trackIndexInAlbum?: number) => {
         if (!isAuthenticated) {
             setShowAuthModal(true);
             return;
         }
         if (!playlist?.items) return;
 
+        const clickedItem = playlist.items[itemIndex];
+        if (clickedItem.type === 'album' && (!clickedItem.tracks || clickedItem.tracks.length === 0)) {
+            const tracks = await getAlbumTracks(clickedItem.albumId);
+            clickedItem.tracks = tracks; 
+        }
 
-        // Create a flat list of all tracks for the player
+
         const flatTracks: Track[] = [];
         let startIndex = 0;
 
         playlist.items.forEach((item: any, idx: number) => {
             if (item.type === 'album') {
-                if (idx === itemIndex) startIndex = flatTracks.length + (trackIndexInAlbum || 0);
-                flatTracks.push(...item.tracks.map(formatTrack));
+                if (item.tracks && item.tracks.length > 0) {
+                    if (idx === itemIndex) startIndex = flatTracks.length + (trackIndexInAlbum || 0);
+                    flatTracks.push(...item.tracks.map(formatTrack));
+                }
             } else {
                 if (idx === itemIndex) startIndex = flatTracks.length;
                 flatTracks.push(formatTrack(item));
             }
         });
-        console.log(flatTracks)
+
         playAlbum(flatTracks, startIndex);
+
+        fetchRemainingPlaylistItems(itemIndex);
     };
+
+    const fetchRemainingPlaylistItems = async (excludeIndex: number) => {
+        const remainingAlbums = playlist.items.filter((item : any, idx : number) => 
+            item.type === 'album' && 
+            idx !== excludeIndex && 
+            (!item.tracks || item.tracks.length === 0)
+        );
+
+        for (const album of remainingAlbums) {
+            const tracks = await getAlbumTracks(album.albumId);
+            album.tracks = tracks;
+        }
+    };
+
 
     const handleDeletePlaylist = async () => {
         if (!id) return;
@@ -488,13 +521,13 @@ const PlaylistPage = () => {
                                 <span className="text-sm font-bold text-white">{playlist.creators[0]?.name}</span>
                                 <span className="text-gray-500">•</span>
                                 <span className="text-sm text-gray-400 font-semibold">
-                                    {albumCount > 0 ? (
+                                    {playlist.albumCount > 0 ? (
                                         <>
-                                        {albumCount} {albumCount === 1 ? 'album' : 'albums'}, {totalTracks} tracks
+                                        {playlist.albumCount} {playlist.albumCount === 1 ? 'album' : 'albums'}, {playlist.totalTracks} tracks
                                         </>
                                     ) : (
                                         <>
-                                        {totalTracks} {totalTracks === 1 ? 'track' : 'tracks'}
+                                        {playlist.totalTracks} {playlist.totalTracks === 1 ? 'track' : 'tracks'}
                                         </>
                                     )} 
                                 </span>

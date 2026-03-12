@@ -341,7 +341,8 @@ export type ItemDetails = {
   artist: any[];
   tracks?: Song[];
   songId?: string;
-  preview_url?: string;
+  trackCount?: number;
+  preview_url?: string | null;
   isrc?: string;
 }
 

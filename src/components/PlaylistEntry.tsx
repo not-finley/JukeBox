@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { useState } from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { ChevronDown, ChevronRight, Disc, Trash2 } from "lucide-react";
@@ -10,6 +10,7 @@ import PlayingVisualizer from "@/components/shared/PlayingVisualizer";
 import { GripVertical } from "lucide-react";
 
 import { usePlayerContext } from "@/context/PlayerContext";
+import { getAlbumTracks } from "@/lib/appwrite/api";
 
 
 const PlaylistEntry = ({ 
@@ -24,6 +25,8 @@ const PlaylistEntry = ({
     const [isOpen, setIsOpen] = useState(false);
     const isAlbum = item.type === 'album';
     const { currentTrack, togglePlay } = usePlayerContext();
+    const [localTracks, setLocalTracks] = useState<any[]>(item.tracks || []);
+    const [isLoading, setIsLoading] = useState(false);
 
     const isAlbumCurrent = item.tracks?.some((t: any) => currentTrack?.songId === t.songId);
 
@@ -53,6 +56,21 @@ const PlaylistEntry = ({
                 onPlay(itemIndex); 
             }
         }
+    };
+
+    const handleAlbumOpen = async () => {
+        if (!isOpen && localTracks.length === 0) {
+            setIsLoading(true);
+            try {
+                const tracks = await getAlbumTracks(item.albumId);
+                setLocalTracks(tracks);
+            } catch (error) {
+                console.error("Failed to load tracks", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        setIsOpen(!isOpen);
     };
 
     if (!isAlbum) {
@@ -117,7 +135,7 @@ const PlaylistEntry = ({
                         ? "grid-cols-[auto_16px_1fr_auto_auto]" // Added an extra 'auto' for the trash column
                         : "grid-cols-[16px_1fr_auto]"
                     }`}
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => handleAlbumOpen()}
             >
                 {/* 1. Drag Handle */}
                 {isCreator && (
@@ -162,7 +180,7 @@ const PlaylistEntry = ({
                 {isCreator && (
                     <button 
                         onClick={(e) => {
-                            e.stopPropagation(); // VERY IMPORTANT: Prevents the album from opening when deleting
+                            e.stopPropagation();
                             onRemove(item.id);
                         }} 
                         className="p-2 text-gray-500 hover:text-red-500 transition-colors md:opacity-0 group-hover:opacity-100"
@@ -175,7 +193,7 @@ const PlaylistEntry = ({
                 {/* 5. Tracks Count & Chevron */}
                 <div className="flex items-center gap-4 justify-self-end">
                     <span className="text-[10px] text-gray-500 font-black tracking-widest hidden md:block">
-                        {item.tracks?.length || 0} TRACKS
+                        {item.trackCount || 0} TRACKS
                     </span>
                     <div className="text-gray-400">
                         {isOpen ? <ChevronDown size={20} className="text-emerald-500" /> : <ChevronRight size={20} />}
@@ -184,9 +202,11 @@ const PlaylistEntry = ({
             </div>
 
             {/* --- Nested Tracks Section --- */}
-            {isOpen && (
-                <div className="bg-black/20 border-t border-white/5 ml-14 mr-4 mb-3 rounded-b-xl animate-in fade-in slide-in-from-top-1 duration-200">
-                    {item.tracks?.map((track: any, idx: number) => {
+            {(isOpen || isLoading) && (
+                <div className="bg-black/20 border-t border-white/5 ml-14 mr-4 mb-3 rounded-b-xl ...">
+                    {isLoading ? (
+                        <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>
+                    ) : localTracks.map((track: any, idx: number) => {
                         const isTrackCurrent = currentTrack?.songId === track.songId;
                         return (
                             <div key={track.songId} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-lg group/track transition-colors">
