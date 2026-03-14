@@ -118,7 +118,7 @@ const { user } = useUserContext();
 
     const groups: { [key: string]: any[] } = {};
 
-    // Grouping by Rating (Stars)
+    // 1. Grouping by Rating (Stars)
     if (sortBy === "rating" && activeSection === "ratings") {
       [5, 4, 3, 2, 1].forEach(star => {
         const match = items.filter(item => Math.floor(item.rating) === star);
@@ -127,26 +127,38 @@ const { user } = useUserContext();
       return groups;
     }
 
-    // Grouping by Date (Newest/Oldest)
+    // 2. Grouping by Date (Newest/Oldest)
     if (sortBy === "newest" || sortBy === "oldest") {
       const now = new Date();
-      items.forEach(item => {
-        const date = new Date(item.createdAt|| item.rating_date || item.listen_date || Date.now());
-        const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
+      // Reset "now" to midnight to compare calendar days accurately
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const oneDay = 24 * 60 * 60 * 1000;
 
-        let label = "Older";
+      items.forEach(item => {
+        const itemDate = new Date(item.createdAt || item.rating_date || item.listen_date || Date.now());
+        // Reset item date to midnight for comparison
+        const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate()).getTime();
+        
+        const diffInDays = Math.round((today - itemDay) / oneDay);
+
+        let label = "";
         if (diffInDays === 0) label = "Today";
         else if (diffInDays === 1) label = "Yesterday";
         else if (diffInDays <= 7) label = "This Week";
         else if (diffInDays <= 30) label = "This Month";
+        else {
+          // For "Older", let's give it more context: Month and Year
+          label = itemDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        }
 
         if (!groups[label]) groups[label] = [];
         groups[label].push(item);
       });
+
       return groups;
     }
 
-    return { "": items }; // Default (no headers)
+    return { "": items }; 
   };
 
   const RenderSection = ({ items, renderItem, gridClass, sectionType, showLoadMore }: any) => {
