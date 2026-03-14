@@ -1,21 +1,9 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.jukeboxd.app',
-  appName: 'Jukeboxd',
-  webDir: 'dist',
-  
-  plugins: {
-    CapacitorHttp: {
-      enabled: true,
-    },
-    StatusBar: {
-      overlaysWebView: true,
-    },
-    AndroidEdgeToEdgeSupport: {
-        adjustMarginsForEdgeToEdge: 'auto' 
-    },
-  },
+  appId: 'ca.jukeboxd.app',
+  appName: 'jukebox',
+  webDir: 'dist'
 };
 
 export default config;

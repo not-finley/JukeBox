@@ -1,7 +1,6 @@
 import {SpotifyAlbumWithTracks, SpotifyTrack, SuggestedAlbum } from '@/types';
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
-const API_BASE_URL = "https://jukeboxd.ca";
 
 export async function getSpotifyToken(): Promise<string> {
     const now = Date.now();
@@ -17,7 +16,7 @@ export async function getSpotifyToken(): Promise<string> {
 
     // 3. Otherwise, fetch a new one
     try {
-        const response = await fetch(`${API_BASE_URL}/api/spotify-token`);
+        const response = await fetch("/api/spotify-token");
         const data = await response.json();
 
         if (data && data.access_token) {
