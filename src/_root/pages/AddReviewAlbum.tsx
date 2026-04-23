@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserContext } from "@/lib/AuthContext";
-import { addReviewAlbum, getAlbumDetailsById } from "@/lib/appwrite/api";
+import { addReviewAlbum, getAlbumDetailsById } from "@/lib/supabase/api";
 import { AlbumDetails } from "@/types";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";

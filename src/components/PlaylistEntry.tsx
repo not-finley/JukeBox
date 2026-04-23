@@ -10,7 +10,7 @@ import PlayingVisualizer from "@/components/shared/PlayingVisualizer";
 import { GripVertical } from "lucide-react";
 
 import { usePlayerContext } from "@/context/PlayerContext";
-import { getAlbumTracks } from "@/lib/appwrite/api";
+import { getAlbumTracks } from "@/lib/supabase/api";
 
 
 const PlaylistEntry = ({ 

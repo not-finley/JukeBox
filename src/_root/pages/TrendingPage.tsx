@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getTrendingData, timeAgo } from "@/lib/appwrite/api"; // Updated to your supabase fetcher
+import { getTrendingData, timeAgo } from "@/lib/supabase/api"; // Updated to your supabase fetcher
 import { TrendingResponse } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";
 

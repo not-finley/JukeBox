@@ -1,7 +1,7 @@
 import { Review } from "@/types";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { timeAgo } from "@/lib/appwrite/api"; // Assuming timeAgo is available here too
+import { timeAgo } from "@/lib/supabase/api"; // Assuming timeAgo is available here too
 
 interface ReviewItemProps {
     review: Review;

@@ -2,7 +2,7 @@ import { useInView } from "react-intersection-observer";
 import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import LoaderMusic from '@/components/shared/loaderMusic';
-import { getSpotifyToken } from '@/lib/appwrite/spotify';
+import { getSpotifyToken } from '@/lib/integrations/spotify';
 import { ChevronDown, ChevronUp } from "lucide-react"; // Optional: for the mobile toggle icon
 
 const DiscographyItem = ({ album, onUpdate, handleNavigation }: { album: any, onUpdate: (id: string, tracks: any[]) => void, handleNavigation: () => void }) => {

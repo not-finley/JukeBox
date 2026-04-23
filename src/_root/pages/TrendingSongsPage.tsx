@@ -1,5 +1,5 @@
 import TrendingList from "@/components/TrendingList";
-import { getTrendingSongs } from "@/lib/appwrite/api";
+import { getTrendingSongs } from "@/lib/supabase/api";
 import { useEffect, useState } from "react";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { SongActivity } from "@/types";

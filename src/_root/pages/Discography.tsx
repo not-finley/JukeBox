@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlbumDetails } from '@/types';
 import { Link, useParams } from 'react-router-dom';
 import LoaderMusic from '@/components/shared/loaderMusic';
-import { getSpotifyToken, getArtistDiscographyFromSpotify } from '@/lib/appwrite/spotify';
+import { getSpotifyToken, getArtistDiscographyFromSpotify } from '@/lib/integrations/spotify';
 import DiscographyItem from '@/components/DiscographyItem'
 
 const Discography = () => {

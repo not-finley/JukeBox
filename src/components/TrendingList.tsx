@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { timeAgo } from "@/lib/appwrite/api";
+import { timeAgo } from "@/lib/supabase/api";
 
 interface TrendingListProps {
     title: string;

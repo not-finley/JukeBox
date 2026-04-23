@@ -5,7 +5,7 @@ import { ChevronLeft, User, Lock, LogOut, Moon, X, HelpCircle} from "lucide-reac
 import { useSignOutAccount } from '@/lib/react-query/queriesAndMutations';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
-import { updateUsername } from "@/lib/appwrite/api";
+import { updateUsername } from "@/lib/supabase/api";
 import SupportModal from "@/components/shared/SupportModal";
 
 const SettingsPage = () => {

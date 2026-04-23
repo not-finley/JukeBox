@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useUserContext } from "@/lib/AuthContext";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import ReviewItemLibrary from "@/components/ReviewItemLibrary";
-import { getReviewedWithLimit, getRatedWithLimit, getListenedWithLimit, getPlaylists } from "@/lib/appwrite/api";
+import { getReviewedWithLimit, getRatedWithLimit, getListenedWithLimit, getPlaylists } from "@/lib/supabase/api";
 import { Listened, RatingGeneral, Review } from "@/types/index";
 import { Plus, Music } from "lucide-react";
 import StarIcon from '@/components/shared/StarIcon';

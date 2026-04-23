@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useInView } from 'react-intersection-observer';
-import { getInternalSuggestions } from '@/lib/appwrite/api';
-import { getArtistDiscographySuggestions } from '@/lib/appwrite/spotify';
+import { getInternalSuggestions } from '@/lib/supabase/api';
+import { getArtistDiscographySuggestions } from '@/lib/integrations/spotify';
 import { useUserContext } from '@/lib/AuthContext';
 
 interface SuggestedAlbum {

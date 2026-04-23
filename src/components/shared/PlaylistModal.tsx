@@ -5,7 +5,7 @@ import {
     DialogHeader, 
     DialogTitle 
 } from "@/components/ui/dialog";
-import { getPlaylists, addItemToPlaylist } from "@/lib/appwrite/api";
+import { getPlaylists, addItemToPlaylist } from "@/lib/supabase/api";
 import { useUserContext } from "@/lib/AuthContext";
 import LoaderMusic from "./loaderMusic";
 import { Plus, Music } from "lucide-react";

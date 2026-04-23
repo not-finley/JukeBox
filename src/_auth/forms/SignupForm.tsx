@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form";
 import { SignupValidation } from "@/lib/validation";
 import { z } from "zod";
 import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
-import { createUserAccount } from "@/lib/appwrite/api";
+import { createUserAccount } from "@/lib/supabase/api";
 
 const SignupForm = () => {
   const { toast } = useToast();

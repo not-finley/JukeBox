@@ -1,7 +1,7 @@
 // import ReviewItemLibrary from "@/components/ReviewItemLibrary";
 // import LoaderMusic from "@/components/shared/loaderMusic";
 // import { useUserContext } from "@/lib/AuthContext";
-// import { getReviewed } from "@/lib/appwrite/api";
+// import { getReviewed } from "@/lib/supabase/api";
 // import { SongReview } from "@/types";
 // import { useEffect, useState } from "react";
 

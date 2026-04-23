@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImagePlus, X } from "lucide-react";
-import { processPlaylistCover, createPlaylist } from "@/lib/appwrite/api";
+import { processPlaylistCover, createPlaylist } from "@/lib/supabase/api";
 import { useUserContext } from "@/lib/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 

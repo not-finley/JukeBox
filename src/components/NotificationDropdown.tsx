@@ -1,6 +1,6 @@
 import { Bell } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getNotifications, timeAgo } from "@/lib/appwrite/api";
+import { getNotifications, timeAgo } from "@/lib/supabase/api";
 import { supabase } from "@/lib/supabaseClient";
 
 

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Activity, ISearchUser } from "@/types";
 import { useUserContext } from "@/lib/AuthContext";
-import { addFollow, getFollowerSuggestions, getRecentFollowedActivities, timeAgo } from "@/lib/appwrite/api";
+import { addFollow, getFollowerSuggestions, getRecentFollowedActivities, timeAgo } from "@/lib/supabase/api";
 import SuggestionsList from "@/components/SuggestionsList";
 
 const PAGE_SIZE = 10;
