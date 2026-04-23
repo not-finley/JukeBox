@@ -9,6 +9,23 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png" />
     <meta name="theme-color" content="#000000">
+    <script>
+      (function () {
+        try {
+          var k = "jukeboxd-theme";
+          var t = localStorage.getItem(k);
+          if (t !== "grey" && t !== "light" && t !== "dark") t = "dark";
+          document.documentElement.dataset.theme = t;
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) {
+            m.setAttribute(
+              "content",
+              t === "light" ? "#f4f4f5" : t === "grey" ? "#18181b" : "#000000"
+            );
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Primary SEO Meta Tags -->
     <title>JukeBoxd – Discover, Track & Share Music You Love</title>

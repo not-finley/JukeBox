@@ -72,7 +72,7 @@ const Suggestions = ({ currentAlbumId, artistId }: { currentAlbumId: string; art
             {suggestions.map((album) => (
                 <Link to={`/album/${album.id}`} key={album.id} className="relative group hover:scale-105 transition-all">
                     {album.label && (
-                        <span className="absolute -top-3 left-2 z-10 bg-emerald-600 text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full shadow-lg">
+                        <span className="absolute -top-3 left-2 z-10 bg-emerald-600 text-white text-[10px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full shadow-lg">
                             {album.label}
                         </span>
                     )}

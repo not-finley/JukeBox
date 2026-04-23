@@ -1,17 +1,38 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUserContext, } from "@/lib/AuthContext";
-import { ChevronLeft, User, Lock, LogOut, Moon, X, HelpCircle} from "lucide-react";
+import { useTheme, type AppTheme } from "@/context/ThemeContext";
+import {
+    ChevronLeft,
+    User,
+    Lock,
+    LogOut,
+    Moon,
+    Sun,
+    CircleDot,
+    X,
+    HelpCircle,
+    Check,
+    type LucideIcon,
+} from "lucide-react";
 import { useSignOutAccount } from '@/lib/react-query/queriesAndMutations';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { updateUsername } from "@/lib/supabase/api";
 import SupportModal from "@/components/shared/SupportModal";
 
+const themeOptions: { id: AppTheme; label: string; hint: string; icon: LucideIcon }[] = [
+    { id: "dark", label: "Dark", hint: "True black backgrounds", icon: Moon },
+    { id: "grey", label: "Grey", hint: "Softer zinc surfaces", icon: CircleDot },
+    { id: "light", label: "Light", hint: "Bright surfaces & dark text", icon: Sun },
+];
+
 const SettingsPage = () => {
     const { user, setUser } = useUserContext();
+    const { theme, setTheme } = useTheme();
     const { mutate: signOut } = useSignOutAccount();
     const [modalType, setModalType] = useState<"username" | "password"| null>(null);
+    const [appearanceOpen, setAppearanceOpen] = useState(false);
     const [isSupportOpen, setIsSupportOpen] = useState(false);
     const [newUsername, setNewUsername] = useState(user.username);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -78,7 +99,7 @@ const SettingsPage = () => {
     }
 
     return (
-        <div className="common-container bg-black min-h-screen w-full text-gray-100 p-6">
+        <div className="common-container bg-dark-1 min-h-screen w-full text-gray-100 p-6">
             <div className="max-w-2xl mx-auto w-full">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-10">
@@ -129,7 +150,20 @@ const SettingsPage = () => {
                     <section>
                         <h2 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 px-2">Experience</h2>
                         <div className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden">
-                            <SettingsItem icon={<Moon size={18}/>} label="Appearance" description="Dark mode (Lighter Coming Soon)" />
+                            <div onClick={() => setAppearanceOpen(true)}>
+                                <SettingsItem
+                                    icon={<Moon size={18} />}
+                                    label="Appearance"
+                                    description={
+                                        theme === "dark"
+                                            ? "Dark"
+                                            : theme === "grey"
+                                              ? "Grey"
+                                              : "Light"
+                                    }
+                                    isLast
+                                />
+                            </div>
                             {/* <SettingsItem icon={<Shield size={18}/>} label="Privacy" description="Control who sees your listens" isLast /> */}
                         </div>
                     </section>
@@ -170,7 +204,7 @@ const SettingsPage = () => {
                                     type="text"
                                     value={newUsername}
                                     onChange={(e) => setNewUsername(e.target.value)}
-                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-emerald-500 outline-none"
+                                    className="w-full bg-dark-1 border border-gray-800 rounded-lg p-3 text-white focus:border-emerald-500 outline-none"
                                 />
                                 <button onClick={handleUsernameUpdate} disabled={isUpdating} className="w-full bg-emerald-500 text-black font-bold py-3 rounded-lg hover:bg-emerald-400">
                                     {isUpdating ? "Saving..." : "Save Username"}
@@ -194,6 +228,56 @@ const SettingsPage = () => {
                 isOpen={isSupportOpen} 
                 onClose={() => setIsSupportOpen(false)} 
             />
+
+            {appearanceOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-gray-900 border border-gray-800 w-full max-w-md rounded-2xl p-6 shadow-2xl">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold">Appearance</h3>
+                            <button
+                                type="button"
+                                onClick={() => setAppearanceOpen(false)}
+                                className="text-gray-500 hover:text-white transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Choose how JukeBoxd looks on this device.
+                        </p>
+                        <div className="rounded-xl border border-gray-800 overflow-hidden divide-y divide-gray-800">
+                            {themeOptions.map((opt) => {
+                                const Icon = opt.icon;
+                                const active = theme === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setTheme(opt.id);
+                                            setAppearanceOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-4 p-4 text-left transition-colors hover:bg-gray-800/50 ${
+                                            active ? "bg-emerald-500/10" : ""
+                                        }`}
+                                    >
+                                        <div className="text-emerald-500 shrink-0">
+                                            <Icon size={20} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-sm">{opt.label}</p>
+                                            <p className="text-xs text-gray-500">{opt.hint}</p>
+                                        </div>
+                                        {active && (
+                                            <Check className="text-emerald-500 shrink-0" size={20} />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -290,7 +290,7 @@ const Album = () => {
 
                         <div className="flex flex-col-reverse lg:flex-row">
                             {/* Tracks */}
-                            <section className="bg-black px-4 py-12 lg:w-3/5">
+                            <section className="bg-dark-1 px-4 py-12 lg:w-3/5">
                                 <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Tracks</h2>
                                 <ul className="divide-y divide-gray-800">
                                     {album.tracks.map((track, index) => {
@@ -384,7 +384,7 @@ const Album = () => {
                                 </ul>
                             </section>
                             {/* Ratings + Actions */}
-                            <section className="bg-black px-4 py-12 lg:w-2/5 flex flex-col items-center justify-start">
+                            <section className="bg-dark-1 px-4 py-12 lg:w-2/5 flex flex-col items-center justify-start">
                                 {/* Ratings Summary */}
                                 <div className="w-full flex items-center justify-between mb-6">
                                     <p className="text-2xl font-bold text-white">Ratings</p>
@@ -502,7 +502,7 @@ const Album = () => {
                                 artistId={album.artists[0]?.artist_id || ""} 
                             />
                         </div>
-                        <section className=" bg-black px-4 py-12">
+                        <section className=" bg-dark-1 px-4 py-12">
                             <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Reviews</h2>
 
                             {album?.reviews.length == 0 ? (<p className="text-center text-gray-300">No reviews yet - be the first to start the conversation!</p>) : ''}

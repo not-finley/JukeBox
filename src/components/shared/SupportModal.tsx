@@ -70,7 +70,7 @@ const SupportModal = ({ isOpen, onClose }: SupportModalProps) => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex gap-2 p-1 bg-black border border-gray-800 rounded-xl">
+            <div className="flex gap-2 p-1 bg-dark-1 border border-gray-800 rounded-xl">
                 <button 
                 type="button"
                 onClick={() => setSupportType("question")}
@@ -91,7 +91,7 @@ const SupportModal = ({ isOpen, onClose }: SupportModalProps) => {
                 placeholder={supportType === "bug" ? "What's broken? (e.g. 'The play button isn't working on this album')" : "How can we help?"}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-emerald-500 outline-none h-32 resize-none"
+                className="w-full bg-dark-1 border border-gray-800 rounded-lg p-3 text-white focus:border-emerald-500 outline-none h-32 resize-none"
             />
             <button 
                 type="submit" 

@@ -242,7 +242,7 @@ const Search = () => {
 
             <Button 
               onClick={() => performSearch(searchQuery)} 
-              className="bg-emerald-600 hover:bg-emerald-500 rounded-lg h-9 px-4 shrink-0 text-xs font-bold uppercase tracking-wider ml-1"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg h-9 px-4 shrink-0 text-xs font-bold uppercase tracking-wider ml-1"
             >
               Go
             </Button>

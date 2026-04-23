@@ -7,17 +7,20 @@ import AuthProvider from '@/lib/AuthContext';
 import { QueryProvider } from './lib/react-query/QueryProvider';
 import { Analytics } from "@vercel/analytics/react"
 import { PlayerProvider } from './context/PlayerContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
         <QueryProvider>
+            <ThemeProvider>
             <AuthProvider>
                 <Analytics/>
                     <PlayerProvider>
                         <App/>
                     </PlayerProvider>
             </AuthProvider>
+            </ThemeProvider>
         </QueryProvider>
     </BrowserRouter>
 )
