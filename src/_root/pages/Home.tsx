@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Library, Search, TrendingUp } from "lucide-react";
+import { ChevronDown, Library, Search, TrendingUp } from "lucide-react";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Activity, AlbumActivity, ISearchUser, SongActivity } from "@/types";
 import { useUserContext } from "@/lib/AuthContext";
@@ -19,65 +19,17 @@ import SuggestionsList from "@/components/SuggestionsList";
 const PAGE_SIZE = 10;
 /** Raw rows per RPC page. Smaller batches re-aggregate faster; card count can still change when jukes merge across batches. */
 const RPC_BATCH = 48;
-/** When a tab filter is active, stop loading more after this many consecutive RPC batches that add no new matching cards (avoids scanning the whole history for rare types). */
-const FILTER_LOAD_STALL_BATCHES = 2;
 
 const followerCacheKey = (accountId: string) => `follower_suggestions_${accountId}`;
-
-/** Feed cards that include at least one review (standalone or inside a juke). */
-function activityHasReview(a: Activity): boolean {
-  if (a.type === "review") return true;
-  if (a.type !== "grouped") return false;
-  if (a.groupedActivities?.some((g) => g.type === "review")) return true;
-  // Album-level review used as juke headline keeps review text before type becomes "grouped"
-  return Boolean(a.text?.trim());
-}
-
-/** Feed cards that include at least one rating (standalone, headline, or child). */
-function activityHasRating(a: Activity): boolean {
-  if (a.type === "rating") return true;
-  if (a.type !== "grouped") return false;
-  const head = a.rating != null && Number(a.rating) > 0;
-  if (head) return true;
-  return (
-    a.groupedActivities?.some(
-      (g) => g.type === "rating" || (g.rating != null && Number(g.rating) > 0)
-    ) ?? false
-  );
-}
-
-/** Feed cards that include at least one listen (standalone or inside a juke). */
-function activityHasListen(a: Activity): boolean {
-  if (a.type === "listen") return true;
-  if (a.type !== "grouped") return false;
-  return a.groupedActivities?.some((g) => g.type === "listen") ?? false;
-}
-
-function activityIsJuke(a: Activity): boolean {
-  return a.type === "grouped" && a.isAggregated;
-}
-
-type HomeFeedFilter = "all" | "review" | "rating" | "listen" | "juked";
-
-function activityMatchesFilter(filter: HomeFeedFilter, a: Activity): boolean {
-  if (filter === "all") return true;
-  if (filter === "review") return activityHasReview(a);
-  if (filter === "rating") return activityHasRating(a);
-  if (filter === "listen") return activityHasListen(a);
-  return activityIsJuke(a);
-}
 
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useUserContext();
   const [activityFeed, setActivityFeed] = useState<Activity[]>([]);
-  const [filteredFeed, setFilteredFeed] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingFollowerSuggestions, setLoadingFollowerSuggestions] = useState(true);
   const [hasMore, setHasMore] = useState(true);
-  const [filterCapped, setFilterCapped] = useState(false);
-  const [filter, setFilter] = useState<HomeFeedFilter>("all");
   const [followerSuggestions, setFollowerSuggestions] = useState<ISearchUser[]>([]);
   const [suggestionsError, setSuggestionsError] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
@@ -85,6 +37,7 @@ const Home = () => {
   const [trendingAlbums, setTrendingAlbums] = useState<AlbumActivity[]>([]);
   const [trendingSongs, setTrendingSongs] = useState<SongActivity[]>([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
+  const [trendingOpen, setTrendingOpen] = useState(true);
 
   const offsetRef = useRef(0);
   const rpcCursorRef = useRef<{ ts: string; key: string } | null>(null);
@@ -96,17 +49,6 @@ const Home = () => {
   useEffect(() => {
     hasMoreRef.current = hasMore;
   }, [hasMore]);
-
-  const filterRef = useRef<HomeFeedFilter>(filter);
-  useEffect(() => {
-    filterRef.current = filter;
-  }, [filter]);
-
-  /** Matched card count for the active filter after the last successful RPC aggregate (not used when filter is All). */
-  const lastFilterMatchCountRef = useRef(-1);
-  /** Consecutive load-more RPC batches that added raw rows but did not increase the filtered match count. */
-  const filterStallBatchesRef = useRef(0);
-  const prevFilterForResetRef = useRef<HomeFeedFilter | null>(null);
 
   const handleFollow = async (userId: string) => {
     if (!user?.accountId) return;
@@ -146,9 +88,6 @@ const Home = () => {
           if (batch !== null) {
             if (initial) {
               rpcRawAccumulatedRef.current = batch.rawActivities;
-              filterStallBatchesRef.current = 0;
-              lastFilterMatchCountRef.current = -1;
-              setFilterCapped(false);
             } else {
               rpcRawAccumulatedRef.current = [...rpcRawAccumulatedRef.current, ...batch.rawActivities];
             }
@@ -156,36 +95,7 @@ const Home = () => {
 
             const aggregated = aggregateFeedActivities(rpcRawAccumulatedRef.current);
             setActivityFeed(aggregated);
-
-            const activeFilter = filterRef.current;
-            const moreFromServer = batch.nextCursor !== null;
-
-            if (activeFilter === "all") {
-              setHasMore(moreFromServer);
-              setFilterCapped(false);
-            } else {
-              const matched = aggregated.filter((a) => activityMatchesFilter(activeFilter, a)).length;
-              if (initial) {
-                lastFilterMatchCountRef.current = matched;
-                filterStallBatchesRef.current = 0;
-                setFilterCapped(false);
-                setHasMore(moreFromServer);
-              } else {
-                const prev = lastFilterMatchCountRef.current;
-                const addedRaw = batch.rawActivities.length > 0;
-                if (matched > prev) {
-                  filterStallBatchesRef.current = 0;
-                } else if (matched === prev && addedRaw) {
-                  filterStallBatchesRef.current += 1;
-                } else if (matched < prev) {
-                  filterStallBatchesRef.current = 0;
-                }
-                lastFilterMatchCountRef.current = matched;
-                const capped = filterStallBatchesRef.current >= FILTER_LOAD_STALL_BATCHES;
-                setFilterCapped(capped);
-                setHasMore(moreFromServer && !capped);
-              }
-            }
+            setHasMore(batch.nextCursor !== null);
             handled = true;
           } else if (!initial) {
             setFeedError("Could not load more.");
@@ -279,32 +189,8 @@ const Home = () => {
     setActivityFeed([]);
     setHasMore(true);
     setFeedError(null);
-    setFilterCapped(false);
-    filterStallBatchesRef.current = 0;
-    lastFilterMatchCountRef.current = -1;
-    prevFilterForResetRef.current = null;
     fetchFeed(true);
   }, [user?.accountId, fetchFeed]);
-
-  useEffect(() => {
-    if (prevFilterForResetRef.current === filter) return;
-    prevFilterForResetRef.current = filter;
-
-    filterStallBatchesRef.current = 0;
-    setFilterCapped(false);
-
-    if (filter === "all") {
-      lastFilterMatchCountRef.current = -1;
-    } else {
-      lastFilterMatchCountRef.current = activityFeed.filter((a) =>
-        activityMatchesFilter(filter, a)
-      ).length;
-    }
-
-    if (!useLegacyFeedRef.current && rpcCursorRef.current !== null) {
-      setHasMore(true);
-    }
-  }, [filter, activityFeed]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -323,28 +209,6 @@ const Home = () => {
     return () => observer.disconnect();
   }, [activityFeed, fetchFeed]);
 
-  useEffect(() => {
-    if (filter === "all") {
-      setFilteredFeed(activityFeed);
-      return;
-    }
-    if (filter === "review") {
-      setFilteredFeed(activityFeed.filter(activityHasReview));
-      return;
-    }
-    if (filter === "rating") {
-      setFilteredFeed(activityFeed.filter(activityHasRating));
-      return;
-    }
-    if (filter === "listen") {
-      setFilteredFeed(activityFeed.filter(activityHasListen));
-      return;
-    }
-    if (filter === "juked") {
-      setFilteredFeed(activityFeed.filter(activityIsJuke));
-    }
-  }, [filter, activityFeed]);
-
   const activityTypeToPastTense = (type: string) => {
     switch (type) {
       case "rating":
@@ -361,12 +225,8 @@ const Home = () => {
     rpcCursorRef.current = null;
     rpcRawAccumulatedRef.current = [];
     useLegacyFeedRef.current = false;
-    prevFilterForResetRef.current = null;
     setHasMore(true);
     setFeedError(null);
-    setFilterCapped(false);
-    filterStallBatchesRef.current = 0;
-    lastFilterMatchCountRef.current = -1;
     fetchFeed(true);
   };
 
@@ -414,86 +274,95 @@ const Home = () => {
     );
   }
 
-  const filterEmpty =
-    filteredFeed.length === 0 &&
-    activityFeed.length > 0 &&
-    filter !== "all";
-
-  const filterEmptyLabel =
-    filter === "review"
-      ? "reviews"
-      : filter === "rating"
-        ? "ratings"
-        : filter === "listen"
-          ? "listens"
-          : filter === "juked"
-            ? "juked sessions"
-            : "items";
-
   const trendingBlock = (
-    <div className="p-4 rounded-xl border border-gray-800 bg-gray-900/40">
-      <div className="flex items-center justify-between mb-3 gap-2">
-        <h2 className="text-lg font-semibold">Trending now</h2>
-        <Link to="/trending" className="text-xs text-emerald-400 hover:text-emerald-300 shrink-0">
+    <div className="rounded-xl border border-gray-800 bg-gray-900/40 overflow-hidden">
+      <div className="flex items-center gap-2 p-4 pb-3">
+        <button
+          type="button"
+          onClick={() => setTrendingOpen((o) => !o)}
+          className="flex flex-1 min-w-0 items-center gap-2 text-left rounded-lg -m-1 p-1 hover:bg-gray-800/60 transition-colors"
+          aria-expanded={trendingOpen}
+          aria-controls="home-trending-panel"
+          id="home-trending-toggle"
+        >
+          <ChevronDown
+            className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${
+              trendingOpen ? "rotate-180" : ""
+            }`}
+            aria-hidden
+          />
+          <h2 className="text-lg font-semibold text-white truncate">Trending now</h2>
+        </button>
+        <Link
+          to="/trending"
+          className="text-xs text-emerald-400 hover:text-emerald-300 shrink-0 py-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           See all
         </Link>
       </div>
-      {trendingLoading ? (
-        <LoaderMusic />
-      ) : (
-        <div className="space-y-5">
-          {trendingAlbums.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Albums</p>
-              <div className="grid grid-cols-3 gap-2">
-                {trendingAlbums.map((a) => (
-                  <Link
-                    key={a.albumId}
-                    to={`/album/${a.albumId}`}
-                    className="group block rounded-lg overflow-hidden border border-gray-800 bg-gray-950/50 hover:border-emerald-600/50 transition"
-                  >
-                    <div className="aspect-square relative">
-                      <img
-                        src={a.albumCoverUrl || "/assets/icons/empty-state.svg"}
-                        alt={a.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <p className="text-[11px] text-gray-300 line-clamp-2 p-1.5 group-hover:text-white">
-                      {a.title}
-                    </p>
-                  </Link>
-                ))}
-              </div>
+      {trendingOpen && (
+        <div className="px-4 pb-4" id="home-trending-panel" role="region" aria-labelledby="home-trending-toggle">
+          {trendingLoading ? (
+            <div className="flex justify-center py-6">
+              <LoaderMusic />
             </div>
-          )}
-          {trendingSongs.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Songs</p>
-              <div className="grid grid-cols-3 gap-2">
-                {trendingSongs.map((s) => (
-                  <Link
-                    key={s.songId}
-                    to={`/song/${s.songId}`}
-                    className="group block rounded-lg overflow-hidden border border-gray-800 bg-gray-950/50 hover:border-emerald-600/50 transition"
-                  >
-                    <div className="aspect-square relative">
-                      <img
-                        src={s.albumCoverUrl || "/assets/icons/empty-state.svg"}
-                        alt={s.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <p className="text-[11px] text-gray-300 line-clamp-2 p-1.5 group-hover:text-white">
-                      {s.title}
-                    </p>
-                  </Link>
-                ))}
-              </div>
+          ) : (
+            <div className="space-y-5">
+              {trendingAlbums.length > 0 && (
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Albums</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {trendingAlbums.map((a) => (
+                      <Link
+                        key={a.albumId}
+                        to={`/album/${a.albumId}`}
+                        className="group block rounded-lg overflow-hidden border border-gray-800 bg-gray-950/50 hover:border-emerald-600/50 transition"
+                      >
+                        <div className="aspect-square relative">
+                          <img
+                            src={a.albumCoverUrl || "/assets/icons/empty-state.svg"}
+                            alt={a.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-[11px] text-gray-300 line-clamp-2 p-1.5 group-hover:text-white">
+                          {a.title}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {trendingSongs.length > 0 && (
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Songs</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {trendingSongs.map((s) => (
+                      <Link
+                        key={s.songId}
+                        to={`/song/${s.songId}`}
+                        className="group block rounded-lg overflow-hidden border border-gray-800 bg-gray-950/50 hover:border-emerald-600/50 transition"
+                      >
+                        <div className="aspect-square relative">
+                          <img
+                            src={s.albumCoverUrl || "/assets/icons/empty-state.svg"}
+                            alt={s.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-[11px] text-gray-300 line-clamp-2 p-1.5 group-hover:text-white">
+                          {s.title}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!trendingLoading && trendingAlbums.length === 0 && trendingSongs.length === 0 && (
+                <p className="text-gray-600 text-sm">No trending items yet.</p>
+              )}
             </div>
-          )}
-          {!trendingLoading && trendingAlbums.length === 0 && trendingSongs.length === 0 && (
-            <p className="text-gray-600 text-sm">No trending items yet.</p>
           )}
         </div>
       )}
@@ -549,45 +418,6 @@ const Home = () => {
             </div>
           )}
 
-          <div className="flex gap-3 mb-4 max-w-2xl overflow-x-auto no-scrollbar py-2 px-4">
-            {(
-              [
-                { key: "all" as const, label: "All" },
-                { key: "review" as const, label: "Reviews" },
-                { key: "rating" as const, label: "Ratings" },
-                { key: "listen" as const, label: "Listens" },
-                { key: "juked" as const, label: "Juked" },
-              ] satisfies readonly { key: HomeFeedFilter; label: string }[]
-            ).map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setFilter(tab.key)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  filter === tab.key
-                    ? "bg-emerald-600 text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {filter !== "all" && filterCapped && (
-            <div className="max-w-2xl px-4 mb-3 text-sm text-gray-400 rounded-lg border border-gray-800 bg-gray-900/50 py-3">
-              No more matches for this tab in the activity we have loaded. Switch to{" "}
-              <button
-                type="button"
-                className="text-emerald-400 hover:text-emerald-300 font-medium"
-                onClick={() => setFilter("all")}
-              >
-                All
-              </button>{" "}
-              and scroll to load older events, then open this tab again.
-            </div>
-          )}
-
           <div className="flex max-w-2xl xl:hidden mb-6 px-4 flex-col gap-3">
             <SuggestionsList
               suggestions={followerSuggestions}
@@ -600,15 +430,8 @@ const Home = () => {
             {trendingBlock}
           </div>
 
-          {filterEmpty && (
-            <div className="max-w-2xl px-4 mb-4 rounded-xl border border-gray-800 bg-gray-900/40 py-6 text-center text-gray-400 text-sm">
-              No {filterEmptyLabel} in your current feed. Try another tab or switch to All and load
-              older activity.
-            </div>
-          )}
-
           <div className="flex flex-col gap-6 w-full max-w-2xl mt-2 px-4 sm:px-0">
-            {filteredFeed.map((activity) => {
+            {activityFeed.map((activity) => {
               const isAggregated = (activity as Activity & { isAggregated?: boolean }).isAggregated;
               const isExpanded = isAggregated && expandedGroup === activity.id;
               const groupedActivities =
@@ -824,13 +647,7 @@ const Home = () => {
             })}
             <div ref={sentinelRef} className="h-32 flex justify-center items-center">
               {loadingMore && <LoaderMusic />}
-              {!hasMore && (
-                <p className="text-gray-500 text-sm mt-2">
-                  {filter !== "all" && filterCapped
-                    ? "End of loaded history for this tab."
-                    : "No more activity"}
-                </p>
-              )}
+              {!hasMore && <p className="text-gray-500 text-sm mt-2">No more activity</p>}
             </div>
           </div>
         </div>
