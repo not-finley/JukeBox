@@ -1,12 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUserContext, } from "@/lib/AuthContext";
-import { ChevronLeft, User, Lock, LogOut, Moon, X, HelpCircle} from "lucide-react";
+import { ChevronLeft, User, Lock, LogOut, Moon, X, HelpCircle, Trash2 } from "lucide-react";
 import { useSignOutAccount } from '@/lib/react-query/queriesAndMutations';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
-import { updateUsername } from "@/lib/supabase/api";
+import { updateUsername, deleteUserAccount } from "@/lib/supabase/api";
 import SupportModal from "@/components/shared/SupportModal";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const SettingsPage = () => {
     const { user, setUser } = useUserContext();
@@ -16,6 +26,8 @@ const SettingsPage = () => {
     const [newUsername, setNewUsername] = useState(user.username);
     const [isUpdating, setIsUpdating] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const { toast } = useToast();
     const redirectUrl = "https://jukeboxd.ca/reset-password";
 
@@ -77,6 +89,29 @@ const SettingsPage = () => {
         }
     }
 
+    const handleDeleteAccount = async () => {
+        setIsDeletingAccount(true);
+        try {
+            const result = await deleteUserAccount(user.accountId);
+            if (!result.ok) {
+                toast({
+                    title: "Could not delete account",
+                    description: result.error,
+                    variant: "destructive",
+                });
+                return;
+            }
+            toast({
+                title: "Account deleted",
+                description: "Your reviews, ratings, listens, and social data have been removed.",
+            });
+            setDeleteDialogOpen(false);
+            signOut();
+        } finally {
+            setIsDeletingAccount(false);
+        }
+    };
+
     return (
         <div className="common-container bg-black min-h-screen w-full text-gray-100 p-6">
             <div className="max-w-2xl mx-auto w-full">
@@ -135,19 +170,26 @@ const SettingsPage = () => {
                     </section>
 
                     {/* Dangerous Zone */}
-                    <div className="space-y-2">
-                        <button 
-                            onClick={() => signOut()}
-                            className="w-full flex items-center gap-3 p-4 text-gray-400 hover:bg-gray-900 transition-colors rounded-2xl font-bold"
-                        >
-                            <LogOut size={18} />
-                            Logout
-                        </button>
-                        {/* <button className="w-full flex items-center gap-3 p-4 text-red-500 hover:bg-red-500/10 transition-colors rounded-2xl font-bold">
-                            <Trash size={18} />
-                            Delete your account
-                        </button> */}
-                    </div>
+                    <section>
+                        <h2 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 px-2">Danger zone</h2>
+                        <div className="space-y-2">
+                            <button
+                                type="button"
+                                onClick={() => setDeleteDialogOpen(true)}
+                                className="w-full flex items-center gap-3 p-4 text-red-500 hover:bg-red-500/10 transition-colors rounded-2xl font-bold border border-red-500/20"
+                            >
+                                <Trash2 size={18} />
+                                Delete account
+                            </button>
+                            <button 
+                                onClick={() => signOut()}
+                                className="w-full flex items-center gap-3 p-4 text-gray-400 hover:bg-gray-900 transition-colors rounded-2xl font-bold"
+                            >
+                                <LogOut size={18} />
+                                Logout
+                            </button>
+                        </div>
+                    </section>
                 </div>
             </div>
 
@@ -194,6 +236,41 @@ const SettingsPage = () => {
                 isOpen={isSupportOpen} 
                 onClose={() => setIsSupportOpen(false)} 
             />
+
+            <AlertDialog
+                open={deleteDialogOpen}
+                onOpenChange={(open) => {
+                    if (!isDeletingAccount) setDeleteDialogOpen(open);
+                }}
+            >
+                <AlertDialogContent className="bg-gray-900 border border-gray-800 text-gray-100 max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-xl font-bold text-white">Delete your account?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-400 text-sm leading-relaxed">
+                            This permanently removes your profile, reviews, ratings, listen history, playlists, and
+                            follow relationships. You will be signed out. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2 sm:gap-0">
+                        <AlertDialogCancel
+                            disabled={isDeletingAccount}
+                            className="bg-transparent border-gray-700 text-gray-200 hover:bg-gray-800 hover:text-white"
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            disabled={isDeletingAccount}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                void handleDeleteAccount();
+                            }}
+                            className="bg-red-600 text-white hover:bg-red-700 focus:ring-red-600"
+                        >
+                            {isDeletingAccount ? "Deleting…" : "Delete account"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

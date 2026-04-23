@@ -11,3 +11,4 @@ export * from "./activities";
 export * from "./trending";
 export * from "./playlists";
 export * from "./suggestions";
+export * from "./accountDeletion";
