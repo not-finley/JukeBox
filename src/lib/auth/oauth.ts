@@ -22,11 +22,9 @@ export function takePostAuthRedirect(): string {
   return '/';
 }
 
-export type SocialProvider = 'google' | 'apple' | 'spotify';
-
-export async function signInWithOAuthProvider(provider: SocialProvider) {
+export async function signInWithGoogleOAuth() {
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
+    provider: "google",
     options: {
       redirectTo: getOAuthRedirectUrl(),
     },
