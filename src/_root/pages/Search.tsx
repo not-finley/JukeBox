@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { searchUsers } from "@/lib/appwrite/api";
-import { getSpotifyToken, searchSpotify, spotifySuggestions } from "@/lib/appwrite/spotify";
+import { searchUsers } from "@/lib/supabase/api";
+import { getSpotifyToken, searchSpotify, spotifySuggestions } from "@/lib/integrations/spotify";
 import { Loader2, X } from "lucide-react";
 
 const FilterOptions = ["All", "Songs", "Albums", "Artists", "Users"] as const;

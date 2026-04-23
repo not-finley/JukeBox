@@ -355,8 +355,6 @@ export async function SpotifyArtistById(artistId: string, token: string) {
         const data = await response.json();
         const albumsData = await albumsResponse.json();
 
-        console.log(albumsData.items)
-
         if (data) {
             const artist = data;
 

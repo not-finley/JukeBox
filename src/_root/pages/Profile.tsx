@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useUserContext } from "@/lib/AuthContext";
 import { Link, useParams } from "react-router-dom";
-import { getListened, getRated, getReviewed, getUserById, updateUser, addFollow, removeFollow, checkIfFollowing, getFollowersList } from "@/lib/appwrite/api";
+import { getListened, getRated, getReviewed, getUserById, updateUser, addFollow, removeFollow, checkIfFollowing, getFollowersList } from "@/lib/supabase/api";
 import { Listened, RatingGeneral, Review } from "@/types";
 import { IUser } from "@/types";
 import LoaderMusic from "@/components/shared/loaderMusic";

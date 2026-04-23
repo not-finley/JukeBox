@@ -1,10 +1,10 @@
 import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
-import { addListenedSong, addUpdateRatingSong, addSongToDatabase, getAllRatingsOfaSong, getRatingSong, getSongDetailsById, hasListenedSong, removeListenedSong, deleteRaitingSong } from "@/lib/appwrite/api";
+import { addListenedSong, addUpdateRatingSong, addSongToDatabase, getAllRatingsOfSong, getRatingSong, getSongDetailsById, hasListenedSong, removeListenedSong, deleteRatingSong } from "@/lib/supabase/api";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import LoaderMusic from "@/components/shared/loaderMusic";
-import { getSpotifyToken, SpotifyTrackById } from "@/lib/appwrite/spotify";
+import { getSpotifyToken, SpotifyTrackById } from "@/lib/integrations/spotify";
 import { useUserContext } from "@/lib/AuthContext";
 import ReviewItem from "@/components/ReviewItem";
 import { BarChart, Bar, XAxis } from 'recharts';
@@ -36,7 +36,7 @@ const SongDetailsSection = () => {
   const isCurrent = currentTrack?.songId === song?.songId;
 
   const fetchGlobalRaiting = async () => {
-    const { counts, average, total } = await getAllRatingsOfaSong(id || '');
+    const { counts, average, total } = await getAllRatingsOfSong(id || '');
 
     setGlobalRatings(counts);
     setGlobalAverage(average);
@@ -56,7 +56,7 @@ const SongDetailsSection = () => {
 
     if (finalValue === rating) {
       setRating(0);
-      await deleteRaitingSong(id ? id : '', user.accountId);
+      await deleteRatingSong(id ? id : '', user.accountId);
     } else {
       setRating(finalValue);
       await addUpdateRatingSong(id ? id : '', user.accountId, finalValue);

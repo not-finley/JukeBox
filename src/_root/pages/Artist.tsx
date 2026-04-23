@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { addUpdateArtist, getArtistDetailsById } from '@/lib/appwrite/api';
+import { addUpdateArtist, getArtistDetailsById } from '@/lib/supabase/api';
 import { ArtistDetails } from '@/types';
 import { Link, useParams } from 'react-router-dom';
-import { getSpotifyToken, SpotifyArtistById } from '@/lib/appwrite/spotify';
+import { getSpotifyToken, SpotifyArtistById } from '@/lib/integrations/spotify';
 import LoaderMusic from '@/components/shared/loaderMusic';
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 

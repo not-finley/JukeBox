@@ -1,6 +1,6 @@
 // import LoaderMusic from "@/components/shared/loaderMusic";
 // import { useUserContext } from "@/lib/AuthContext";
-// import { getRated} from "@/lib/appwrite/api";
+// import { getRated} from "@/lib/supabase/api";
 // import { Rating } from "@/types";
 // import { useEffect, useState } from "react";
 // import { Link } from "react-router-dom";

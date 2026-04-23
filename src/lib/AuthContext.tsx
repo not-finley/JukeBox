@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { IUser, IContextType } from '@/types';
 import LoaderMusic from '@/components/shared/loaderMusic';
-import { getProfileUrl } from './appwrite/api';
+import { getProfileUrl } from '@/lib/supabase/api';
 
 export const INITIAL_USER: IUser = {
   accountId: '',

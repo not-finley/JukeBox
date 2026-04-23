@@ -1,10 +1,10 @@
-import { addAlbumComplex, addListenedAlbum, addUpdateRatingAlbum, addUpdateRatingSong, deleteRaitingAlbum, deleteRaitingSong, getAlbumDetailsById, getAlbumTrackRatings, getAllRatingsOfAlbum, getRatingAlbum, hasListenedAlbum, removeListenedAlbum } from '@/lib/appwrite/api';
+import { addAlbumComplex, addListenedAlbum, addUpdateRatingAlbum, addUpdateRatingSong, deleteRatingAlbum, deleteRatingSong, getAlbumDetailsById, getAlbumTrackRatings, getAllRatingsOfAlbum, getRatingAlbum, hasListenedAlbum, removeListenedAlbum } from '@/lib/supabase/api';
 import { AlbumDetails, Track } from '@/types';
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
 import { BarChart, Bar, XAxis } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { getSpotifyToken, SpotifyAlbumById } from '@/lib/appwrite/spotify';
+import { getSpotifyToken, SpotifyAlbumById } from '@/lib/integrations/spotify';
 import LoaderMusic from '@/components/shared/loaderMusic';
 import { useUserContext } from '@/lib/AuthContext';
 import { FaSpotify } from "react-icons/fa";
@@ -67,7 +67,7 @@ const Album = () => {
 
         if (finalValue == rating) {
             setRating(0);
-            await deleteRaitingAlbum(id ? id : '', user.accountId)
+            await deleteRatingAlbum(id ? id : '', user.accountId)
         } else {
             setRating(finalValue);
             await addUpdateRatingAlbum(id ? id : '', user.accountId, finalValue);
@@ -104,7 +104,7 @@ const Album = () => {
         setSongRatings(newRatings);
 
         if (newValue === 0) {
-            await deleteRaitingSong(album?.tracks[trackIndex].songId || "", user.accountId);
+            await deleteRatingSong(album?.tracks[trackIndex].songId || "", user.accountId);
         } else {
             await addUpdateRatingSong(album?.tracks[trackIndex].songId || "", user.accountId, newValue);
         }

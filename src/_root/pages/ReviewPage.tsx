@@ -14,7 +14,7 @@ import {
   getReviewById,
   addCommentToReview,
   timeAgo,
-} from "@/lib/appwrite/api";
+} from "@/lib/supabase/api";
 import LoaderMusic from "@/components/shared/loaderMusic";
 import { Comment } from "@/types";
 import AuthModal from "@/components/shared/AuthModal";

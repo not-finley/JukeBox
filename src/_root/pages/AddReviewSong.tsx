@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useUserContext } from "@/lib/AuthContext";
-import { addReviewSong, getSongDetailsById } from "@/lib/appwrite/api";
+import { addReviewSong, getSongDetailsById } from "@/lib/supabase/api";
 import { SongDetails } from "@/types";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
