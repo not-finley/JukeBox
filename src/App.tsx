@@ -28,17 +28,15 @@ import TrendingAlbumsPage from './_root/pages/TrendingAlbumsPage';
 import TrendingReviewsPage from './_root/pages/TrendingReviewsPage';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import PrivacyPolicy from './_root/pages/PrivacyPolicy';
 
 const App = () => {
   useEffect(() => {
     const initializeApp = async () => {
-      try {
-      
+      if (Capacitor.isNativePlatform()) {
         await StatusBar.setStyle({ style: Style.Dark });
-        
         await StatusBar.setOverlaysWebView({ overlay: true });
-      } catch (error) {
-        console.log("Capacitor StatusBar not available in browser");
       }
     };
 
@@ -57,8 +55,10 @@ const App = () => {
               <Route path="/sign-in" element={<SigninForm />}/>
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
-              <Route path="/auth/callback" element={<AuthCallback />} />
             </Route>
+
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
 
             <Route element={<RootLayout />}>
               <Route path="/trending" element={<Songs />}/>

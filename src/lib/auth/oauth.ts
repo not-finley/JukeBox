@@ -12,14 +12,12 @@ const REDIRECT_STORAGE_KEY = 'jukebox_oauth_next';
 
 export function rememberPostAuthRedirect(path: string) {
   if (!path || path === AUTH_CALLBACK_PATH) return;
-  sessionStorage.setItem(REDIRECT_STORAGE_KEY, path);
+  localStorage.setItem(REDIRECT_STORAGE_KEY, path);
 }
-
 export function takePostAuthRedirect(): string {
-  const next = sessionStorage.getItem(REDIRECT_STORAGE_KEY);
-  sessionStorage.removeItem(REDIRECT_STORAGE_KEY);
-  if (next && next.startsWith('/') && !next.startsWith('//')) return next;
-  return '/';
+  const next = localStorage.getItem(REDIRECT_STORAGE_KEY);
+  localStorage.removeItem(REDIRECT_STORAGE_KEY);
+  return (next && next.startsWith('/') && !next.startsWith('//')) ? next : '/';
 }
 
 export async function signInWithGoogleOAuth() {
