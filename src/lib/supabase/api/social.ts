@@ -1,4 +1,4 @@
-import { IFollow } from "@/types";
+import { IFollow, ISearchUser } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import { getProfileUrl } from "./users";
 
@@ -146,15 +146,20 @@ export async function getFollowerSuggestions(userId: string) {
     );
     const avatarMap = Object.fromEntries(avatarPromises.map((a) => [a.id, a.avatar_url]));
 
-    const profilesWithAvatars = profiles.map((a) => ({
+    const profilesWithAvatars = (profiles || []).map((a) => ({
         ...a,
         id: a.user_id,
         avatar_url: avatarMap[a.user_id] || "/assets/default-avatar.png",
     }));
 
-    // merge counts with profiles
-    return suggestions.map((s: any) => ({
-        mutual_count: s.mutual_count,
-        ...profilesWithAvatars.find(p => p.user_id === s.suggested_user)
-    }));
+    const merged: ISearchUser[] = [];
+    for (const s of suggestions as { suggested_user: string; mutual_count: number }[]) {
+        const profile = profilesWithAvatars.find((p) => p.user_id === s.suggested_user);
+        if (!profile) continue;
+        merged.push({
+            mutual_count: s.mutual_count,
+            ...profile,
+        });
+    }
+    return merged;
 }
