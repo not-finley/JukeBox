@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import OAuthButtons from '@/components/shared/OAuthButtons'
+import { Mail } from 'lucide-react'
 
 const SelectAuth = () => {
     return (
@@ -7,38 +9,43 @@ const SelectAuth = () => {
             <h2 className="h3-bold md:h2-bold pt-5 sm:pt-8 text-center">
                 The pulse of your playlist
             </h2>
-            <p className="text-light-3 small-medium md:base-regular mt-2 text-center mb-10">
+            <p className="text-light-3 small-medium md:base-regular mt-2 text-center mb-8">
                 Review albums, track listens, and see what your friends are spinning.
             </p>
 
             <div className="flex flex-col gap-4 w-full">
-                {/* Primary Action: Sign In */}
-                <Link 
-                    to="/sign-in" 
-                    className="shad-button_primary py-6 flex-center rounded-lg font-semibold"
+                <OAuthButtons redirectAfterAuth="/" />
+
+                <div className="flex items-center my-1">
+                    <div className="h-[1px] flex-1 bg-gray-800"></div>
+                    <span className="px-3 text-xs text-gray-500 uppercase">or email</span>
+                    <div className="h-[1px] flex-1 bg-gray-800"></div>
+                </div>
+
+                <Link
+                    to="/sign-in"
+                    className="flex-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg border border-gray-700 transition font-semibold text-sm"
                 >
-                    Sign In
+                    <Mail className="h-4 w-4" aria-hidden />
+                    Sign in with email
                 </Link>
 
-                {/* Secondary Action: Sign Up */}
-                <Link 
-                    to="/sign-up" 
-                    className="bg-gray-800 hover:bg-gray-700 text-white py-3 flex-center rounded-lg border border-gray-700 transition"
+                <Link
+                    to="/sign-up"
+                    className="text-center text-emerald-400 hover:text-emerald-300 text-sm font-medium transition py-1"
                 >
-                    Create an Account
+                    Create an account with email
                 </Link>
 
-                {/* Divider */}
                 <div className="flex items-center my-2">
                     <div className="h-[1px] flex-1 bg-gray-800"></div>
                     <span className="px-3 text-xs text-gray-500 uppercase">or</span>
                     <div className="h-[1px] flex-1 bg-gray-800"></div>
                 </div>
 
-                {/* Preview Action: Continue without account */}
-                <Link 
-                    to="/trending" 
-                    className="text-emerald-400 hover:text-emerald-300 text-sm font-medium transition text-center py-2"
+                <Link
+                    to="/trending"
+                    className="text-light-3 hover:text-light-2 text-sm font-medium transition text-center py-2"
                 >
                     Continue as Guest (Preview)
                 </Link>

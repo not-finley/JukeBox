@@ -18,6 +18,7 @@ import ResetPasswordPage from './_auth/ResetPage';
 import ForgotPasswordPage from './_auth/ForgotPasswordPage';
 import SignedInLayout from './_root/SignedInLayout';
 import SelectAuth from './_auth/forms/SelectAuth';
+import AuthCallback from './_auth/AuthCallback';
 import PlaylistPage from './_root/pages/PlaylistPage';
 import CreatePlaylist from './_root/pages/CreatePlaylist';
 import NewProfile from './_root/pages/NewProfile';
@@ -56,6 +57,7 @@ const App = () => {
               <Route path="/sign-in" element={<SigninForm />}/>
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
+              <Route path="/auth/callback" element={<AuthCallback />} />
             </Route>
 
             <Route element={<RootLayout />}>

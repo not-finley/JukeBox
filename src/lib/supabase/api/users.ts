@@ -1,6 +1,74 @@
+import type { User } from "@supabase/supabase-js";
 import { INewUser, IUser, ISearchUser } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import { processProfileImage } from "./utils/images";
+
+function slugFromString(value: string): string {
+    const s = value
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .slice(0, 24);
+    return s || "user";
+}
+
+async function pickUniqueUsername(base: string): Promise<string> {
+    const slug = slugFromString(base);
+    for (let i = 0; i < 10; i++) {
+        const candidate =
+            i === 0 ? slug : `${slug}_${Math.random().toString(36).slice(2, 7)}`;
+        const { data } = await supabase
+            .from("users")
+            .select("user_id")
+            .eq("username", candidate)
+            .maybeSingle();
+        if (!data) return candidate.slice(0, 30);
+    }
+    return `${slug}_${Date.now().toString(36)}`.slice(0, 30);
+}
+
+/**
+ * Ensures a `users` row exists for the given auth user (email/password or OAuth).
+ */
+export async function ensureUserRowFromAuth(user: User): Promise<void> {
+    const { data: existing } = await supabase
+        .from("users")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+    if (existing) return;
+
+    const meta = user.user_metadata ?? {};
+    const email = user.email ?? "";
+    const name =
+        (typeof meta.full_name === "string" && meta.full_name.trim()) ||
+        (typeof meta.name === "string" && meta.name.trim()) ||
+        (typeof meta.user_name === "string" && meta.user_name.trim()) ||
+        (email ? email.split("@")[0] : "User");
+
+    const usernameBase =
+        (typeof meta.username === "string" && meta.username.trim()) ||
+        (typeof meta.preferred_username === "string" && meta.preferred_username.trim()) ||
+        (typeof meta.user_name === "string" && meta.user_name.trim()) ||
+        email.split("@")[0] ||
+        user.id.slice(0, 8);
+
+    const username = await pickUniqueUsername(usernameBase);
+
+    const { error } = await supabase.from("users").insert({
+        user_id: user.id,
+        name,
+        email: email || `${user.id}@oauth.placeholder`,
+        username,
+    });
+    if (error) throw error;
+
+    if (!meta.username || meta.username !== username) {
+        await supabase.auth.updateUser({
+            data: { name, username },
+        });
+    }
+}
 
 export const getProfileUrl = (userId: string): string => {
     if (!userId) return "/assets/icons/profile-placeholder.svg";

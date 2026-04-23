@@ -17,6 +17,7 @@ import { SignupValidation } from "@/lib/validation";
 import { z } from "zod";
 import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
 import { createUserAccount } from "@/lib/supabase/api";
+import OAuthButtons from "@/components/shared/OAuthButtons";
 
 const SignupForm = () => {
   const { toast } = useToast();
@@ -76,6 +77,16 @@ const SignupForm = () => {
         <p className="text-light-3 small-medium md:base-regular">
           Enter your details to start reviewing.
         </p>
+
+        <div className="w-full mt-6">
+          <OAuthButtons redirectAfterAuth={redirectTo} />
+        </div>
+
+        <div className="flex items-center gap-3 w-full mt-6">
+          <div className="h-px flex-1 bg-gray-800" />
+          <span className="text-xs uppercase text-gray-500">or sign up with email</span>
+          <div className="h-px flex-1 bg-gray-800" />
+        </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
           {["name", "username", "email", "password"].map((field) => (
