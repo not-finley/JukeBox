@@ -29,26 +29,17 @@ async function pickUniqueUsername(base: string): Promise<string> {
 
     return `${slug}_${Math.random().toString(36).slice(2, 5)}`.slice(0, 30);
 }
-function isUniqueViolation(err: { code?: string; message?: string }): boolean {
-    return err.code === "23505" || (err.message?.toLowerCase().includes("duplicate") ?? false);
-}
-
-async function userRowExists(userId: string): Promise<boolean> {
-    const { data } = await supabase
-        .from("users")
-        .select("user_id")
-        .eq("user_id", userId)
-        .maybeSingle();
-    return !!data;
-}
-
 /**
  * Ensures a `users` row exists for the given auth user (email/password or OAuth).
- * Safe to call on every session load: no-ops if the row already exists, and tolerates
- * concurrent inserts (OAuth callback + checkAuthUser) via post-error re-check.
  */
 export async function ensureUserRowFromAuth(user: User): Promise<void> {
-    if (await userRowExists(user.id)) return;
+    const { data: existing } = await supabase
+        .from("users")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+    
+    if (existing) return;
 
     const meta = user.user_metadata ?? {};
     const email = user.email ?? "";
@@ -68,41 +59,26 @@ export async function ensureUserRowFromAuth(user: User): Promise<void> {
         email.split("@")[0] ||
         "user";
 
-    let lastError: { message?: string; code?: string } | null = null;
+    const username = await pickUniqueUsername(usernameBase);
 
-    for (let attempt = 0; attempt < 5; attempt++) {
-        const username = await pickUniqueUsername(
-            attempt === 0 ? usernameBase : `${usernameBase}_${user.id.slice(0, 8)}_${attempt}`,
-        );
+    // 3. Insert into public.users
+    const { error } = await supabase.from("users").insert({
+        user_id: user.id,
+        name,
+        email: email || `${user.id}@oauth.placeholder`,
+        username,
+        avatar_url: meta.avatar_url || meta.picture || null, // Capture Google Profile Pic
+    });
 
-        const { error } = await supabase.from("users").insert({
-            user_id: user.id,
-            name,
-            email: email || `${user.id}@oauth.placeholder`,
-            username,
-            avatar_url: meta.avatar_url || meta.picture || null,
-        });
-
-        if (!error) {
-            await supabase.auth.updateUser({
-                data: { name, username },
-            });
-            return;
-        }
-
-        lastError = error;
-        if (await userRowExists(user.id)) return;
-
-        if (isUniqueViolation(error)) continue;
-
+    if (error) {
         console.error("Error creating user row:", error.message);
         throw error;
     }
 
-    if (lastError) {
-        console.error("Error creating user row after retries:", lastError.message);
-        throw lastError;
-    }
+    // 4. Sync metadata back to Auth for session consistency
+    await supabase.auth.updateUser({
+        data: { name, username },
+    });
 }
 
 export const getProfileUrl = (userId: string): string => {
