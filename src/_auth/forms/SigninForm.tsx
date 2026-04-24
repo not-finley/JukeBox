@@ -17,6 +17,7 @@ import { z } from "zod";
 import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import OAuthButtons from "@/components/shared/OAuthButtons";
 
 
 const SigninForm = () => {
@@ -66,6 +67,16 @@ const SigninForm = () => {
         <p className="text-light-3 small-medium md:base-regular">
           Welcome back! Please enter your details
         </p>
+
+        <div className="w-full mt-6">
+          <OAuthButtons redirectAfterAuth={redirectTo} />
+        </div>
+
+        <div className="flex items-center gap-3 w-full mt-6">
+          <div className="h-px flex-1 bg-gray-800" />
+          <span className="text-xs uppercase text-gray-500">or use email</span>
+          <div className="h-px flex-1 bg-gray-800" />
+        </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
           <FormField
