@@ -9,6 +9,7 @@ import { usePlayerContext } from '@/context/PlayerContext';
 import LoaderMusic from '@/components/shared/loaderMusic';
 
 
+
 const RootLayout = () => {
   const { isLoading } = useUserContext();
   const { currentTrack } = usePlayerContext();
@@ -27,7 +28,6 @@ const RootLayout = () => {
         <Outlet />
         {currentTrack && <PreviewPlayer/>}
       </section>
-
 
       <Bottombar />
     </div>

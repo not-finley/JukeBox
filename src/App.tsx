@@ -31,6 +31,7 @@ import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import PrivacyPolicy from './_root/pages/PrivacyPolicy';
 
+
 const App = () => {
   useEffect(() => {
     const initializeApp = async () => {
