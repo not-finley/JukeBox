@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { IUser, IContextType } from '@/types';
 import { AuthOverlaySkeleton } from '@/components/shared/PageSkeletons';
-import { getProfileUrl } from '@/lib/supabase/api';
+import { getProfileUrl, ensureUserRowFromAuth } from '@/lib/supabase/api';
 
 export const INITIAL_USER: IUser = {
   accountId: '',
@@ -45,12 +45,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         const u = session.user;
 
+        await ensureUserRowFromAuth(u);
+
         // Fetch additional info from users table
         const { data: userData } = await supabase
           .from("users")
           .select("bio")
           .eq("user_id", u.id)
-          .single();
+          .maybeSingle();
 
         const { count: followersCount } = await supabase
           .from("followers")
