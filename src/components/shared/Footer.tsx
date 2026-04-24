@@ -3,39 +3,45 @@ import { Coffee } from "lucide-react";
 
 const Footer = () => {
     return (
-        <footer className="w-full py-1 border-t border-white/10 bg-dark-1 mt-auto">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-12 md:flex-row">
-            <p className="text-sm text-light-3">
-            © 2026 Jukeboxd. All rights reserved.
+        <footer className="w-full py-4 border-t border-white/10 bg-dark-1 mt-auto">
+        <div className="container flex flex-col items-center gap-4 md:flex-row md:justify-between md:h-12">
+            
+            {/* Copyright - First on mobile, left on desktop */}
+            <p className="text-xs text-light-3 order-2 md:order-1">
+            © 2026 Jukeboxd. Built by Finley.
             </p>
-            <div className="flex gap-4">
+
+            {/* Links Group - Centered on mobile, right on desktop */}
+            <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 order-1 md:order-2">
             <Link 
                 to="/about" 
-                className="text-sm text-light-3 hover:text-emerald-500 underline-offset-4 hover:underline"
+                className="text-xs font-medium text-light-3 hover:text-emerald-500 transition-colors"
             >
                 About
             </Link>
             <Link 
                 to="/privacy" 
-                className="text-sm text-light-3 hover:text-emerald-500 underline-offset-4 hover:underline"
+                className="text-xs font-medium text-light-3 hover:text-emerald-500 transition-colors"
             >
-                Privacy Policy
+                Privacy
             </Link>
             <a 
                 href="mailto:finley.harrison@me.com" 
-                className="text-sm text-light-3 hover:text-emerald-500 underline-offset-4 hover:underline"
+                className="text-xs font-medium text-light-3 hover:text-emerald-500 transition-colors"
             >
                 Contact
             </a>
+            
+            {/* Buy Me A Coffee - Styled as a subtle button on mobile */}
             <a 
                 href="https://buymeacoffee.com/notfinley" 
                 target="_blank" 
                 rel="noreferrer"
-                className="flex items-center gap-2 text-sm text-light-3 hover:text-emerald-500 transition-colors group"
-                >
-                <Coffee size={16} className="group-hover:animate-bounce" />
-                <span>Buy me a coffee</span>
-                </a>
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 transition-all group"
+            >
+                <Coffee size={14} className="group-hover:animate-bounce" />
+                <span>Support</span>
+            </a>
             </div>
         </div>
         </footer>
