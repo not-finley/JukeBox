@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Coffee } from "lucide-react";
 
 const Footer = () => {
     return (
@@ -26,6 +27,15 @@ const Footer = () => {
             >
                 Contact
             </a>
+            <a 
+                href="https://buymeacoffee.com/notfinley" 
+                target="_blank" 
+                rel="noreferrer"
+                className="flex items-center gap-2 text-sm text-light-3 hover:text-emerald-500 transition-colors group"
+                >
+                <Coffee size={16} className="group-hover:animate-bounce" />
+                <span>Buy me a coffee</span>
+                </a>
             </div>
         </div>
         </footer>
