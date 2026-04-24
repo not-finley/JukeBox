@@ -1,5 +1,5 @@
 import { ISearchUser } from "@/types";
-import LoaderMusic from "./shared/loaderMusic";
+import { SuggestionsCarouselSkeleton } from "./shared/PageSkeletons";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
@@ -44,7 +44,7 @@ const SuggestionsList = ({
         </button>
       </div>
 
-      {loading && <LoaderMusic />}
+      {loading && <SuggestionsCarouselSkeleton />}
 
       <div className="flex overflow-x-auto gap-4 no-scrollbar py-2">
         {suggestions.map((u) => (

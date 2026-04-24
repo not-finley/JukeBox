@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { getPlaylists, addItemToPlaylist } from "@/lib/supabase/api";
 import { useUserContext } from "@/lib/AuthContext";
-import LoaderMusic from "./loaderMusic";
+import { PlaylistModalRowsSkeleton } from "./PageSkeletons";
 import { Plus, Music } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -71,7 +71,7 @@ const PlaylistModal = ({ isOpen, onClose, itemId, type }: PlaylistModalProps) =>
 
                 <div className="flex flex-col gap-1 max-h-[400px] overflow-y-auto mt-4 pr-2 custom-scrollbar">
                     {loading ? (
-                        <div className="py-12 flex justify-center"><LoaderMusic /></div>
+                        <PlaylistModalRowsSkeleton />
                     ) : playlists.length > 0 ? (
                         playlists.map((playlist) => (
                             <button

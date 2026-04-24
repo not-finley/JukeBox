@@ -3,7 +3,11 @@ import { useUserContext } from "@/lib/AuthContext";
 import { Link, useParams } from "react-router-dom";
 import { getListened, getRated, getReviewed, getUserById, updateUser, addFollow, removeFollow, checkIfFollowing, getFollowersList, getPlaylists } from "@/lib/supabase/api";
 import { Listened, RatingGeneral, Review, IUser, Playlist } from "@/types";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import {
+    FollowerColumnSkeleton,
+    ProfileFullPageSkeleton,
+    ProfileTabContentSkeleton,
+} from "@/components/shared/PageSkeletons";
 import AuthModal from "@/components/shared/AuthModal";
 import { Edit2, Star, Disc, Music, Settings } from "lucide-react";
 import NotificationDropdown from "@/components/NotificationDropdown";
@@ -405,7 +409,7 @@ const ProfileComponent = ({
 
                 <div className="space-y-6">
                     {activeTab === "Reviews" && (
-                    loadingReviews ? <LoaderMusic /> : (reviews.length === 0? 
+                    loadingReviews ? <ProfileTabContentSkeleton variant="reviews" /> : (reviews.length === 0? 
                     (<div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="bg-dark-3 p-6 rounded-full mb-4">
                         <img src="/assets/icons/pen-nib.svg" className="w-10 h-10 opacity-20 invert" alt="No reviews" />
@@ -434,7 +438,7 @@ const ProfileComponent = ({
                     )}
 
                     {activeTab === "Ratings" && (
-                    loadingRatings ? <LoaderMusic /> : (ratings.length === 0? 
+                    loadingRatings ? <ProfileTabContentSkeleton variant="ratings" /> : (ratings.length === 0? 
                     (<div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="bg-dark-3 p-6 rounded-full mb-4">
                     <span className="text-4xl opacity-20">★</span>
@@ -488,7 +492,7 @@ const ProfileComponent = ({
 
                 {activeTab === "Listens" && (
                 loadingListens ? (
-                    <LoaderMusic />
+                    <ProfileTabContentSkeleton variant="listens" />
                 ) : (listened.length === 0? 
                     (<div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="bg-dark-3 p-6 rounded-full mb-4">
@@ -563,7 +567,7 @@ const ProfileComponent = ({
 
                 {activeTab === "Playlists" && (
                 loadingListens ? (
-                    <LoaderMusic />
+                    <ProfileTabContentSkeleton variant="playlists" />
                 ) : (playlists.length === 0? 
                     (<div className="flex flex-col items-center justify-center py-20 text-center">
                     <div className="bg-dark-3 p-6 rounded-full mb-4">
@@ -636,7 +640,7 @@ const ProfileComponent = ({
                 </div>
                 <div className="flex-1 overflow-y-auto p-4">
                 {loadingList ? (
-                    <LoaderMusic />
+                    <FollowerColumnSkeleton />
                 ) : list.length === 0 ? (
                     <p className="text-gray-500 italic">No {showFollowModal.type} found.</p>
                 ) : (
@@ -747,7 +751,7 @@ const NewProfile = () => {
 
 
     if (loading || !profileUser) {
-        return <div className="common-container"><LoaderMusic /></div>;
+        return <ProfileFullPageSkeleton />;
     }
 
 

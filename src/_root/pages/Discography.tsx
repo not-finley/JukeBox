@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AlbumDetails } from '@/types';
 import { Link, useParams } from 'react-router-dom';
-import LoaderMusic from '@/components/shared/loaderMusic';
+import { DiscographyGridSkeleton } from '@/components/shared/PageSkeletons';
 import { getSpotifyToken, getArtistDiscographyFromSpotify } from '@/lib/integrations/spotify';
 import DiscographyItem from '@/components/DiscographyItem'
 
@@ -125,7 +125,7 @@ const Discography = () => {
 
             {/* Scrollable content container */}
             <div className="flex-1 w-full overflow-y-auto px-5 py-5 lg:px-8 lg:p-14 custom-scrollbar">
-                {loading && <div className="py-20"><LoaderMusic /></div>}
+                {loading && <DiscographyGridSkeleton />}
                 {notFound && <p className="text-center text-gray-300 py-20">Discography not found</p>}
 
                 {/* Items must be inside the scrollable container for useInView to work correctly */}

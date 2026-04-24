@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import { SearchGridSkeleton, SearchSuggestionsSkeleton } from "@/components/shared/PageSkeletons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { searchUsers } from "@/lib/supabase/api";
 import { getSpotifyToken, searchSpotify, spotifySuggestions } from "@/lib/integrations/spotify";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 
 const FilterOptions = ["All", "Songs", "Albums", "Artists", "Users"] as const;
 type SearchState = (typeof FilterOptions)[number];
@@ -281,7 +281,7 @@ const Search = () => {
               {/* CASE 2: API Suggestions (User is typing) */}
               {searchQuery.length > 0 && (
                 <>
-                  {isSuggestionsLoading && <div className="p-4 text-center"><Loader2 className="animate-spin mx-auto text-emerald-500" size={16}/></div>}
+                  {isSuggestionsLoading && <SearchSuggestionsSkeleton />}
                   
                   {!isSuggestionsLoading && suggestions.map((item) => (
                     <div 
@@ -325,7 +325,7 @@ const Search = () => {
       {/* 3. RESULTS SECTION */}
       <div className="w-full px-4 mt-6">
         {loading ? (
-          <div className="flex justify-center py-20"><LoaderMusic /></div>
+          <div className="w-full py-8"><SearchGridSkeleton /></div>
         ) : results.all.length > 0 ? (
           <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-3 gap-y-6">
             {activeTab === "All" && results.all.map(renderCard)}

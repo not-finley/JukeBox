@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import LoaderMusic from "@/components/shared/loaderMusic";
+import { MediaFormPageSkeleton } from "@/components/shared/PageSkeletons";
 import { toast } from "@/hooks/use-toast";
 
 
@@ -67,7 +68,7 @@ const AddReviewSong = () => {
   if (!song) {
     return (
       <div className="common-container">
-        <LoaderMusic />
+        <MediaFormPageSkeleton />
       </div>
     )
   }

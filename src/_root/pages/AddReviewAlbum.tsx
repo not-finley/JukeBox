@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import { MediaFormPageSkeleton } from "@/components/shared/PageSkeletons";
 import { toast } from "@/hooks/use-toast";
 import Loader from "@/components/shared/loader";
 import { FaSpotify } from "react-icons/fa";
@@ -74,7 +74,7 @@ const AddReviewAlbum = () => {
   if (!album) {
     return (
       <div className="common-container">
-        <LoaderMusic />
+        <MediaFormPageSkeleton />
       </div>
     );
   }

@@ -33,7 +33,6 @@ import PrivacyPolicy from './_info/PrivacyPolicy';
 import About from './_info/About';
 import InfoLayout from './_info/InfoLayout';
 
-
 const App = () => {
   useEffect(() => {
     const initializeApp = async () => {

@@ -6,7 +6,7 @@ import { Outlet } from 'react-router-dom'
 import { PreviewPlayer } from '@/components/shared/PreviewPlayer'
 import { useUserContext } from '@/lib/AuthContext';
 import { usePlayerContext } from '@/context/PlayerContext';
-import LoaderMusic from '@/components/shared/loaderMusic';
+import { AppShellSkeleton } from '@/components/shared/PageSkeletons';
 
 
 
@@ -14,7 +14,7 @@ const RootLayout = () => {
   const { isLoading } = useUserContext();
   const { currentTrack } = usePlayerContext();
   
-  if (isLoading) return <div className='common-container'><LoaderMusic/></div>;
+  if (isLoading) return <AppShellSkeleton />;
 
   return (
     // min-h-dvh ensures the background covers the full screen without being static

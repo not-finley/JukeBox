@@ -1,7 +1,7 @@
 import TrendingList from "@/components/TrendingList";
 import { getTrendingSongs } from "@/lib/supabase/api";
 import { useEffect, useState } from "react";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import { TrendingListSkeleton } from "@/components/shared/PageSkeletons";
 import { SongActivity } from "@/types";
 
 const TrendingSongsPage = () => {
@@ -18,7 +18,12 @@ const TrendingSongsPage = () => {
         fetchTrendingSongs();
     }, []);
 
-    if (loading) return <LoaderMusic />;
+    if (loading)
+        return (
+            <div className="common-container max-w-7xl mx-auto px-4 py-10 w-full">
+                <TrendingListSkeleton type="songs" />
+            </div>
+        );
 
     return <TrendingList title="Top Songs" items={songs} type="songs" />;
 };
