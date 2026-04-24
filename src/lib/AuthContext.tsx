@@ -20,7 +20,7 @@ const INITIAL_STATE: IContextType = {
   isAuthenticated: false,
   setUser: () => { },
   setIsAuthenticated: () => { },
-  checkAuthUser: async (_opts?: { silent?: boolean }) => false,
+  checkAuthUser: async () => false,
   logout: async () => { },
 };
 
@@ -33,8 +33,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   
 
-  const checkAuthUser = async (opts?: { silent?: boolean }): Promise<boolean> => {
-    if (!opts?.silent) setIsLoading(true);
+  const checkAuthUser = async (): Promise<boolean> => {
+    setIsLoading(true);
     try {
       const {
         data: { session },
@@ -84,11 +84,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return false;
     } catch (err) {
       console.error('checkAuthUser error:', err);
-      setUser(INITIAL_USER);
-      setIsAuthenticated(false);
       return false;
     } finally {
-      if (!opts?.silent) setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -111,9 +109,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     checkAuthUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        setUser((prev) => ({
+        setUser(prev => ({
           ...prev,
           accountId: session.user.id,
           email: session.user.email ?? '',
@@ -122,9 +120,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           imageUrl: getProfileUrl(session.user.id) ?? '',
         }));
         setIsAuthenticated(true);
-        if (event === 'SIGNED_IN') {
-          void checkAuthUser({ silent: true });
-        }
       } else {
         setUser(INITIAL_USER);
         setIsAuthenticated(false);

@@ -1,14 +1,13 @@
 import { Outlet, Navigate } from "react-router-dom";
 import Footer from '../components/shared/Footer';
-import { useUserContext } from "@/lib/AuthContext";
 
 const AuthLayout = () => {
-  const { isAuthenticated } = useUserContext();
+  const isAuthenticated = false;
 
   return (
     <>
       {isAuthenticated ? (
-        <Navigate to="/" replace />
+        <Navigate to="/" />
       ) : (
         /* Change h-dvh to flex-col and overflow-hidden to prevent scrolling */
         <div className="flex flex-col h-dvh overflow-hidden">
