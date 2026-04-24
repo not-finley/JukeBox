@@ -29,7 +29,9 @@ import TrendingReviewsPage from './_root/pages/TrendingReviewsPage';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
-import PrivacyPolicy from './_root/pages/PrivacyPolicy';
+import PrivacyPolicy from './_info/PrivacyPolicy';
+import About from './_info/About';
+import InfoLayout from './_info/InfoLayout';
 
 
 const App = () => {
@@ -59,7 +61,11 @@ const App = () => {
             </Route>
 
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
+
+            <Route element={<InfoLayout />}>
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/about" element={<About />} />
+            </Route>
 
             <Route element={<RootLayout />}>
               <Route path="/trending" element={<Songs />}/>

@@ -9,6 +9,12 @@ const Footer = () => {
             </p>
             <div className="flex gap-4">
             <Link 
+                to="/about" 
+                className="text-sm text-light-3 hover:text-emerald-500 underline-offset-4 hover:underline"
+            >
+                About
+            </Link>
+            <Link 
                 to="/privacy" 
                 className="text-sm text-light-3 hover:text-emerald-500 underline-offset-4 hover:underline"
             >
