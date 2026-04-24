@@ -1,7 +1,7 @@
 import { useInView } from "react-intersection-observer";
 import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
-import LoaderMusic from '@/components/shared/loaderMusic';
+import { DiscographyTracksSkeleton } from '@/components/shared/PageSkeletons';
 import { getSpotifyToken } from '@/lib/integrations/spotify';
 import { ChevronDown, ChevronUp } from "lucide-react"; // Optional: for the mobile toggle icon
 
@@ -93,7 +93,7 @@ const DiscographyItem = ({ album, onUpdate, handleNavigation }: { album: any, on
                 <div className={`${showTracksMobile ? 'block' : 'hidden'} md:block bg-black/30 rounded-xl overflow-hidden`}>
                     <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                         {loadingTracks ? (
-                            <div className="flex justify-center py-6"><LoaderMusic /></div>
+                            <DiscographyTracksSkeleton />
                         ) : album.tracks?.length > 0 ? (
                             <ul className="text-zinc-300 text-sm divide-y divide-white/5 w-full">
                                 {album.tracks.map((t: any, index: number) => (

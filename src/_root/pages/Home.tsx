@@ -1,7 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, Library, Search, TrendingUp } from "lucide-react";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import {
+  FeedLoadMoreSkeleton,
+  FollowerColumnSkeleton,
+  HomeFeedSkeleton,
+  HomeTrendingPanelSkeleton,
+} from "@/components/shared/PageSkeletons";
 import { Activity, AlbumActivity, ISearchUser, SongActivity } from "@/types";
 import { useUserContext } from "@/lib/AuthContext";
 import {
@@ -231,11 +236,7 @@ const Home = () => {
   };
 
   if (loading) {
-    return (
-      <div className="common-container flex justify-center items-center min-h-[80vh]">
-        <LoaderMusic />
-      </div>
-    );
+    return <HomeFeedSkeleton />;
   }
 
   if (feedError && activityFeed.length === 0) {
@@ -304,9 +305,7 @@ const Home = () => {
       {trendingOpen && (
         <div className="px-4 pb-4" id="home-trending-panel" role="region" aria-labelledby="home-trending-toggle">
           {trendingLoading ? (
-            <div className="flex justify-center py-6">
-              <LoaderMusic />
-            </div>
+            <HomeTrendingPanelSkeleton />
           ) : (
             <div className="space-y-5">
               {trendingAlbums.length > 0 && (
@@ -646,7 +645,7 @@ const Home = () => {
               );
             })}
             <div ref={sentinelRef} className="h-32 flex justify-center items-center">
-              {loadingMore && <LoaderMusic />}
+              {loadingMore && <FeedLoadMoreSkeleton />}
               {!hasMore && <p className="text-gray-500 text-sm mt-2">No more activity</p>}
             </div>
           </div>
@@ -656,7 +655,7 @@ const Home = () => {
           <div className="p-4 rounded-xl border border-gray-800 bg-gray-900/40">
             <h2 className="text-lg font-semibold mb-3">People you may know</h2>
             <div className="flex flex-col gap-4">
-              {loadingFollowerSuggestions && <LoaderMusic />}
+              {loadingFollowerSuggestions && <FollowerColumnSkeleton />}
               {suggestionsError && (
                 <p className="text-sm text-gray-500">Could not load suggestions.</p>
               )}

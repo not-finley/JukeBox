@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Edit2, Trash2, Check, Loader2, Settings2, Download, Import  } from "lucide-react";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import { PlaylistPageSkeleton, PlaylistSearchSkeleton } from "@/components/shared/PageSkeletons";
 import PlaylistEntry from "@/components/PlaylistEntry";
 import { usePlayerContext } from "@/context/PlayerContext";
 import { useUserContext } from "@/lib/AuthContext";
@@ -420,14 +420,16 @@ const PlaylistPage = () => {
         toast({ title: "CSV Exported!", description: `Included ${rows.length} total tracks.` });
     };
             
-    if (loading) return <div className="common-container"><LoaderMusic /></div>;
-
+    if (loading)
+        return (
+            <div className="common-container">
+                <PlaylistPageSkeleton />
+            </div>
+        );
 
     return (
     <div className="common-container">
-        {loading && <LoaderMusic />}
-        
-        {playlist && !loading && (
+        {playlist && (
             <div className="w-full max-w-6xl">
                 {/* --- HEADER SECTION --- */}
                 <div className={`relative w-full overflow-hidden rounded-b-3xl transition-all ${
@@ -730,7 +732,7 @@ const PlaylistPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
                     {isSearching ? (
-                        <div className="col-span-full flex justify-center py-10"><LoaderMusic /></div>
+                        <PlaylistSearchSkeleton />
                     ) : (
                         searchResults.map((result) => (
                             <div key={result.id} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-lg group">

@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { addListenedSong, addUpdateRatingSong, addSongToDatabase, getAllRatingsOfSong, getRatingSong, getSongDetailsById, hasListenedSong, removeListenedSong, deleteRatingSong } from "@/lib/supabase/api";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import { SongDetailSkeleton } from "@/components/shared/PageSkeletons";
 import { getSpotifyToken, SpotifyTrackById } from "@/lib/integrations/spotify";
 import { useUserContext } from "@/lib/AuthContext";
 import ReviewItem from "@/components/ReviewItem";
@@ -168,7 +168,7 @@ const SongDetailsSection = () => {
 
   return (
     <div className="common-container">
-      {loading && <LoaderMusic />}
+      {loading && <SongDetailSkeleton />}
       {/* {notFound && <h1 className='text-2xl text-gray-300'>Arist not found</h1>} */}
       {song && (
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">

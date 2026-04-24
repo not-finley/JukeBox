@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getTrendingData, timeAgo } from "@/lib/supabase/api"; // Updated to your supabase fetcher
 import { TrendingResponse } from "@/types";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import { TrendingHubSkeleton } from "@/components/shared/PageSkeletons";
 
 const TrendingPage = () => {
   const [trending, setTrending] = useState<TrendingResponse | null>(null);
@@ -21,11 +21,7 @@ const TrendingPage = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="common-container flex justify-center items-center min-h-[80vh]">
-        <LoaderMusic />
-      </div>
-    );
+    return <TrendingHubSkeleton />;
   }
 
   return (

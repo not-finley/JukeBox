@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { BarChart, Bar, XAxis } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { getSpotifyToken, SpotifyAlbumById } from '@/lib/integrations/spotify';
-import LoaderMusic from '@/components/shared/loaderMusic';
+import { AlbumDetailSkeleton } from '@/components/shared/PageSkeletons';
 import { useUserContext } from '@/lib/AuthContext';
 import { FaSpotify } from "react-icons/fa";
 import ReviewItem from '@/components/ReviewItem';
@@ -218,7 +218,7 @@ const Album = () => {
     return (
         <div className="common-container">
             {notFound && <h1 className='text-2xl text-gray-300'>Album not found</h1>}
-            {loading && (<LoaderMusic />)}
+            {loading && <AlbumDetailSkeleton />}
             {album && !loading &&
                 (
                     <div className='w-full max-w-6xl'>

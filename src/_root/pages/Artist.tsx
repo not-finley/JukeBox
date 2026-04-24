@@ -3,7 +3,7 @@ import { addUpdateArtist, getArtistDetailsById } from '@/lib/supabase/api';
 import { ArtistDetails } from '@/types';
 import { Link, useParams } from 'react-router-dom';
 import { getSpotifyToken, SpotifyArtistById } from '@/lib/integrations/spotify';
-import LoaderMusic from '@/components/shared/loaderMusic';
+import { ArtistPageSkeleton } from '@/components/shared/PageSkeletons';
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 
 const Artist = () => {
@@ -97,7 +97,7 @@ const Artist = () => {
 
       {/* Scrollable content */}
       <div ref={scrollContainerRef} className="flex-1 overflow-auto common-container -mt-10 p-10 px-6">
-        {loading && <div className='mt-20'><LoaderMusic /> </div>}
+        {loading && <ArtistPageSkeleton />}
         {notFound && <h1 className="text-2xl text-gray-300 text-center mt-20">Artist not found</h1>}
 
         {artist && (

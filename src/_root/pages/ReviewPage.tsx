@@ -15,7 +15,7 @@ import {
   addCommentToReview,
   timeAgo,
 } from "@/lib/supabase/api";
-import LoaderMusic from "@/components/shared/loaderMusic";
+import { ReviewPageSkeleton } from "@/components/shared/PageSkeletons";
 import { Comment } from "@/types";
 import AuthModal from "@/components/shared/AuthModal";
 
@@ -121,9 +121,7 @@ export default function ReviewPage() {
   return (
 
     <div className=" min-h-[calc(100dvh-145px)] w-full max-w-2xl mx-auto px-4 py-6">
-      {!review && (
-        <LoaderMusic />
-      )}
+      {!review && <ReviewPageSkeleton />}
       {review && (
         <>
           {/* Back */}

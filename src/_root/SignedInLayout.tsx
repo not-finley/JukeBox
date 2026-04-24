@@ -6,14 +6,14 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { PreviewPlayer } from '@/components/shared/PreviewPlayer'
 import { useUserContext } from '@/lib/AuthContext';
 import { usePlayerContext } from '@/context/PlayerContext';
-import LoaderMusic from '@/components/shared/loaderMusic';
+import { AppShellSkeleton } from '@/components/shared/PageSkeletons';
 
 
 const SignedInLayout = () => {
   const { isAuthenticated, isLoading } = useUserContext();
   const { currentTrack } = usePlayerContext();
   
-  if (isLoading) return <div className='common-container'><LoaderMusic/></div>;
+  if (isLoading) return <AppShellSkeleton />;
   if (!isAuthenticated) return <Navigate to="/auth-select" replace />;
 
   return (
