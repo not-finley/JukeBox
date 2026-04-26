@@ -148,7 +148,7 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
                     name: c.user.name,
                     username: c.user.username,
                     email: c.user.email,
-                    imageUrl: getProfileUrl(c.user.user_id),
+                    imageUrl: getProfileUrl(c.user.user_id, c.user.avatar_url),
                     bio: c.user.bio ?? "",
                 }
             }));
@@ -176,7 +176,7 @@ export async function getReviewById(reviewId: string): Promise<Review | null> {
                 name: reviewData.creator.name,
                 username: reviewData.creator.username,
                 email: reviewData.creator.email,
-                imageUrl: await getProfileUrl(reviewData.creator.user_id),
+                imageUrl: await getProfileUrl(reviewData.creator.user_id, reviewData.creator.avatar_url),
                 bio: reviewData.creator.bio ?? "",
             }
         };

@@ -20,13 +20,15 @@ export function takePostAuthRedirect(): string {
   return (next && next.startsWith('/') && !next.startsWith('//')) ? next : '/';
 }
 
-export async function signInWithGoogleOAuth() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
+export const signInWithGoogleOAuth = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
     options: {
-      redirectTo: getOAuthRedirectUrl(),
+      redirectTo: `${window.location.origin}/auth/callback`, 
+      queryParams: {
+        access_type: 'offline',
+      },
     },
   });
   if (error) throw error;
-  return data;
-}
+};

@@ -82,7 +82,7 @@ export async function getFollowersList(userId: string, type: 'followers' | 'foll
             return {
                 ...user,
                 accountId: user.user_id,
-                imageUrl: await getProfileUrl(user.user_id)
+                imageUrl: await getProfileUrl(user.user_id, user.avatar_url)
             };
         })
     );

@@ -138,7 +138,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
                         name: r.creator.name,
                         username: r.creator.username,
                         email: r.creator.email,
-                        imageUrl: await getProfileUrl(r.creator.user_id),
+                        imageUrl: await getProfileUrl(r.creator.user_id, r.creator.avatar_url),
                         bio: r.creator.bio ?? "",
 
                     },

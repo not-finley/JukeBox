@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Fetch additional info from users table
         const { data: userData } = await supabase
           .from("users")
-          .select("bio")
+          .select("bio, avatar_url")
           .eq("user_id", u.id)
           .single();
 
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq("follower_id", u.id);
 
 
-        const imageUrl = getProfileUrl(u.id);
+        const imageUrl = getProfileUrl(u.id, userData?.avatar_url);
 
         setUser({
           accountId: u.id,
@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           email: session.user.email ?? '',
           name: session.user.user_metadata?.name ?? '',
           username: session.user.user_metadata?.username ?? '',
-          imageUrl: getProfileUrl(session.user.id) ?? '',
+          imageUrl: getProfileUrl(session.user.id, session.user.user_metadata?.avatar_url) ?? '',
         }));
         setIsAuthenticated(true);
       } else {

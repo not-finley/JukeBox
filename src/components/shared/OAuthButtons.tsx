@@ -3,11 +3,9 @@ import { SiGoogle } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import { rememberPostAuthRedirect, signInWithGoogleOAuth } from "@/lib/auth/oauth";
 
-/** Set to true when Google OAuth is configured and tested. */
-const GOOGLE_OAUTH_ENABLED = false;
+const GOOGLE_OAUTH_ENABLED = true;
 
 type OAuthButtonsProps = {
-  /** App path to open after OAuth completes (e.g. `location.state?.from`). */
   redirectAfterAuth?: string;
   className?: string;
 };

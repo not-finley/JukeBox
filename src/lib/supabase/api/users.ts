@@ -67,7 +67,7 @@ export async function ensureUserRowFromAuth(user: User): Promise<void> {
         name,
         email: email || `${user.id}@oauth.placeholder`,
         username,
-        avatar_url: meta.avatar_url || meta.picture || null, // Capture Google Profile Pic
+        avatar_url: meta.avatar_url || meta.picture || null,
     });
 
     if (error) {
@@ -80,15 +80,15 @@ export async function ensureUserRowFromAuth(user: User): Promise<void> {
         data: { name, username },
     });
 }
+export const getProfileUrl = (userId: string, avatarUrl?: string | null): string => {
+    if (avatarUrl && avatarUrl.startsWith("http")) return avatarUrl;
 
-export const getProfileUrl = (userId: string): string => {
-    if (!userId) return "/assets/icons/profile-placeholder.svg";
+    if (userId) {
+        const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "akneztqjuwaharlzqwvc";
+        return `https://${PROJECT_ID}.supabase.co/storage/v1/object/public/profiles/${userId}/profile.jpg`;
+    }
 
-    // This is your project reference from your URL
-    const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "akneztqjuwaharlzqwvc"; 
-    
-    // Construct the direct link to the public object
-    return `https://${PROJECT_ID}.supabase.co/storage/v1/object/public/profiles/${userId}/profile.jpg` || "/assets/icons/profile-placeholder.svg";
+    return "/assets/icons/profile-placeholder.svg";
 };
 
 export async function getCurrentUser() {
@@ -240,7 +240,7 @@ export async function searchUsers(query: string): Promise<ISearchUser[]> {
             id: user.user_id,
             username: user.username,
             name: user.name,
-            avatar_url: getProfileUrl(user.user_id),
+            avatar_url: getProfileUrl(user.user_id, user.avatar_url),
         }))
         
 
@@ -284,7 +284,7 @@ export async function getUserById(userId: string): Promise<IUser | null> {
             name: userData.name,
             username: userData.username,
             email: userData.email,
-            imageUrl: await getProfileUrl(userId),
+            imageUrl: await getProfileUrl(userId, userData.avatar_url),
             bio: userData.bio,
             followersCount,
             followingCount, 

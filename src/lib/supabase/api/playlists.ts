@@ -45,7 +45,7 @@ export const getPlaylistById = async (playlistId: string): Promise<Playlist | nu
         const resolvedCreators = await Promise.all(
             data.playlist_creators.map(async (pc: any) => ({
                 ...pc.user,
-                imageUrl: pc.user.user_id ? await getProfileUrl(pc.user.user_id) : "/assets/default-avatar.png",
+                imageUrl: pc.user.user_id ? await getProfileUrl(pc.user.user_id, pc.user.avatar_url) : "/assets/default-avatar.png",
                 accountId: pc.user.user_id,
                 name: pc.user.name
             }))
