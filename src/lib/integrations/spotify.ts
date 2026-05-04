@@ -1,33 +1,34 @@
 import {SpotifyAlbumWithTracks, SpotifyTrack, SuggestedAlbum } from '@/types';
+// import { Capacitor } from '@capacitor/core';
 
 const SPOTIFY_API_BASE_URL = "https://api.spotify.com/v1";
 
 export async function getSpotifyToken(): Promise<string> {
     const now = Date.now();
-
-    // 1. Try to get existing token from storage
     const cachedToken = localStorage.getItem("spotify_token");
     const expiry = localStorage.getItem("spotify_token_expiry");
-
-    // 2. If it exists and hasn't expired (with a 5-min safety buffer), use it!
     if (cachedToken && expiry && now < parseInt(expiry) - 300000) {
         return cachedToken;
     }
 
-    // 3. Otherwise, fetch a new one
+    const isNative = true;
+    const apiBase = isNative ? "https://www.jukeboxd.ca" : "";
+
     try {
-        const response = await fetch("/api/spotify-token");
+        const response = await fetch(`${apiBase}/api/spotify-token`);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+
         const data = await response.json();
 
         if (data && data.access_token) {
-            // Calculate expiry: Current time + (3600 seconds * 1000)
             const expiresInMs = (data.expires_in || 3600) * 1000;
             const absoluteExpiry = now + expiresInMs;
-
-            // 4. Save to storage for next time
             localStorage.setItem("spotify_token", data.access_token);
             localStorage.setItem("spotify_token_expiry", absoluteExpiry.toString());
-
             return data.access_token;
         }
 

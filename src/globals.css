@@ -27,6 +27,8 @@
   --swiper-pagination-bullet-opacity: 1;
   --swiper-pagination-bullet-horizontal-gap: 4px;
   --swiper-pagination-bullet-vertical-gap: 5px;
+  --safe-top: env(safe-area-inset-top, 20px);
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
 }
 
 
@@ -49,18 +51,12 @@
 
 @layer utilities {
 
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+  .pt-safe {
+    padding-top: var(--safe-top);
   }
 
-  /* 2. Only apply the fallback if we are in the "App" build / Standalone */
-  @media (display-mode: standalone) {
-    .pb-safe {
-      padding-bottom: max(env(safe-area-inset-bottom), 20px);
-    }
-    .pt-safe {
-      padding-top: max(env(safe-area-inset-top), 32px);
-    }
+  .pb-safe {
+    padding-bottom: var(--safe-bottom);
   }
   /* TYPOGRAPHY */
   .h1-bold {
@@ -326,7 +322,7 @@
 
   /* Bottom bar */
   .bottom-bar {
-    @apply z-50 flex-between w-full sticky bottom-0 rounded-t-[20px] bg-dark-2 px-5 py-2 md:hidden;
+    @apply z-50 flex-between w-full rounded-t-[20px] bg-dark-2 px-5 py-2 md:hidden;
   }
 
   /* File uploader */
@@ -380,7 +376,7 @@
 
   /* Topbar */
   .topbar {
-    @apply sticky top-0 z-50 md:hidden bg-dark-2 w-full;
+    @apply z-50 md:hidden bg-dark-2 w-full;
   }
 
   /* User card */

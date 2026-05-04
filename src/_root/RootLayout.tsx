@@ -17,19 +17,25 @@ const RootLayout = () => {
   if (isLoading) return <AppShellSkeleton />;
 
   return (
-    // min-h-dvh ensures the background covers the full screen without being static
-    <div className="relative w-full min-h-dvh md:flex bg-dark-1">
+    <div className="flex flex-col md:flex-row h-screen w-full bg-dark-1 overflow-hidden">
       <Topbar />
       
       <LeftSidebar />
 
-      {/* On mobile, we need to ensure this section doesn't push the footer down */}
-      <section className="flex flex-1 flex-col">
-        <Outlet />
-        {currentTrack && <PreviewPlayer/>}
-      </section>
+      <main className="flex-1 overflow-y-auto custom-scrollbar">
+        <section className="flex flex-col">
+          <Outlet />
+          {/* Ensure the last element doesn't get hidden by the player */}
+          <div className="h-24" /> 
+        </section>
+      </main>
 
+      {/* 3. PLAYER: If active, sits above bottom bar */}
+      {currentTrack && <PreviewPlayer />}
+
+      {/* 4. BOTTOMBAR: pb-safe is applied here */}
       <Bottombar />
+
     </div>
   )
 }

@@ -17,13 +17,12 @@ const allowCors = (fn: any) => async (req: VercelRequest, res: VercelResponse) =
     
     return await fn(req, res);
 };
-
 const handler = async (_req: VercelRequest, res: VercelResponse) => {
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
     try {
-        const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+        const auth = btoa(`${clientId}:${clientSecret}`);
         const response = await fetch("https://accounts.spotify.com/api/token", {
             method: "POST",
             headers: {
