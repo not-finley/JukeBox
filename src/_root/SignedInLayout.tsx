@@ -17,24 +17,37 @@ const SignedInLayout = () => {
   if (!isAuthenticated) return <Navigate to="/auth-select" replace />;
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-dark-1 overflow-hidden">
-      <Topbar />
+    <div className="flex flex-col md:flex-row h-screen w-full bg-[#050505] text-white overflow-hidden">
+      {/* Hide Topbar on desktop since LeftSidebar handles it */}
+      <div className="md:hidden">
+        <Topbar />
+      </div>
       
       <LeftSidebar />
 
-      <main className="flex-1 overflow-y-auto custom-scrollbar">
-        <section className="flex flex-col">
-          <Outlet />
-          <div className="h-24" /> 
-        </section>
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {/* The Content Scroll Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <section className="flex flex-col max-w-7xl mx-auto w-full p-4 md:p-8">
+            <Outlet />
+            {/* Spacer for the floating player */}
+            <div className="h-32" /> 
+          </section>
+        </div>
+
+        {/* Desktop/Mobile Player Wrapper */}
+        {currentTrack && (
+          <div className="absolute bottom-0 left-0 w-full pb-4 md:pb-6 pointer-events-none">
+             <div className="pointer-events-auto">
+                <PreviewPlayer />
+             </div>
+          </div>
+        )}
       </main>
 
-      {/* 3. PLAYER: If active, sits above bottom bar */}
-      {currentTrack && <PreviewPlayer />}
-
-      {/* 4. BOTTOMBAR: pb-safe is applied here */}
-      <Bottombar />
-
+      <div className="md:hidden">
+        <Bottombar />
+      </div>
     </div>
   )
 }

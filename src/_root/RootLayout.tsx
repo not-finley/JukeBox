@@ -22,18 +22,21 @@ const RootLayout = () => {
       
       <LeftSidebar />
 
-      <main className="flex-1 overflow-y-auto custom-scrollbar">
-        <section className="flex flex-col">
-          <Outlet />
-          {/* Ensure the last element doesn't get hidden by the player */}
-          <div className="h-24" /> 
-        </section>
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <section className="flex flex-col">
+            <Outlet />
+            <div className="h-24" /> 
+          </section>
+        </div>
+
+        {currentTrack && (
+          <div className="w-full bg-black/40 backdrop-blur-md border-t border-white/5">
+              <PreviewPlayer />
+          </div>
+        )}
       </main>
 
-      {/* 3. PLAYER: If active, sits above bottom bar */}
-      {currentTrack && <PreviewPlayer />}
-
-      {/* 4. BOTTOMBAR: pb-safe is applied here */}
       <Bottombar />
 
     </div>
