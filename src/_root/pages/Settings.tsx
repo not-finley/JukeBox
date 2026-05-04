@@ -78,8 +78,8 @@ const SettingsPage = () => {
     }
 
     return (
-        <div className="common-container bg-black min-h-screen w-full text-gray-100 p-6">
-            <div className="max-w-2xl mx-auto w-full">
+        <div className="common-container min-h-screen w-full text-gray-100 p-6">
+            <div className="w-full">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-10">
                     <Link to={`/profile/${user.accountId}`} className="p-2 hover:bg-gray-900 rounded-full transition">
