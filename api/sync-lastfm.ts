@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -6,13 +7,20 @@ const getSpotifyToken = async () => {
     const auth = btoa(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`);
     const res = await fetch("https://accounts.spotify.com/api/token", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Basic ${auth}` },
+        headers: { 
+            "Content-Type": "application/x-www-form-urlencoded", 
+            Authorization: `Basic ${auth}` 
+        },
         body: "grant_type=client_credentials",
     });
-    return (await res.json()).access_token;
+    const data = await res.json();
+    return data.access_token;
 };
 
-const handler = async (req: any, res: any) => {
+const handler = async (req: VercelRequest, res: VercelResponse) => {
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
     const { lastfmUsername, userId } = req.body;
     const token = await getSpotifyToken();
 
@@ -70,3 +78,5 @@ const handler = async (req: any, res: any) => {
 
     return res.status(200).json({ message: "Sync complete" });
 };
+
+export default handler;
