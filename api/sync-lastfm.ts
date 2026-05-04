@@ -31,7 +31,9 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     const songListensToInsert : any = [];
     const newAlbums = new Map();
     const newSongs = new Map();
-    
+    const newArtists = new Map();
+    const newArtistSongs = new Map();
+
     const chunk = tracks.slice(0, 25); 
 
     await Promise.all(chunk.map(async (track: any) => {
@@ -40,14 +42,22 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
         const listenDate = new Date(parseInt(track.date.uts) * 1000).toISOString();
 
         // 1. Quick local check
-        let { data: existingSong } = await supabase
+        const { data: matchedSong } = await supabase
             .from('songs')
-            .select('song_id')
+            .select(`
+                song_id,
+                artistsongs!inner (
+                    artists!inner (
+                        name
+                    )
+                )
+            `)
             .ilike('title', trackName)
+            .ilike('artistsongs.artists.name', artistName)
             .limit(1)
             .maybeSingle();
 
-        let songId = existingSong?.song_id;
+        let songId = matchedSong?.song_id;
 
         // 2. Spotify Search if necessary
         if (!songId) {
@@ -60,15 +70,31 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
 
             if (spotTrack) {
                 songId = spotTrack.id;
+                
+                // Add to batch for albums
                 newAlbums.set(spotTrack.album.id, {
                     album_id: spotTrack.album.id,
                     title: spotTrack.album.name,
                     album_cover_url: spotTrack.album.images[0]?.url,
                 });
+
+                // Add to batch for songs
                 newSongs.set(spotTrack.id, {
                     song_id: spotTrack.id,
                     album_id: spotTrack.album.id,
                     title: spotTrack.name,
+                });
+
+                spotTrack.artists.forEach((artist: any) => {
+                    newArtists.set(artist.id, {
+                        artist_id: artist.id,
+                        name: artist.name,
+                        spotify_url: artist.external_urls.spotify
+                    });
+                    newArtistSongs.set(`${spotTrack.id}-${artist.id}`, {
+                        song_id: spotTrack.id,
+                        artist_id: artist.id
+                    });
                 });
             }
         }
@@ -83,8 +109,11 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     }));
 
     // 3. BULK UPSERT - This is where you gain all your speed
+    if (newArtists.size > 0) await supabase.from('artists').upsert(Array.from(newArtists.values()));
     if (newAlbums.size > 0) await supabase.from('albums').upsert(Array.from(newAlbums.values()));
     if (newSongs.size > 0) await supabase.from('songs').upsert(Array.from(newSongs.values()));
+    if (newArtistSongs.size > 0) await supabase.from('artistsongs').upsert(Array.from(newArtistSongs.values()));
+
     if (songListensToInsert.length > 0) {
         await supabase.from('song_listens').upsert(songListensToInsert, { 
             onConflict: 'user_id, song_id, listen_date' 
