@@ -3,6 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
+const normalizeReleaseDate = (date: string) => {
+    if (!date) return null;
+    if (date.length === 4) return `${date}-01-01`;
+    if (date.length === 7) return `${date}-01`;
+    return date;
+};
+
 const getSpotifyToken = async () => {
     const clientId = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -81,35 +88,43 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
             const spotData = await spotRes.json();
             const spotTrack = spotData.tracks?.items[0];
 
-            if (spotTrack) {
-                songId = spotTrack.id;
+           if (spotTrack) {
+            songId = spotTrack.id;
+
+            // 1. Full Album Metadata
+            newAlbums.set(spotTrack.album.id, {
+                album_id: spotTrack.album.id,
+                title: spotTrack.album.name,
+                spotify_url: spotTrack.album.external_urls.spotify,
+                album_cover_url: spotTrack.album.images[0]?.url,
+                release_date: normalizeReleaseDate(spotTrack.album.release_date),
+                total_tracks: spotTrack.album.total_tracks,
+            });
+
+            // 2. Full Song Metadata
+            newSongs.set(spotTrack.id, {
+                song_id: spotTrack.id,
+                title: spotTrack.name,
+                album_id: spotTrack.album.id,
+                spotify_url: spotTrack.external_urls.spotify,
+                pop: spotTrack.popularity, // Matching your 'pop' column name
+                isrc: spotTrack.external_ids?.isrc,
+            });
+
+            // 3. Artist Mapping
+            spotTrack.artists.forEach((artist: any) => {
+                newArtists.set(artist.id, {
+                    artist_id: artist.id,
+                    name: artist.name,
+                    spotify_url: artist.external_urls.spotify
+                });
                 
-                // Add to batch for albums
-                newAlbums.set(spotTrack.album.id, {
-                    album_id: spotTrack.album.id,
-                    title: spotTrack.album.name,
-                    album_cover_url: spotTrack.album.images[0]?.url,
-                });
-
-                // Add to batch for songs
-                newSongs.set(spotTrack.id, {
+                newArtistSongs.set(`${spotTrack.id}-${artist.id}`, {
                     song_id: spotTrack.id,
-                    album_id: spotTrack.album.id,
-                    title: spotTrack.name,
+                    artist_id: artist.id
                 });
-
-                spotTrack.artists.forEach((artist: any) => {
-                    newArtists.set(artist.id, {
-                        artist_id: artist.id,
-                        name: artist.name,
-                        spotify_url: artist.external_urls.spotify
-                    });
-                    newArtistSongs.set(`${spotTrack.id}-${artist.id}`, {
-                        song_id: spotTrack.id,
-                        artist_id: artist.id
-                    });
-                });
-            }
+            });
+        }
         }
 
         if (songId) {
