@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUserContext, } from "@/lib/AuthContext";
-import { ChevronLeft, User, Lock, LogOut, Moon, X, HelpCircle} from "lucide-react";
+import { ChevronLeft, User, Lock, LogOut, Moon, X, HelpCircle, Radio} from "lucide-react";
 import { useSignOutAccount } from '@/lib/react-query/queriesAndMutations';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
@@ -11,12 +11,14 @@ import SupportModal from "@/components/shared/SupportModal";
 const SettingsPage = () => {
     const { user, setUser } = useUserContext();
     const { mutate: signOut } = useSignOutAccount();
-    const [modalType, setModalType] = useState<"username" | "password"| null>(null);
+    const [modalType, setModalType] = useState<"username" | "password" | "lastfm" | null>(null);
     const [isSupportOpen, setIsSupportOpen] = useState(false);
     const [newUsername, setNewUsername] = useState(user.username);
     const [isUpdating, setIsUpdating] = useState(false);
     const [loading, setLoading] = useState(false);
     const { toast } = useToast();
+    const [lastFmUsername, setLastFmUsername] = useState(user.lastFmUsername || "");
+    const [isUpdatingLastFm, setIsUpdatingLastFm] = useState(false);    
     const redirectUrl = "https://jukeboxd.ca/reset-password";
 
     const handleUsernameUpdate = async () => {
@@ -77,6 +79,51 @@ const SettingsPage = () => {
         }
     }
 
+    const handleLastFmUpdate = async () => {
+        if (!lastFmUsername.trim()) return;
+
+        setIsUpdatingLastFm(true);
+        try {
+            // 1. Update the username in Supabase
+            const { error } = await supabase
+                .from('users')
+                .update({ lastfm_username: lastFmUsername })
+                .eq('user_id', user.accountId);
+
+            if (error) throw error;
+            
+            const syncResponse = await fetch("/api/sync-lastfm", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    lastfmUsername: lastFmUsername, 
+                    userId: user.accountId 
+                }),
+            });
+
+            if (!syncResponse.ok) {
+                console.error("Initial sync failed to start");
+            }
+
+            // 3. Update local state and close UI
+            setUser((prev: any) => ({ ...prev, lastFmUsername }));
+            setModalType(null);
+            
+            toast({ 
+                title: "Connected!", 
+                description: "Your Last.fm history is being imported now." 
+            });
+
+        } catch (err) {
+            toast({ 
+                title: "Error", 
+                description: "Failed to update Last.fm connection." 
+            });
+        } finally {
+            setIsUpdatingLastFm(false);
+        }
+    };
+
     return (
         <div className="common-container min-h-screen w-full text-gray-100 p-6">
             <div className="w-full">
@@ -105,6 +152,20 @@ const SettingsPage = () => {
                                     icon={<Lock size={18}/>} 
                                     label="Password" 
                                     description="Update your security credentials" 
+                                    isLast 
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2 className="text-xs uppercase tracking-[0.2em] font-bold text-gray-500 mb-4 px-2">Connections</h2>
+                        <div className="bg-gray-900/40 border border-gray-800 rounded-2xl overflow-hidden">
+                            <div onClick={() => setModalType("lastfm")}>
+                                <SettingsItem 
+                                    icon={<Radio size={18}/>} 
+                                    label="Last.fm" 
+                                    description={user.lastFmUsername ? `Connected as ${user.lastFmUsername}` : "Connect your scrobbles"} 
                                     isLast 
                                 />
                             </div>
@@ -157,7 +218,7 @@ const SettingsPage = () => {
                     <div className="bg-gray-900 border border-gray-800 w-full max-w-md rounded-2xl p-6 shadow-2xl">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-bold">
-                                {modalType === "username" ? "Update Username" : "Update Password"}
+                                {modalType === "username" ? "Update Username" : modalType === "password" ? "Update Password" : "Update Last.fm"}
                             </h3>
                             <button onClick={() => setModalType(null)} className="text-gray-500 hover:text-white transition-colors">
                                 <X size={20} />
@@ -186,9 +247,31 @@ const SettingsPage = () => {
                                 </button>
                             </div>
                         )}
+
+                        {modalType === "lastfm" && (
+                            <div className="space-y-4">
+                                <p className="text-xs text-gray-400">Enter your Last.fm username to sync your listening history.</p>
+                                <input 
+                                    type="text"
+                                    placeholder="Last.fm Username"
+                                    value={lastFmUsername}
+                                    onChange={(e) => setLastFmUsername(e.target.value)}
+                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-red-500 outline-none"
+                                />
+                                <button 
+                                    onClick={handleLastFmUpdate} 
+                                    disabled={isUpdatingLastFm} 
+                                    className="w-full bg-emerald-500 text-black font-bold py-3 rounded-lg hover:bg-emerald-400"
+                                >
+                                    {isUpdatingLastFm ? "Connecting..." : "Connect Last.fm"}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
+
+            
 
             <SupportModal 
                 isOpen={isSupportOpen} 

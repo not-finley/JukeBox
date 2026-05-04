@@ -42,6 +42,7 @@ export type IUser = {
   followersCount?: number | null;
   followingCount?: number | null;
   top_five?: Album[]
+  lastFmUsername?: string;
 };
 
 
