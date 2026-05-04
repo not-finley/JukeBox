@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getTrendingData, timeAgo } from "@/lib/supabase/api"; // Updated to your supabase fetcher
+import { getTrendingData, timeAgo } from "@/lib/supabase/api";
 import { TrendingResponse } from "@/types";
 import { TrendingHubSkeleton } from "@/components/shared/PageSkeletons";
 
@@ -30,8 +30,8 @@ const TrendingPage = () => {
         
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-3xl font-bold text-white mb-2">Trending Now</h1>
-          <p className="text-gray-400">The most played music and top reviews this week.</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Top Charts</h1>
+          <p className="text-gray-400">The most played music and top reviews of all time.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -71,7 +71,7 @@ const TrendingPage = () => {
                       <p className="text-white font-medium truncate group-hover:text-emerald-400 transition-colors">
                         {song.title}
                       </p>
-                      <p className="text-gray-500 text-sm">{song.playCount} plays this week</p>
+                      <p className="text-gray-500 text-sm">{song.playCount} total plays</p>
                     </div>
                   </Link>
                 ))}
