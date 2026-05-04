@@ -4,7 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 const supabase = createClient(process.env.VITE_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 const getSpotifyToken = async () => {
-    const auth = btoa(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`);
+    const clientId = process.env.SPOTIFY_CLIENT_ID;
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+        throw new Error("Missing Spotify Credentials");
+    }
+
+    const auth = btoa(`${clientId}:${clientSecret}`);
     const res = await fetch("https://accounts.spotify.com/api/token", {
         method: "POST",
         headers: { 
@@ -13,6 +20,12 @@ const getSpotifyToken = async () => {
         },
         body: "grant_type=client_credentials",
     });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Spotify Auth Failed: ${res.status} - ${errorText}`);
+    }
+
     const data = await res.json();
     return data.access_token;
 };
