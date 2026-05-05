@@ -32,6 +32,7 @@ import { Capacitor } from '@capacitor/core';
 import PrivacyPolicy from './_info/PrivacyPolicy';
 import About from './_info/About';
 import InfoLayout from './_info/InfoLayout';
+import LandingRedirect from './_info/LandingRedirect';
 
 const App = () => {
   useEffect(() => {
@@ -62,7 +63,7 @@ const App = () => {
             <Route path="/auth/callback" element={<AuthCallback />} />
 
            <Route element={<InfoLayout />}>
-              <Route index element={<About />} />
+              <Route index element={<LandingRedirect />} />
               <Route path="/about" element={<About />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
             </Route>
