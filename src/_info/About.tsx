@@ -8,7 +8,7 @@ const About = () => {
             
             {/* Hero */}
             <section className="text-center mb-24">
-                <h1 className="text-6xl md:text-7xl font-black mb-8 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                <h1 className="text-6xl md:text-7xl font-black mb-8 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent pb-2">
                     Music has a memory.
                 </h1>
                 <p className="text-xl md:text-2xl text-light-3 max-w-3xl mx-auto leading-relaxed mb-10">
