@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
-import { ensureUserRowFromAuth } from "@/lib/supabase/api/users";
 import { useUserContext } from "@/lib/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { takePostAuthRedirect } from "@/lib/auth/oauth";
