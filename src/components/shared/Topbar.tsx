@@ -24,7 +24,7 @@ const Topbar = () => {
         <section className="topbar top-0 z-30 w-full bg-black/80 backdrop-blur-md border-b border-white/5 pt-safe">
             <div className="flex justify-between items-center py-3 px-5">
                 {/* Logo */}
-                <Link to="/" className="flex gap-3 items-center hover:opacity-80 transition">
+                <Link to="/home" className="flex gap-3 items-center hover:opacity-80 transition">
                     <img
                         src="/assets/images/JBlogoSimple.svg"
                         alt="logo"

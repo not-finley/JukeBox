@@ -7,7 +7,7 @@ const AuthLayout = () => {
   return (
     <>
       {isAuthenticated ? (
-        <Navigate to="/" />
+        <Navigate to="/home" />
       ) : (
         <div className="flex flex-col h-dvh overflow-hidden">
           

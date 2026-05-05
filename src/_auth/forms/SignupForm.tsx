@@ -34,7 +34,7 @@ const SignupForm = () => {
     },
   });
 
-  const redirectTo = location.state?.from || "/";
+  const redirectTo = location.state?.from || "/home";
 
   const { mutateAsync: signInAccount, isPending: isSigningIn } = useSignInAccount();
 

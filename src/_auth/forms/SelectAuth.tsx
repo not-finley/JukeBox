@@ -14,7 +14,7 @@ const SelectAuth = () => {
             </p>
 
             <div className="flex flex-col gap-4 w-full">
-                <OAuthButtons redirectAfterAuth="/" />
+                <OAuthButtons redirectAfterAuth="/home" />
 
                 <div className="flex items-center my-1">
                     <div className="h-[1px] flex-1 bg-gray-800"></div>

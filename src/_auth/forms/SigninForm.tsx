@@ -36,7 +36,7 @@ const SigninForm = () => {
 
   const { mutateAsync: signInAccount, isPending } = useSignInAccount();
 
-  const redirectTo = location.state?.from || "/";
+  const redirectTo = location.state?.from || "/home";
 
   async function onSubmit(values: z.infer<typeof SigninValidation>) {
     try {

@@ -1,96 +1,139 @@
-import { Link } from 'react-router-dom';
-import { Music, Code, Heart, Headphones } from 'lucide-react';
+// About.tsx
+import { Link } from "react-router-dom";
+import { Music, Heart, Headphones, Disc3 } from "lucide-react";
 
 const About = () => {
     return (
-        <div className="max-w-4xl mx-auto px-6 py-16 text-light-1 bg-dark-1 min-h-screen">
-        {/* Header Section */}
-        <section className="text-center mb-16">
-            <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-cyan-500 bg-clip-text text-transparent">
-            About Jukeboxd
-            </h1>
-            <p className="text-xl text-light-3 max-w-2xl mx-auto leading-relaxed">
-            Your personal music diary and recommendation hub. 
-            Built for those who live life through a pair of headphones.
-            </p>
-        </section>
-
-        {/* The "Solo Passion" Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
-            <div className="space-y-6">
-            <div className="flex items-center gap-3 text-emerald-500">
-                <Heart size={24} fill="currentColor" />
-                <h2 className="text-2xl font-semibold">A Passion Project</h2>
-            </div>
-            <p className="text-light-2 leading-relaxed">
-                Jukeboxd isn't owned by a big corporation or a data-hungry tech giant. 
-                It is a <strong>solo passion project</strong> built from the ground up by a single 
-                developer who loves music just as much as you do.
-            </p>
-            <p className="text-light-2 leading-relaxed">
-                I started this project because I wanted a cleaner, more personal way to 
-                track my listening habits, rate my favorite albums, and share reviews 
-                with a community that actually cares about the art.
-            </p>
-            </div>
+        <div className="max-w-6xl mx-auto px-6 py-20 text-light-1">
             
-            <div className="bg-dark-2 p-8 rounded-2xl border border-white/5 shadow-2xl">
-            <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-500">
-                    <Code size={20} />
-                </div>
-                <div>
-                    <h4 className="font-semibold">Built with Modern Tech</h4>
-                    <p className="text-sm text-light-3">React, TypeScript, & Supabase</p>
-                </div>
-                </div>
-                <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-500">
-                    <Music size={20} />
-                </div>
-                <div>
-                    <h4 className="font-semibold">Powered by Spotify</h4>
-                    <p className="text-sm text-light-3">Seamless metadata integration</p>
-                </div>
-                </div>
-            </div>
-            </div>
-        </section>
+            {/* Hero */}
+            <section className="text-center mb-24">
+                <h1 className="text-6xl md:text-7xl font-black mb-8 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                    Music has a memory.
+                </h1>
+                <p className="text-xl md:text-2xl text-light-3 max-w-3xl mx-auto leading-relaxed mb-10">
+                    Jukeboxd is your personal soundtrack journal; 
+                    track albums, rate discoveries, and share your musical identity.
+                </p>
 
-        {/* What you can do */}
-        <section className="mb-20">
-            <h3 className="text-3xl font-bold mb-10 text-center">What is Jukeboxd?</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-            <div className="space-y-3 p-4">
-                <Headphones className="mx-auto text-emerald-500" size={32} />
-                <h4 className="font-bold text-lg">Log Your Listens</h4>
-                <p className="text-sm text-light-3">Keep a visual history of every album and song you discover.</p>
-            </div>
-            <div className="space-y-3 p-4">
-                <Music className="mx-auto text-emerald-500" size={32} />
-                <h4 className="font-bold text-lg">Rate & Review</h4>
-                <p className="text-sm text-light-3">Share your hot takes and deep dives with other music lovers.</p>
-            </div>
-            <div className="space-y-3 p-4">
-                <Heart className="mx-auto text-emerald-500" size={32} />
-                <h4 className="font-bold text-lg">Social Discovery</h4>
-                <p className="text-sm text-light-3">Follow friends and see what the community is vibing to.</p>
-            </div>
-            </div>
-        </section>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Link
+                        to="/sign-up"
+                        className="px-8 py-4 rounded-full bg-emerald-500 text-dark-1 font-bold hover:bg-emerald-400 transition"
+                    >
+                        Start Logging
+                    </Link>
+                    <Link
+                        to="/trending"
+                        className="px-8 py-4 rounded-full border border-white/10 hover:border-emerald-500 text-light-2 hover:text-emerald-400 transition"
+                    >
+                        Explore
+                    </Link>
+                </div>
+            </section>
 
-        {/* Call to Action */}
-        <section className="text-center p-12 bg-emerald-600 rounded-3xl text-white">
-            <h2 className="text-3xl font-black mb-4 text-dark-1">Join the rhythm.</h2>
-            <p className="mb-8 font-medium text-dark-1 opacity-90">Start your musical diary today and never forget a great track again.</p>
-            <Link 
-            to="/sign-up" 
-            className="bg-dark-1 text-light-1 px-8 py-3 rounded-full font-bold hover:bg-black transition border border-white/10"
-            >
-            Get Started for Free
-            </Link>
-        </section>
+            {/* Founder Story */}
+            <section className="grid md:grid-cols-2 gap-16 items-center mb-24">
+                <div className="space-y-6">
+                    <div className="flex items-center gap-3 text-emerald-400">
+                        <Heart size={24} fill="currentColor" />
+                        <h2 className="text-3xl font-bold">Built by a real music lover</h2>
+                    </div>
+
+                    <p className="text-light-2 leading-relaxed text-lg">
+                        Jukeboxd is an independent solo-built platform, made for people
+                        who care deeply about albums, artists, and discovering sounds that matter.
+                    </p>
+
+                    <p className="text-light-3 leading-relaxed">
+                        No corporate algorithms. No bloated social clutter.
+                        Just a clean space to document your listening journey and connect
+                        with others through music.
+                    </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border border-white/10 rounded-3xl p-10 backdrop-blur-sm">
+                    <Disc3 className="text-emerald-400 mb-4" size={48} />
+                    <p className="text-light-2 italic text-lg leading-relaxed">
+                        “I wanted Letterboxd for music, so I built it.”
+                    </p>
+                    <p className="mt-4 text-sm text-light-3">— Finley, Creator</p>
+                </div>
+            </section>
+
+            {/* Features */}
+            <section className="mb-24">
+                <h3 className="text-4xl font-bold text-center mb-14">
+                    Everything your music taste deserves
+                </h3>
+
+                <div className="grid md:grid-cols-3 gap-8">
+                    {[
+                        {
+                            icon: Headphones,
+                            title: "Track Every Listen",
+                            desc: "Build your personal archive of albums, songs."
+                        },
+                        {
+                            icon: Music,
+                            title: "Rate & Review",
+                            desc: "Capture your thoughts, rankings, and favorite releases."
+                        },
+                        {
+                            icon: Heart,
+                            title: "Discover Community",
+                            desc: "Follow fellow listeners and uncover new music through real people."
+                        }
+                    ].map((feature, i) => (
+                        <div
+                            key={i}
+                            className="p-8 rounded-3xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
+                        >
+                            <feature.icon className="text-emerald-400 mb-4" size={36} />
+                            <h4 className="text-xl font-bold mb-3">{feature.title}</h4>
+                            <p className="text-light-3 leading-relaxed">{feature.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* CTA */}
+            <section className="text-center bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-3xl p-16 text-dark-1">
+                <h2 className="text-4xl font-black mb-4">
+                    Start building your musical legacy.
+                </h2>
+                <p className="text-lg mb-8 font-medium opacity-90">
+                    Every album tells a story. Keep yours forever.
+                </p>
+
+                <Link
+                    to="/sign-up"
+                    className="inline-block px-10 py-4 rounded-full bg-dark-1 text-light-1 font-bold hover:bg-black transition"
+                >
+                    Join Jukeboxd Free
+                </Link>
+            </section>
+
+            {/* <section className="text-center mt-20 border-t border-white/10 pt-16">
+                <h3 className="text-2xl font-bold mb-4 text-light-1">
+                    Support independent music discovery
+                </h3>
+
+                <p className="text-light-3 max-w-2xl mx-auto mb-8 leading-relaxed">
+                    Jukeboxd is built and maintained by one developer with a love for music and community.
+                    If you believe in the project, consider supporting its growth.
+                </p>
+
+                <a
+                    href="https://buymeacoffee.com/notfinley"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-3 px-8 py-4 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 font-semibold hover:bg-emerald-500/20 transition"
+                >
+                    <Heart size={18} fill="currentColor" />
+                    Support the Project
+                </a>
+            </section> */}
         </div>
     );
 };

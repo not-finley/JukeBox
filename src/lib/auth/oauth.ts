@@ -17,7 +17,7 @@ export function rememberPostAuthRedirect(path: string) {
 export function takePostAuthRedirect(): string {
   const next = localStorage.getItem(REDIRECT_STORAGE_KEY);
   localStorage.removeItem(REDIRECT_STORAGE_KEY);
-  return (next && next.startsWith('/') && !next.startsWith('//')) ? next : '/';
+  return (next && next.startsWith('/') && !next.startsWith('//')) ? next : '/home';
 }
 
 export const signInWithGoogleOAuth = async () => {

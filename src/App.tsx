@@ -61,9 +61,10 @@ const App = () => {
 
             <Route path="/auth/callback" element={<AuthCallback />} />
 
-            <Route element={<InfoLayout />}>
-              <Route path="/privacy" element={<PrivacyPolicy />} />
+           <Route element={<InfoLayout />}>
+              <Route index element={<About />} />
               <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
             </Route>
 
             <Route element={<RootLayout />}>
@@ -82,7 +83,7 @@ const App = () => {
             </Route>
             {/* private routes */}
             <Route element={<SignedInLayout />}>
-              <Route index element={<Home />}/>
+              <Route path="/home" element={<Home />}/>
               <Route path="/library" element={<Library />}/>
               <Route path="/library/reviews" element={<LibraryReviews />}/>
               <Route path="/library/rated" element={<LibraryRatings />}/>

@@ -13,6 +13,9 @@ const Footer = () => {
 
             {/* Links Group - Centered on mobile, right on desktop */}
             <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 order-1 md:order-2">
+            <Link to="/sign-up" className="text-xs font-medium text-light-3 hover:text-emerald-500 transition-colors">
+                Sign Up
+            </Link>
             <Link 
                 to="/about" 
                 className="text-xs font-medium text-light-3 hover:text-emerald-500 transition-colors"

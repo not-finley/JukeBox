@@ -10,7 +10,7 @@ type OAuthButtonsProps = {
   className?: string;
 };
 
-const OAuthButtons = ({ redirectAfterAuth = "/", className = "" }: OAuthButtonsProps) => {
+const OAuthButtons = ({ redirectAfterAuth = "/home", className = "" }: OAuthButtonsProps) => {
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
 
