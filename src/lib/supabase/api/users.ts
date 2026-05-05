@@ -38,31 +38,27 @@ export async function ensureUserRowFromAuth(user: User): Promise<void> {
         .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
-    
+
     if (existing) return;
 
     const meta = user.user_metadata ?? {};
     const email = user.email ?? "";
 
-    // 1. Determine Display Name
     const name =
         (typeof meta.full_name === "string" && meta.full_name.trim()) ||
         (typeof meta.name === "string" && meta.name.trim()) ||
-        email.split("@")[0] || 
+        email.split("@")[0] ||
         "Jukeboxd User";
 
-    // 2. Determine Username Base (Google usually provides 'name' or 'email')
     const usernameBase =
         (typeof meta.username === "string" && meta.username.trim()) ||
         (typeof meta.preferred_username === "string" && meta.preferred_username.trim()) ||
-        (typeof meta.user_name === "string" && meta.user_name.trim()) ||
         email.split("@")[0] ||
         "user";
 
     const username = await pickUniqueUsername(usernameBase);
 
-    // 3. Insert into public.users
-    const { error } = await supabase.from("users").insert({
+    const { error } = await supabase.from("users").upsert({
         user_id: user.id,
         name,
         email: email || `${user.id}@oauth.placeholder`,
@@ -71,11 +67,9 @@ export async function ensureUserRowFromAuth(user: User): Promise<void> {
     });
 
     if (error) {
-        console.error("Error creating user row:", error.message);
-        throw error;
+        console.error("Fallback user creation failed:", error.message);
     }
 
-    // 4. Sync metadata back to Auth for session consistency
     await supabase.auth.updateUser({
         data: { name, username },
     });
@@ -102,7 +96,6 @@ export async function getCurrentUser() {
 
 export async function createUserAccount(user: INewUser) {
     try {
-        // Create auth user in Supabase
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: user.email,
             password: user.password,
@@ -117,21 +110,7 @@ export async function createUserAccount(user: INewUser) {
         if (authError) throw authError;
         if (!authData.user) throw new Error("Failed to create user");
 
-        // Save to users table
-        const { data: newUser, error: dbError } = await supabase
-            .from("users")
-            .insert({
-                user_id: authData.user.id,
-                name: user.name,
-                email: user.email,
-                username: user.username,
-            })
-            .select()
-            .single();
-
-        if (dbError) throw dbError;
-
-        return newUser;
+        return authData.user;
     } catch (error) {
         console.error("createUserAccount error:", error);
         return null;
