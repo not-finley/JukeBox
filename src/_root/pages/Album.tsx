@@ -217,7 +217,11 @@ const Album = () => {
     }, [id, isAuthenticated, user?.accountId]);
 
     if (loading) {
-        return <AlbumDetailSkeleton />
+        return (
+            <div className="common-container">
+                <AlbumDetailSkeleton />
+            </div>
+        )
     }
 
     if (!album || notFound) {
