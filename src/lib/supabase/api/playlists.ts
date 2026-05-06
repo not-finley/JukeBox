@@ -153,6 +153,36 @@ export const getAlbumTracks = async (albumId: string) => {
     }
 };
 
+export const getBatchAlbumTracks = async (albumIds: string[]) => {
+    try {
+        const { data, error } = await supabase
+            .from('songs')
+            .select(`
+                song_id,
+                title,
+                isrc,
+                album_id,
+                artists:artists (name),
+                album:albums (title)
+            `)
+            .in('album_id', albumIds); // Fetches everything in one go
+
+        if (error) throw error;
+
+        return data.map(s => ({
+            songId: s.song_id,
+            title: s.title,
+            artist: s.artists.map((a: any) => a.name).join(", "),
+            isrc: s.isrc,
+            albumTitle: Array.isArray(s.album) ? s.album[0]?.title : '',
+            albumId: s.album_id
+        }));
+    } catch (error) {
+        console.error("Error fetching batch album tracks:", error);
+        return [];
+    }
+};
+
 export async function deletePlaylist(playlistId: string) {
     try {
         // 1. Delete from DB and get the cover_url back

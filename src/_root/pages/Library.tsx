@@ -5,7 +5,7 @@ import { LibraryPageSkeleton } from "@/components/shared/PageSkeletons";
 import ReviewItemLibrary from "@/components/ReviewItemLibrary";
 import { getReviewedWithLimit, getRatedWithLimit, getListenedWithLimit, getPlaylists } from "@/lib/supabase/api";
 import { Listened, RatingGeneral, Review } from "@/types/index";
-import { Plus, Music } from "lucide-react";
+import { Plus, Music, X } from "lucide-react";
 import StarIcon from '@/components/shared/StarIcon';
 import { cn } from "@/lib/utils";
 
@@ -296,7 +296,7 @@ const { user } = useUserContext();
                 onClick={() => setSearchQuery("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-xs"
               >
-                Clear
+                <X size={18} />
               </button>
             )}
           </div>

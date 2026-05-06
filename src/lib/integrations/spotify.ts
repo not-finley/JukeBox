@@ -158,6 +158,7 @@ export async function searchSpotify(query: string, token: string): Promise<{ sor
                 album: track.album?.name || "",
                 release_date: track.album?.release_date || "",
                 popularity: track.popularity || 0,
+                explicit: track.explicit || false,
                 artists,
                 matchScore,
             });
@@ -178,6 +179,7 @@ export async function searchSpotify(query: string, token: string): Promise<{ sor
                 total_tracks: album.total_tracks || 0,
                 artists,
                 popularity: album.popularity || 0,
+                explicit: album.explicit || false,
                 matchScore,
             });
         });

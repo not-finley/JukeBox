@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
-import { Play, Music } from "lucide-react";
+import { Play, Music, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +28,7 @@ import { PlaylistPageSkeleton, PlaylistSearchSkeleton } from "@/components/share
 import PlaylistEntry from "@/components/PlaylistEntry";
 import { usePlayerContext } from "@/context/PlayerContext";
 import { useUserContext } from "@/lib/AuthContext";
-import { getPlaylistById, processPlaylistCover, updatePlaylistMetadata, addItemToPlaylist, updatePlaylistCover, addSongToDatabase, updateItemsOrder, deletePlaylist, removeItemFromPlaylist, addAlbumComplex, batchSyncSongsToDatabase, batchAddItemsToPlaylist, getAlbumTracks} from "@/lib/supabase/api";
+import { getPlaylistById, processPlaylistCover, updatePlaylistMetadata, addItemToPlaylist, updatePlaylistCover, addSongToDatabase, updateItemsOrder, deletePlaylist, removeItemFromPlaylist, addAlbumComplex, batchSyncSongsToDatabase, batchAddItemsToPlaylist, getAlbumTracks, getBatchAlbumTracks} from "@/lib/supabase/api";
 import { Search } from "lucide-react";
 import { searchSpotify, getSpotifyToken, SpotifyTrackById, getSpotifyPlaylistTracks } from "@/lib/integrations/spotify";
 import { useToast } from "@/hooks/use-toast";
@@ -365,39 +365,60 @@ const PlaylistPage = () => {
     };
 
 
-    const exportToCSV = () => {
+    const exportToCSV = async () => {
         if (!playlist?.items?.length) return;
 
-        // 1. Define Headers
+        // 1. Identify which albums need track data
+        const missingAlbumIds = playlist.items
+            .filter((item: any) => item.type === 'album' && (!item.tracks || item.tracks.length === 0))
+            .map((item: any) => item.albumId);
+
+        let fetchedTracksMap = new Map();
+
+        // 2. Batch fetch only if there are missing tracks
+        if (missingAlbumIds.length > 0) {
+            toast({ title: "Optimizing export data..." });
+            const allTracks = await getBatchAlbumTracks(missingAlbumIds);
+            
+            // Group tracks by albumId for easy lookup
+            allTracks.forEach(track => {
+                const existing = fetchedTracksMap.get(track.albumId) || [];
+                fetchedTracksMap.set(track.albumId, [...existing, track]);
+            });
+        }
+
         const headers = ["Track Name", "Artist", "Album", "ISRC", "Spotify ID"];
         const rows: string[] = [];
 
-        // Helper to extract artist names from strings or arrays of objects
-        const formatArtist = (artistData: any) => {
-            if (Array.isArray(artistData)) {
-                return artistData.map((a: any) => a.name || a).join(", ");
-            }
-            return artistData || "Unknown Artist";
-        };
-
-        // 2. Process Items (Flatten Albums)
+        // 3. Generate Rows
         playlist.items.forEach((item: any) => {
             if (item.type === 'song') {
-                // Standard Song Row
+                const artistName = Array.isArray(item.artist) 
+                    ? item.artist.map((a: any) => a.name).join(", ") 
+                    : item.artist;
+
                 rows.push([
                     `"${item.title?.replace(/"/g, '""')}"`,
-                    `"${formatArtist(item.artist)?.replace(/"/g, '""')}"`,
+                    `"${artistName?.replace(/"/g, '""')}"`,
                     `"${item.album?.title?.replace(/"/g, '""') || ''}"`,
                     item.isrc || "",
                     item.songId || ""
                 ].join(","));
             } else if (item.type === 'album') {
-                // Expand Album into multiple Track Rows
-                item.tracks?.forEach((track: any) => {
+                // Use already loaded tracks OR the ones we just fetched
+                const tracksToExport = (item.tracks && item.tracks.length > 0) 
+                    ? item.tracks 
+                    : fetchedTracksMap.get(item.albumId) || [];
+
+                tracksToExport.forEach((track: any) => {
+                    const trackArtist = Array.isArray(track.artist) 
+                        ? track.artist.map((a: any) => a.name).join(", ") 
+                        : track.artist;
+
                     rows.push([
                         `"${track.title?.replace(/"/g, '""')}"`,
-                        `"${formatArtist(track.artist || item.artist)?.replace(/"/g, '""')}"`,
-                        `"${item.title?.replace(/"/g, '""')}"`, // Using parent album title
+                        `"${(trackArtist || item.artist)?.replace(/"/g, '""')}"`,
+                        `"${item.title?.replace(/"/g, '""')}"`,
                         track.isrc || "",
                         track.songId || ""
                     ].join(","));
@@ -405,20 +426,18 @@ const PlaylistPage = () => {
             }
         });
 
-        // 3. Create Blob and Download
+        // 4. Download Logic (same as before)
         const csvContent = [headers.join(","), ...rows].join("\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `${playlist.name.replace(/\s+/g, '_')}_backup.csv`);
-        link.style.visibility = 'hidden';
+        link.href = url;
+        link.download = `${playlist.name.replace(/\s+/g, '_')}_export.csv`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
-        toast({ title: "CSV Exported!", description: `Included ${rows.length} total tracks.` });
+        toast({ title: "Export Complete", description: `Saved ${rows.length} tracks.` });
     };
             
     
@@ -725,54 +744,77 @@ const PlaylistPage = () => {
 
                 {/* --- SEARCH SECTION --- */}
                 {isCreator && (
-                <div className="mt-12 border-t border-white/5 pt-12 px-6 md:px-10 max-w-7xl mx-auto w-full">
-                    <h2 className="text-2xl font-bold text-white mb-6">Let's find something for your playlist</h2>
-                    
-                    <div className="relative max-w-xl mb-10">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <Input 
-                        placeholder="Search for songs, albums, or artists..."
-                        className="bg-white/10 border-none pl-12 h-14 rounded-full text-lg focus:bg-white/20 transition-all focus-visible:ring-emerald-500/50"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    </div>
+                    <div className="mt-12 border-t border-white/5 pt-12 px-6 md:px-10 max-w-7xl mx-auto w-full">
+                        <h2 className="text-2xl font-bold text-white mb-6">Let's find something for your playlist</h2>
+                        
+                        <div className="relative max-w-xl mb-10 group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
+                            
+                            <Input 
+                                placeholder="Search for songs, albums, or artists..."
+                                className="bg-white/10 border-none pl-12 pr-12 h-14 rounded-full text-lg focus:bg-white/20 transition-all focus-visible:ring-emerald-500/50"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
-                    {isSearching ? (
-                        <PlaylistSearchSkeleton />
-                    ) : (
-                        searchResults.map((result) => (
-                            <div key={result.id} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-lg group">
-                                <div className="flex items-center gap-4">
-                                    <div className="relative">
-                                        <img src={result.album_cover_url} className="w-12 h-12 rounded-md shadow-md" />
-                                        {result.type === 'album' && (
-                                            <div className="absolute -top-2 -left-2 bg-emerald-500 text-[8px] font-black px-1.5 py-0.5 rounded text-black uppercase">
-                                                Album
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <p className="text-sm font-bold text-white">{result.title}</p>
-                                        <p className="text-xs text-gray-400">
-                                            {result.artists?.map((a: any) => a.name).join(", ")}
-                                        </p>
-                                    </div>
-                                </div>
-                                <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    disabled={isAddingSongId === result.id}
-                                    onClick={() => handleAddItem(result)} // Use the new generic handler
+                            {/* Clear Button */}
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-all"
                                 >
-                                    {isAddingSongId === result.id ? <Loader2 className="animate-spin" /> : "Add"}
-                                </Button>
-                            </div>
-                        ))
-                    )}
+                                    <X size={18} />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
+                            {isSearching ? (
+                                <PlaylistSearchSkeleton />
+                            ) : (
+                                searchResults.map((result) => (
+                                    <div key={result.id} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-lg group/item transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="relative">
+                                                <img src={result.album_cover_url} className="w-12 h-12 rounded-md shadow-md object-cover" />
+                                                
+                                                {/* Explicit Badge (Top Right) */}
+                                                {result.explicit && (
+                                                    <div className="absolute -top-1 -right-1 bg-zinc-800 text-gray-400 text-[7px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-sm border border-white/10 shadow-lg">
+                                                        E
+                                                    </div>
+                                                )}
+
+                                                {/* Type Badge (Top Left) */}
+                                                {result.type === 'album' && (
+                                                    <div className="absolute -top-2 -left-2 bg-emerald-500 text-[8px] font-black px-1.5 py-0.5 rounded text-black uppercase shadow-lg">
+                                                        Album
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <p className="text-sm font-bold text-white truncate max-w-[150px] sm:max-w-[250px]">
+                                                    {result.title}
+                                                </p>
+                                                <p className="text-xs text-gray-400 truncate">
+                                                    {result.artists?.map((a: any) => a.name).join(", ")}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            className="border-white/10 hover:bg-emerald-500 hover:text-black hover:border-emerald-500 transition-all"
+                                            disabled={isAddingSongId === result.id}
+                                            onClick={() => handleAddItem(result)}
+                                        >
+                                            {isAddingSongId === result.id ? <Loader2 className="animate-spin" /> : "Add"}
+                                        </Button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
-                </div>
                 )}
             </div>
         )}
