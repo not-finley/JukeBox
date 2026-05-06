@@ -33,6 +33,7 @@ import PrivacyPolicy from './_info/PrivacyPolicy';
 import About from './_info/About';
 import InfoLayout from './_info/InfoLayout';
 import LandingRedirect from './_info/LandingRedirect';
+import NotFound from './components/shared/NotFound';
 
 const App = () => {
   useEffect(() => {
@@ -81,6 +82,7 @@ const App = () => {
               <Route path="/album/:id" element={<Album />}/>
               <Route path="/search" element={<Search  />}/>
               <Route path="/playlist/:id" element={<PlaylistPage />}/>
+              <Route path="*" element={<NotFound />} />
             </Route>
             {/* private routes */}
             <Route element={<SignedInLayout />}>

@@ -12,6 +12,7 @@ import AuthModal from "@/components/shared/AuthModal";
 import { Edit2, Star, Disc, Music, Settings } from "lucide-react";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import StarIcon from '@/components/shared/StarIcon';
+import NotFound from "@/components/shared/NotFound";
 
 type profileProps = {
     userid: string;
@@ -749,9 +750,13 @@ const NewProfile = () => {
         fetchAllData();
     }, [profileUser])
 
-
-    if (loading || !profileUser) {
+    if (loading) {
         return <ProfileFullPageSkeleton />;
+    }
+
+
+    if (!profileUser) {
+        return <NotFound/>;
     }
 
 

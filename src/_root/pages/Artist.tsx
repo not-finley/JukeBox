@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getSpotifyToken, SpotifyArtistById } from '@/lib/integrations/spotify';
 import { ArtistPageSkeleton } from '@/components/shared/PageSkeletons';
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import NotFound from '@/components/shared/NotFound';
 
 const Artist = () => {
   const { id } = useParams();
@@ -74,6 +75,19 @@ const Artist = () => {
   };
 
   useEffect(() => { if (id) fetchArtist(); }, [id]);
+
+  if (loading) {
+    return (
+      <div ref={scrollContainerRef} className="flex flex-col min-h-screen w-full">
+        <ArtistPageSkeleton />
+      </div>
+    );
+  }
+
+  if (notFound || !artist) {
+    return <NotFound />;
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen w-full md:overflow-hidden">

@@ -15,6 +15,7 @@ import PlayingVisualizer from "@/components/shared/PlayingVisualizer";
 import AuthModal from "@/components/shared/AuthModal";
 import PlaylistModal from "@/components/shared/PlaylistModal";
 import StarIcon from '@/components/shared/StarIcon';
+import NotFound from "@/components/shared/NotFound";
 
 
 
@@ -128,26 +129,26 @@ const SongDetailsSection = () => {
   }
 
   useEffect(() => {
-    if (id) {
-      fetchSongAndReviews();
-      fetchGlobalRaiting();
-
-      if (isAuthenticated && user?.accountId) {
-        fetchListened();
-        addUpdateRatingSonglocal();
-      }
+    if (!id) {
+      setNotFound(true);
+      setLoading(false);
+      return;
     }
+    fetchSongAndReviews();
+    fetchGlobalRaiting();
+
+    if (isAuthenticated && user?.accountId) {
+      fetchListened();
+      addUpdateRatingSonglocal();
+    }
+    
   }, [id, user?.accountId, isAuthenticated]);
 
 
   if (!song) {
-    /*add to database if exists in spotify*/
-    // getSong();
     if (songNotFound) {
       return (
-        <div className="common-container">
-          <p>Song not found</p>
-        </div>
+        <NotFound/>
       )
     }
   }
@@ -166,10 +167,20 @@ const SongDetailsSection = () => {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="common-container">
+        <SongDetailSkeleton />
+      </div>
+    );
+  }
+
+  if (!song || songNotFound) {
+    return <NotFound />;
+  }
+
   return (
     <div className="common-container">
-      {loading && <SongDetailSkeleton />}
-      {/* {notFound && <h1 className='text-2xl text-gray-300'>Arist not found</h1>} */}
       {song && (
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row">
           {/* Left Section: Album Cover + User Actions */}

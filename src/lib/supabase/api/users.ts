@@ -237,10 +237,10 @@ export async function getUserById(userId: string): Promise<IUser | null> {
             .from("users")
             .select("*")
             .eq("user_id", userId)
-            .single();
+            .maybeSingle();
 
         if (userError) throw userError;
-        if (!userData) throw new Error("User not found")
+        if (!userData) return null;
 
         const { data: followersData, error: followersError } = await supabase
             .from("followers")

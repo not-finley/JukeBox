@@ -35,6 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Track } from "@/types";
 import AuthModal from "@/components/shared/AuthModal";
+import NotFound from "@/components/shared/NotFound";
 
 const PlaylistPage = () => {
     const { id } = useParams();
@@ -420,12 +421,19 @@ const PlaylistPage = () => {
         toast({ title: "CSV Exported!", description: `Included ${rows.length} total tracks.` });
     };
             
-    if (loading)
+    
+    if (loading) {
         return (
             <div className="common-container">
                 <PlaylistPageSkeleton />
             </div>
         );
+    }
+
+    if (!playlist ) {
+        return <NotFound />
+    }
+    
 
     return (
     <div className="common-container">

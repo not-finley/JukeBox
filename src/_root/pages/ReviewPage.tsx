@@ -18,6 +18,7 @@ import {
 import { ReviewPageSkeleton } from "@/components/shared/PageSkeletons";
 import { Comment } from "@/types";
 import AuthModal from "@/components/shared/AuthModal";
+import NotFound from "@/components/shared/NotFound";
 
 
 
@@ -28,6 +29,7 @@ export default function ReviewPage() {
   const navigate = useNavigate();
 
   const [review, setReview] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentInput, setCommentInput] = useState("");
   const [openRepliesFor, setOpenRepliesFor] = useState<string | null>(null);
@@ -41,24 +43,31 @@ export default function ReviewPage() {
 
 
   useEffect(() => {
-    if (!id) return;
-    loadReview();
-  }, [id]);
+    const fetchFullData = async () => {
+      setLoading(true);
+      try {
+        await loadReview();
+        if (user?.accountId && id) {
+          await loadLikeStatus();
+        }
+      } catch (error) {
+        console.error("Failed to load review page:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    if (!user || !id) return;
-    loadLikeStatus();
-  }, [user, id]);
+    if (id) fetchFullData();
+  }, [id, user?.accountId]);
 
   const loadReview = async () => {
     const data = await getReviewById(id || "");
-    setReview(data);
-    setLikeCount(data?.likes || 0);
-    setComments(data?.comments || []);
-
-    if (!data) {
+    if (data) {
       setReview(data);
-      setLikeCount(0);
+      setLikeCount(data.likes || 0);
+      setComments(data.comments || []);
+    } else {
+      setReview(null);
     }
   };
 
@@ -117,11 +126,22 @@ export default function ReviewPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100dvh-145px)] w-full max-w-2xl mx-auto px-4 py-6">
+        <ReviewPageSkeleton />
+      </div>
+    );
+  }
+
+  // 2. If finished loading and review is null, show 404
+  if (!review) {
+    return <NotFound />;
+  }
 
   return (
 
     <div className=" min-h-[calc(100dvh-145px)] w-full max-w-2xl mx-auto px-4 py-6">
-      {!review && <ReviewPageSkeleton />}
       {review && (
         <>
           {/* Back */}

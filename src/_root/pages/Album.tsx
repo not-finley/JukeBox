@@ -16,6 +16,7 @@ import AuthModal from '@/components/shared/AuthModal';
 import PlaylistModal from "@/components/shared/PlaylistModal"
 import Suggestions from '@/components/Suggestions';
 import StarIcon from '@/components/shared/StarIcon';
+import NotFound from '@/components/shared/NotFound';
 
 
 const Album = () => {
@@ -215,10 +216,16 @@ const Album = () => {
         }
     }, [id, isAuthenticated, user?.accountId]);
 
+    if (loading) {
+        return <AlbumDetailSkeleton />
+    }
+
+    if (!album || notFound) {
+        return <NotFound />
+    }
+
     return (
         <div className="common-container">
-            {notFound && <h1 className='text-2xl text-gray-300'>Album not found</h1>}
-            {loading && <AlbumDetailSkeleton />}
             {album && !loading &&
                 (
                     <div className='w-full max-w-6xl'>
