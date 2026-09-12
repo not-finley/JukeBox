@@ -42,7 +42,7 @@ const Home = () => {
   const [trendingAlbums, setTrendingAlbums] = useState<AlbumActivity[]>([]);
   const [trendingSongs, setTrendingSongs] = useState<SongActivity[]>([]);
   const [trendingLoading, setTrendingLoading] = useState(true);
-  const [trendingOpen, setTrendingOpen] = useState(true);
+  const [trendingOpen, setTrendingOpen] = useState(false);
 
   const offsetRef = useRef(0);
   const rpcCursorRef = useRef<{ ts: string; key: string } | null>(null);
@@ -369,7 +369,7 @@ const Home = () => {
   );
 
   return (
-    <div className="common-container w-full px-0 sm:px-8 lg:px-16 py-6">
+    <div className="w-full px-0 lg:px-16 py-6">
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-10 w-full max-w-7xl mx-auto">
         <div className="w-full">
           <div className="w-full max-w-2xl px-4 mb-6">
@@ -429,7 +429,7 @@ const Home = () => {
             {trendingBlock}
           </div>
 
-          <div className="flex flex-col gap-6 w-full max-w-2xl mt-2 px-4 sm:px-0">
+          <div className="flex flex-col gap-6 w-full max-w-2xl mt-2">
             {activityFeed.map((activity) => {
               const isAggregated = (activity as Activity & { isAggregated?: boolean }).isAggregated;
               const isExpanded = isAggregated && expandedGroup === activity.id;
@@ -450,7 +450,7 @@ const Home = () => {
                     activity.type === "review" ? "hover:cursor-pointer" : ""
                   } touch-action-pan-y`}
                 >
-                  <div className="flex items-center gap-3 p-4 bg-gray-900/60 backdrop-blur-sm z-10">
+                  <div className="flex items-center gap-3 p-4 bg-gray-900/60 backdrop-blur-sm z-100">
                     <Link to={`/profile/${activity.userId}`}>
                       <img
                         src={activity.profileUrl || "/assets/icons/profile-placeholder.svg"}
