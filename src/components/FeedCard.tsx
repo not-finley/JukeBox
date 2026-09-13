@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Activity } from "@/types";
 import { timeAgo } from "@/lib/supabase/api";
+import StarIcon from '@/components/shared/StarIcon';
 
 interface FeedCardProps {
   activity: Activity;
@@ -32,36 +33,37 @@ export const FeedCard = ({
         activity.type === "review" ? "hover:border-gray-700 hover:bg-gray-900/70 cursor-pointer" : ""
       } shadow-md`}
     >
-      {/* Top User Info Bar */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2.5">
-          <Link to={`/profile/${activity.userId}`} onClick={(e) => e.stopPropagation()}>
+      {/* Top User Info Bar (Compact & Full Width) */}
+      <div className="flex items-center justify-between mb-3 text-xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Link to={`/profile/${activity.userId}`} onClick={(e) => e.stopPropagation()} className="shrink-0">
             <img
               src={activity.profileUrl || "/assets/icons/profile-placeholder.svg"}
               alt={activity.username}
               className="w-6 h-6 rounded-full object-cover border border-gray-700"
             />
           </Link>
-          <div className="flex items-center gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5 min-w-0 truncate">
             <Link
               to={`/profile/${activity.userId}`}
-              className="font-bold text-gray-200 hover:underline"
+              className="font-bold text-gray-200 hover:underline truncate"
               onClick={(e) => e.stopPropagation()}
             >
               {activity.username}
             </Link>
-            <span className="text-gray-500">
+            <span className="text-gray-500 shrink-0">
               {isAggregated ? "juked an album" : activityTypeToPastTense(activity.type).toLowerCase()}
+            </span>
+            <span className="text-gray-600 px-1">•</span>
+            <span className="text-gray-500 text-[10px] uppercase tracking-wider shrink-0">
+              {timeAgo(activity.date)}
             </span>
           </div>
         </div>
-        <span className="text-gray-500 text-[10px] uppercase tracking-wider">
-          {timeAgo(activity.date)}
-        </span>
       </div>
 
-      {/* Main Content Row: Thumbnail + Details (Letterboxd Style) */}
-      <div className="flex gap-3.5 items-start">
+      {/* Main Content Row: Thumbnail + Expanded Details */}
+      <div className="flex gap-3.5 items-center">
         {/* Album / Song Thumbnail */}
         <Link
           to={primaryLink}
@@ -75,39 +77,56 @@ export const FeedCard = ({
           />
         </Link>
 
-        {/* Details & Review Text */}
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-col mb-1">
-            <Link
-              to={primaryLink}
-              className="font-bold text-white hover:text-emerald-400 text-sm sm:text-base truncate transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {activity.targetName}
-            </Link>
-          </div>
-
-          {/* Rating Stars */}
-          {activity.rating && (
-            <div className="flex gap-0.5 mb-1.5">
-              {[...Array(5)].map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-xs ${
-                    i < (activity.rating || 0) ? "text-yellow-400" : "text-gray-700"
-                  }`}
+        {/* Details, Stars & Review Text making full use of horizontal space */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          {activity.text ? (
+            // Layout WITH review text (stacked content)
+            <div className="flex flex-col">
+              <div className="flex items-baseline justify-between gap-2 mb-1">
+                <Link
+                  to={primaryLink}
+                  className="font-bold text-white hover:text-emerald-400 text-sm sm:text-base truncate transition-colors"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  ★
-                </span>
-              ))}
-            </div>
-          )}
+                  {activity.targetName}
+                </Link>
 
-          {/* Review or Log Text Snippet */}
-          {activity.text && (
-            <p className="text-gray-300 text-xs sm:text-sm italic leading-relaxed line-clamp-2">
-              &ldquo;{activity.text}&rdquo;
-            </p>
+                {activity.rating && (
+                  <div className="flex gap-1 shrink-0">
+                    {[...Array(5)].map((_, i) => {
+                      const ratingValue = activity.rating || 0;
+                      const fillLevel = Math.max(0, Math.min(1, ratingValue - i));
+                      return <StarIcon key={i} fillLevel={fillLevel} sizeClass="w-3.5 h-3.5" />;
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-gray-300 text-xs sm:text-sm italic leading-relaxed line-clamp-2 mt-1">
+                &ldquo;{activity.text}&rdquo;
+              </p>
+            </div>
+          ) : (
+            // Layout WITHOUT review text (vertically centered use of space)
+            <div className="flex items-center justify-between gap-2">
+              <Link
+                to={primaryLink}
+                className="font-bold text-white hover:text-emerald-400 text-sm sm:text-base truncate transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {activity.targetName}
+              </Link>
+
+              {activity.rating && (
+                <div className="flex gap-1 shrink-0">
+                  {[...Array(5)].map((_, i) => {
+                    const ratingValue = activity.rating || 0;
+                    const fillLevel = Math.max(0, Math.min(1, ratingValue - i));
+                    return <StarIcon key={i} fillLevel={fillLevel} sizeClass="w-4 h-4" />;
+                  })}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -133,7 +152,7 @@ export const FeedCard = ({
                 <div key={g.id || idx} className="flex items-center justify-between text-xs py-1">
                   <Link
                     to={`/song/${g.targetId}`}
-                    className="text-gray-300 hover:text-white truncate max-w-[200px]"
+                    className="text-gray-300 hover:text-white truncate max-w-[280px]"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {g.targetName}
