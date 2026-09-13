@@ -85,7 +85,7 @@ export const FeedCard = ({
               <div className="flex items-baseline justify-between gap-2 mb-1">
                 <Link
                   to={primaryLink}
-                  className="font-bold text-white hover:text-emerald-400 text-sm sm:text-base truncate transition-colors"
+                  className="font-bold text-white hover:text-emerald-400 text-md sm:text-base truncate transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {activity.targetName}
@@ -96,7 +96,7 @@ export const FeedCard = ({
                     {[...Array(5)].map((_, i) => {
                       const ratingValue = activity.rating || 0;
                       const fillLevel = Math.max(0, Math.min(1, ratingValue - i));
-                      return <StarIcon key={i} fillLevel={fillLevel} sizeClass="w-3.5 h-3.5" />;
+                      return <StarIcon key={i} fillLevel={fillLevel} sizeClass="w-5 h-5" />;
                     })}
                   </div>
                 )}
@@ -111,7 +111,7 @@ export const FeedCard = ({
             <div className="flex items-center justify-between gap-2">
               <Link
                 to={primaryLink}
-                className="font-bold text-white hover:text-emerald-400 text-sm sm:text-base truncate transition-colors"
+                className="font-bold text-white hover:text-emerald-400 text-md sm:text-base truncate transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
                 {activity.targetName}
@@ -122,7 +122,7 @@ export const FeedCard = ({
                   {[...Array(5)].map((_, i) => {
                     const ratingValue = activity.rating || 0;
                     const fillLevel = Math.max(0, Math.min(1, ratingValue - i));
-                    return <StarIcon key={i} fillLevel={fillLevel} sizeClass="w-4 h-4" />;
+                    return <StarIcon key={i} fillLevel={fillLevel} sizeClass="w-5 h-5" />;
                   })}
                 </div>
               )}
