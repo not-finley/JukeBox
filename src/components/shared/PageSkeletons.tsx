@@ -30,6 +30,43 @@ export function AuthOverlaySkeleton() {
     </div>
   );
 }
+export function FeedCardSkeleton() {
+  return (
+    <div className="flex flex-col border border-gray-800/80 rounded-xl bg-gray-900/40 p-4 shadow-md space-y-4">
+      {/* Top User Info Bar Skeleton */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="w-6 h-6 rounded-full shrink-0" />
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="h-3 w-24 rounded" />
+            <Skeleton className="h-3 w-16 rounded" />
+          </div>
+        </div>
+        <Skeleton className="h-2.5 w-12 rounded" />
+      </div>
+
+      {/* Main Content Row: Thumbnail + Details Skeleton */}
+      <div className="flex gap-3.5 items-start">
+        {/* Album / Song Thumbnail Skeleton */}
+        <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-lg" />
+
+        {/* Details & Text Skeleton */}
+        <div className="flex-1 min-w-0 space-y-2">
+          <Skeleton className="h-4 w-3/4 rounded" />
+          <Skeleton className="h-3 w-20 rounded" />
+          <Skeleton className="h-3 w-full rounded" />
+          <Skeleton className="h-3 w-4/5 rounded" />
+        </div>
+      </div>
+
+      {/* Optional Aggregated / Expandable Footer Skeleton */}
+      <div className="pt-3 border-t border-gray-800/60 flex items-center justify-between">
+        <Skeleton className="h-3 w-28 rounded" />
+        <Skeleton className="h-3 w-10 rounded" />
+      </div>
+    </div>
+  );
+}
 
 export function HomeFeedSkeleton() {
   return (
@@ -43,22 +80,13 @@ export function HomeFeedSkeleton() {
             <Skeleton className="h-10 w-24 rounded-lg" />
             <Skeleton className="h-10 w-28 rounded-lg" />
           </div>
+          
+          {/* Render individual matched card skeletons */}
           {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-gray-800 overflow-hidden bg-gray-900/40"
-            >
-              <div className="flex items-center gap-3 p-4 bg-gray-900/60">
-                <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                <div className="flex-1 space-y-2 min-w-0">
-                  <Skeleton className="h-4 w-[90%]" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
-              </div>
-              <Skeleton className="w-full aspect-square sm:aspect-[6/5] min-h-[220px] rounded-none" />
-            </div>
+            <FeedCardSkeleton key={i} />
           ))}
         </div>
+        
         <div className="hidden xl:flex flex-col gap-4 sticky top-6 h-fit">
           <Skeleton className="h-72 w-full rounded-xl border border-gray-800/80" />
         </div>
@@ -379,9 +407,9 @@ export function SearchSuggestionsSkeleton() {
 /** Skeleton album / playlist tiles — matches Library rounded-2xl cover art */
 export function LibraryGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 w-full">
+    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 w-full">
       {Array.from({ length: 12 }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-3">
+        <div key={i} className="flex flex-col gap-1">
           <Skeleton className="aspect-square w-full rounded-2xl shadow-lg ring-1 ring-white/5" />
           <Skeleton className="h-3.5 w-full rounded-md" />
           <Skeleton className="h-3 w-2/3 rounded-md" />

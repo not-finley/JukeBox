@@ -329,69 +329,60 @@ const ProfileComponent = ({
         </header>
 
         {/* --- JUKEBOXD FIVE SECTION --- */}
-        <section className="mb-12">
-            <div className="flex justify-between items-center mb-6 border-b border-gray-800 pb-2">
-                <h2 className="text-sm uppercase tracking-[0.2em] font-bold text-gray-500">
-                    Current Fav's{editing && <span className="text-emerald-500 normal-case ml-2">- Select up to 5 albums from your Listens below</span>}
-                </h2>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                {[...Array(5)].map((_, i) => {
-                    const item = topFive[i];
-                    const containerStyles = `relative aspect-square rounded-lg border-2 transition-all overflow-hidden ${
-                        editing ? 'border-emerald-500/30 border-dashed' : 'border-gray-800'
-                    }`;
+        {((topFive && topFive.length > 0) || editing) && (
+            <section className="mb-8">
+                <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                    <h2 className="text-sm uppercase tracking-[0.2em] font-bold text-gray-500">
+                        Current Fav's{editing && <span className="text-emerald-500 normal-case ml-2">- Select up to 5 albums from your Listens below</span>}
+                    </h2>
+                </div>
+                
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                    {[...Array(5)].map((_, i) => {
+                        const item = topFive[i];
+                        const containerStyles = `relative aspect-square rounded-lg border-2 transition-all overflow-hidden ${
+                            editing ? 'border-emerald-500/30 border-dashed' : 'border-gray-800'
+                        }`;
 
-                    const content = (
-                        <>
-                            {item ? (
-                                <div key={i} >
-                                    {item ? (
-                                        <div className="relative h-full w-full group">
-                                            <img src={item.album_cover_url} className="w-full h-full object-cover" alt={item.name} />
-                                            
-                                            <div className="absolute inset-x-0 bottom-0 bg-black/10 backdrop-blur-lg p-1.5 md:p-2">
-                                                <p className="text-[10px] md:text-xs font-bold text-white truncate">{item.name}</p>
-                                                <p className="text-[8px] md:text-[10px] text-gray-300 truncate">{item.artist_name || item.artist}</p>
-                                            </div>
-
-                                            {editing && (
-                                                <button 
-                                                    onClick={(e) => { e.preventDefault(); toggleTopFive(item); }}
-                                                    className="absolute top-1 right-1 w-5 h-5 bg-red/50 rounded-full z-20 backdrop-blur-sm flex items-center justify-center shadow-lg transition-transform active:scale-90"
-                                                >
-                                                    <span className="text-[10px] font-bold text-white">✕</span>
-                                                </button>
-                                            )}
+                        const content = (
+                            <div className="h-full w-full">
+                                {item ? (
+                                    <div className="relative h-full w-full group">
+                                        <img src={item.album_cover_url} className="w-full h-full object-cover" alt={item.name} />
+                                        <div className="absolute inset-x-0 bottom-0 bg-black/10 backdrop-blur-lg p-1.5 md:p-2">
+                                            <p className="text-[10px] md:text-xs font-bold text-white truncate">{item.name}</p>
+                                            <p className="text-[8px] md:text-[10px] text-gray-300 truncate">{item.artist_name || item.artist}</p>
                                         </div>
-                                    ) : (
-                                        <div className="h-full flex items-center justify-center text-gray-800">
-                                            <Disc size={24} className="opacity-20" />
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="h-full flex items-center justify-center text-gray-700">
-                                    <Disc size={32} className="opacity-20" />
-                                </div>
-                            )}
-                        </>
-                    );
+                                        {editing && (
+                                            <button 
+                                                onClick={(e) => { e.preventDefault(); toggleTopFive(item); }}
+                                                className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full z-20 backdrop-blur-sm flex items-center justify-center shadow-lg transition-transform active:scale-90"
+                                            >
+                                                <span className="text-[10px] font-bold text-white">✕</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex items-center justify-center text-gray-800">
+                                        <Disc size={24} className="opacity-20" />
+                                    </div>
+                                )}
+                            </div>
+                        );
 
-                    // Conditional Wrapper: Link if not editing and item exists, otherwise Div
-                    return !editing && item ? (
-                        <Link to={`/album/${item.id}`} key={i} className={containerStyles}>
-                            {content}
-                        </Link>
-                    ) : (
-                        <div key={i} className={containerStyles}>
-                            {content}
-                        </div>
-                    );
-                })}
-            </div>
-        </section>
+                        return !editing && item ? (
+                            <Link to={`/album/${item.id}`} key={i} className={containerStyles}>
+                                {content}
+                            </Link>
+                        ) : (
+                            <div key={i} className={containerStyles}>
+                                {content}
+                            </div>
+                        );
+                    })}
+                </div>
+            </section>
+        )}
 
         {/* --- MAIN CONTENT & SIDEBAR --- */}
             <div className="grid grid-cols-1 gap-12">

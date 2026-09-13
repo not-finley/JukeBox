@@ -462,13 +462,13 @@ const { user } = useUserContext();
                 sectionType="listens"
                 showLoadMore={hasMore.listens}
                 items={filteredListened}
-                gridClass="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"
+                gridClass="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3"
                 sortBy={sortBy}
                 activeSection={activeSection}
                 onLoadMore={loadMore}
                 isFetchingMore={isFetchingMore}
                 renderItem={(item: any) => (
-                  <Link key={`${item.type}-${item.id}`} to={item.type === "song" ? `/song/${item.id}` : `/album/${item.id}`} className="flex flex-col gap-3 group">
+                  <Link key={`${item.type}-${item.id}`} to={item.type === "song" ? `/song/${item.id}` : `/album/${item.id}`} className="flex flex-col gap-1 group">
                     <img src={item.album_cover_url || "/assets/icons/music-placeholder.png"} className="w-full aspect-square object-cover rounded-2xl group-hover:scale-105 transition-transform shadow-lg" />
                     <p className="text-white text-sm font-semibold truncate">{item.name}</p>
                   </Link>

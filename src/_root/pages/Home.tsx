@@ -444,7 +444,7 @@ const Home = () => {
         </div>
 
         {/* Feed List Items */}
-        <div className="flex flex-col gap-2 sm:gap-6 w-full max-w-2xl mx-auto px-2 sm:px-0 mt-2">
+        <div className="flex flex-col gap-2 w-full max-w-2xl mx-auto px-2 sm:px-0 mt-2">
           {activityFeed.map((activity) => (
             <FeedCard
               key={activity.id}
