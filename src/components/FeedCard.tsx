@@ -123,7 +123,7 @@ export const FeedCard = ({
             }}
             className="flex items-center justify-between w-full text-xs text-emerald-400 hover:text-emerald-300 font-medium py-1"
           >
-            <span>{groupedActivities.length} other tracks played in this session</span>
+            <span>{groupedActivities.length} tracks rated</span>
             <span>{isExpanded ? "Hide" : "Show"}</span>
           </button>
 
