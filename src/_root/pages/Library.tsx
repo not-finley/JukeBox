@@ -155,7 +155,7 @@ const { user } = useUserContext();
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "rating">("newest");
   const [filterType, setFilterType] = useState<"all" | "song" | "album">("all");
   
-  const [activeSection, setActiveSection] = useState<"reviews" | "ratings" | "listens" | "playlists">("reviews");
+  const [activeSection, setActiveSection] = useState<"reviews" | "ratings" | "listens" | "playlists">("listens");
   const [offset, setOffset] = useState({ reviews: 0, ratings: 0, listens: 0 });
   const [hasMore, setHasMore] = useState({ reviews: true, ratings: true, listens: true });
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -260,9 +260,9 @@ const { user } = useUserContext();
   );
 
   const SECTIONS = [
-    { key: "reviews", label: "Reviews" },
-    { key: "ratings", label: "Rated" },
     { key: "listens", label: "History" },
+    { key: "ratings", label: "Rated" },
+    { key: "reviews", label: "Reviews" },
     { key: "playlists", label: "Playlists" },
   ];
 
@@ -274,7 +274,7 @@ const { user } = useUserContext();
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Your Library</h1>
-            <p className="text-gray-400">Manage your reviews, ratings, and music history.</p>
+            <p className="text-gray-400">Manage your music history, reviews, and ratings.</p>
           </div>
 
           <div className="flex gap-3 w-full md:max-w-md">
