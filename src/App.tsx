@@ -34,6 +34,7 @@ import About from './_info/About';
 import InfoLayout from './_info/InfoLayout';
 import LandingRedirect from './_info/LandingRedirect';
 import NotFound from './components/shared/NotFound';
+import ScrollToTop from "./components/shared/ScrollToTop";
 
 const App = () => {
   useEffect(() => {
@@ -48,6 +49,7 @@ const App = () => {
   }, []);
   return (
   <main className="flex flex-col min-h-screen">
+        <ScrollToTop />
         <Helmet>
           <meta name="description" content="A place to review and share music!"></meta>
         </Helmet>
