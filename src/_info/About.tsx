@@ -28,7 +28,7 @@ const About = () => {
       {/* Hero Section */}
       <section className="relative text-center mb-24 md:mb-32 pt-8 md:pt-16">
         <SoundWave position="left" />
-        <SoundWave position="right" />w2
+        <SoundWave position="right" />
 
         <div className="relative z-10">
           {/* Pill Badge */}
