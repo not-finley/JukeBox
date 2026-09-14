@@ -16,16 +16,6 @@ const AuthCallback = () => {
       hasExchanged.current = true;
 
       try {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get("code");
-
-        if (code) {
-          const { error: exchangeError } =
-            await supabase.auth.exchangeCodeForSession(code);
-
-          if (exchangeError) throw exchangeError;
-        }
-
         const {
           data: { session },
           error: sessionError,
@@ -38,7 +28,6 @@ const AuthCallback = () => {
           return;
         }
 
-        // Trigger handles users table creation automatically
         await checkAuthUser();
 
         const nextPath = takePostAuthRedirect();
