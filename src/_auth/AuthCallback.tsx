@@ -12,45 +12,69 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const handleAuth = async () => {
-      if (hasExchanged.current) return;
+      if (hasExchanged.current) {
+        console.log("[AuthCallback] Already processed, skipping duplicate run.");
+        return;
+      }
       hasExchanged.current = true;
 
+      console.log("[AuthCallback] Started. Current URL:", window.location.href);
+
       try {
-        // 1. Check if tokens exist in the hash fragment (Implicit flow / production behavior)
+        // 1. Check if tokens exist in the hash fragment
         const hash = window.location.hash;
+        console.log("[AuthCallback] Window hash present:", !!hash);
+        
         if (hash && hash.includes("access_token")) {
           const params = new URLSearchParams(hash.replace("#", "?"));
           const access_token = params.get("access_token");
           const refresh_token = params.get("refresh_token");
 
+          console.log("[AuthCallback] Extracted tokens from hash - Access Token exists:", !!access_token, "Refresh Token exists:", !!refresh_token);
+
           if (access_token && refresh_token) {
-            await supabase.auth.setSession({
+            const { error: setSessionError } = await supabase.auth.setSession({
               access_token,
               refresh_token,
             });
+            if (setSessionError) {
+              console.error("[AuthCallback] Error setting manual session:", setSessionError);
+              throw setSessionError;
+            }
+            console.log("[AuthCallback] Successfully set manual session from hash tokens.");
           }
         }
 
         // 2. Standard session retrieval fallback
+        console.log("[AuthCallback] Fetching current session from Supabase client...");
         const {
           data: { session },
           error: sessionError,
         } = await supabase.auth.getSession();
 
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          console.error("[AuthCallback] Session error returned:", sessionError);
+          throw sessionError;
+        }
+
+        console.log("[AuthCallback] Session retrieved successfully. User ID:", session?.user?.id ?? "None");
 
         if (!session) {
+          console.warn("[AuthCallback] No session found. Redirecting to /sign-in");
           navigate("/sign-in", { replace: true });
           return;
         }
 
+        console.log("[AuthCallback] Calling checkAuthUser()...");
         await checkAuthUser();
+        console.log("[AuthCallback] checkAuthUser() completed.");
 
         const nextPath = takePostAuthRedirect();
+        console.log("[AuthCallback] Navigating to post-auth destination:", nextPath);
         navigate(nextPath, { replace: true });
 
       } catch (err) {
-        console.error("Auth callback error:", err);
+        console.error("[AuthCallback] Fatal error caught during handleAuth:", err);
         navigate("/sign-in", { replace: true });
       }
     };
