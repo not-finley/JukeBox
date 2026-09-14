@@ -17,7 +17,7 @@ const SignedInLayout = () => {
   if (!isAuthenticated) return <Navigate to="/auth-select" replace />;
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-[#050505] text-white overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#050505] text-white overflow-hidden">
       {/* Hide Topbar on desktop since LeftSidebar handles it */}
       <div className="md:hidden">
         <Topbar />
@@ -27,7 +27,7 @@ const SignedInLayout = () => {
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* The Content Scroll Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 overflow-y-auto overscroll-y-auto custom-scrollbar">
           <section className="flex flex-col max-w-7xl mx-auto w-full p-4 md:p-8">
             <Outlet />
             {/* Spacer for the floating player */}

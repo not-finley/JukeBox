@@ -7,15 +7,22 @@ const AuthLayout = () => {
   return (
     <>
       {isAuthenticated ? (
-        <Navigate to="/home" />
+        <Navigate to="/home" replace />
       ) : (
-        <div className="flex flex-col h-dvh overflow-hidden">
+        /* Use 100dvh to prevent mobile address bar clipping/layout shifts */
+        <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-[#050505] text-white">
           
-          <div className="flex flex-1 min-h-0"> 
-            <section className="flex flex-1 justify-center items-center flex-col py-10 overflow-y-auto">
-              <Outlet />
+          {/* Main content split wrapper - min-h-0 is essential for nested flex scrolling */}
+          <div className="flex flex-1 min-h-0 w-full"> 
+            
+            {/* Scrollable form container with mobile overscroll protection */}
+            <section className="flex flex-1 justify-center items-center flex-col p-4 sm:p-6 overflow-y-auto overscroll-y-none custom-scrollbar">
+              <div className="w-full max-w-md my-auto">
+                <Outlet />
+              </div>
             </section>
 
+            {/* Desktop side image preview */}
             <img
               src="/assets/images/side-image-small.png"
               alt="logo"
@@ -23,6 +30,7 @@ const AuthLayout = () => {
               loading="lazy"
             />
           </div>
+
           <Footer />
         </div>
       )}
@@ -30,4 +38,4 @@ const AuthLayout = () => {
   );
 };
 
-export default AuthLayout
+export default AuthLayout;
