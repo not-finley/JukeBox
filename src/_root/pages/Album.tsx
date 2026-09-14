@@ -129,6 +129,8 @@ const Album = () => {
 
 
     const fetchAlbum = async () => {
+        setLoading(true);
+        setAlbum(null);
         try {
             const fetchedAlbum = await getAlbumDetailsById(id || "");
             if (!fetchedAlbum) {
