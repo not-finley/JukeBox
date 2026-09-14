@@ -17,21 +17,20 @@ const RootLayout = () => {
   if (isLoading) return <AppShellSkeleton />;
 
   return (
-    <div className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#050505] text-white overflow-hidden">
-      {/* Hide Topbar on desktop since LeftSidebar handles it */}
-      <div className="md:hidden">
-        <Topbar />
-      </div>
-      
+    <div className="flex flex-col md:flex-row min-h-screen w-full bg-[#050505] text-white">
+
       <LeftSidebar />
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* The Content Scroll Area */}
-        <div className="flex-1 overflow-y-auto overscroll-y-auto custom-scrollbar">
+      <main className="flex-1 flex flex-col min-w-0 relative pb-24 md:pb-0">
+        <div className="md:hidden sticky top-0 z-30 w-full">
+          <Topbar />
+        </div>
+    
+        {/* The Page Content */}
+        <div className="flex-1">
           <section className="flex flex-col max-w-7xl mx-auto w-full p-4 md:p-8">
             <Outlet />
-            {/* Spacer for the floating player */}
-            <div className="h-32" /> 
+            <div className="h-20" /> 
           </section>
         </div>
 

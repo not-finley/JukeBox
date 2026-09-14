@@ -54,8 +54,8 @@ const Bottombar = () => {
 
   return (
     <>
-      <section className="bottom-bar pb-safe overflow-visible"> 
-        <div className="flex justify-around items-center w-full px-2 relative"> 
+      <section className="fixed bottom-0 left-0 right-0 z-30 bg-black/90 backdrop-blur-lg border-t border-white/10 pb-safe overflow-visible md:hidden">
+        <div className="flex justify-around items-center w-full px-2 relative py-1">
           
           {/* Left Side Links */}
           {leftLinks.map(renderLink)}

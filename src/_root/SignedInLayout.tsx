@@ -8,7 +8,6 @@ import { useUserContext } from '@/lib/AuthContext';
 import { usePlayerContext } from '@/context/PlayerContext';
 import { AppShellSkeleton } from '@/components/shared/PageSkeletons';
 
-
 const SignedInLayout = () => {
   const { isAuthenticated, isLoading } = useUserContext();
   const { currentTrack } = usePlayerContext();
@@ -17,27 +16,29 @@ const SignedInLayout = () => {
   if (!isAuthenticated) return <Navigate to="/auth-select" replace />;
 
   return (
-    <div className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#050505] text-white overflow-hidden">
-      {/* Hide Topbar on desktop since LeftSidebar handles it */}
-      <div className="md:hidden">
-        <Topbar />
-      </div>
+    <div className="flex flex-col md:flex-row min-h-screen w-full bg-[#050505] text-white">
       
       <LeftSidebar />
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* The Content Scroll Area */}
-        <div className="flex-1 overflow-y-auto overscroll-y-auto custom-scrollbar">
+      {/* Main Column wrapping both the Topbar and the page content */}
+      <main className="flex-1 flex flex-col min-w-0 relative pb-24 md:pb-0">
+        
+        {/* Topbar is now sticky inside the scrolling column */}
+        <div className="md:hidden sticky top-0 z-30 w-full">
+          <Topbar />
+        </div>
+
+        {/* The Page Content */}
+        <div className="flex-1">
           <section className="flex flex-col max-w-7xl mx-auto w-full p-4 md:p-8">
             <Outlet />
-            {/* Spacer for the floating player */}
-            <div className="h-32" /> 
+            <div className="h-20" /> 
           </section>
         </div>
 
         {/* Desktop/Mobile Player Wrapper */}
         {currentTrack && (
-          <div className="absolute bottom-0 left-0 w-full pb-4 md:pb-6 pointer-events-none">
+          <div className="fixed md:absolute bottom-16 md:bottom-0 left-0 w-full pb-4 md:pb-6 pointer-events-none z-30">
              <div className="pointer-events-auto">
                 <PreviewPlayer />
              </div>
@@ -52,6 +53,4 @@ const SignedInLayout = () => {
   )
 }
 
-
-
-export default SignedInLayout
+export default SignedInLayout;
