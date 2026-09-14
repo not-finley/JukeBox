@@ -17,7 +17,7 @@ const AuthLayout = () => {
             
             {/* Scrollable form container with mobile overscroll protection */}
             <section className="flex flex-1 justify-center items-center flex-col p-4 sm:p-6 overflow-y-auto overscroll-y-none custom-scrollbar">
-              <div className="w-full max-w-md my-auto">
+              <div className="w-full max-w-md py-8">
                 <Outlet />
               </div>
             </section>

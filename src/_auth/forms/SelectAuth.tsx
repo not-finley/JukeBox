@@ -4,16 +4,18 @@ import { Mail } from 'lucide-react'
 
 const SelectAuth = () => {
     return (
-        <div className="sm:w-420 flex-center flex-col p-6">
-            <img src="/assets/images/JBlogoSimple.svg" alt="Logo" />
-            <h2 className="h3-bold md:h2-bold pt-5 sm:pt-8 text-center">
+        <div className="w-full max-w-md mx-auto flex flex-col items-center">
+            <img src="/assets/images/JBlogoSimple.svg" alt="Logo" className="w-30 h-10" />
+            
+            {/* Reduced padding-top on small screens */}
+            <h2 className="h3-bold md:h2-bold pt-3 sm:pt-6 text-center">
                 The pulse of your playlist
             </h2>
-            <p className="text-light-3 small-medium md:base-regular mt-2 text-center mb-8">
+            <p className="text-light-3 small-medium md:base-regular mt-1 text-center mb-6">
                 Review albums, track listens, and see what your friends are spinning.
             </p>
 
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-3 w-full">
                 <OAuthButtons redirectAfterAuth="/home" />
 
                 <div className="flex items-center my-1">
@@ -24,7 +26,7 @@ const SelectAuth = () => {
 
                 <Link
                     to="/sign-in"
-                    className="flex-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-lg border border-gray-700 transition font-semibold text-sm"
+                    className="flex-center gap-2 bg-gray-800 hover:bg-gray-700 text-white py-2.5 rounded-lg border border-gray-700 transition font-semibold text-sm"
                 >
                     <Mail className="h-4 w-4" aria-hidden />
                     Sign in with email
@@ -37,7 +39,7 @@ const SelectAuth = () => {
                     Create an account with email
                 </Link>
 
-                <div className="flex items-center my-2">
+                <div className="flex items-center my-1">
                     <div className="h-[1px] flex-1 bg-gray-800"></div>
                     <span className="px-3 text-xs text-gray-500 uppercase">or</span>
                     <div className="h-[1px] flex-1 bg-gray-800"></div>
@@ -45,7 +47,7 @@ const SelectAuth = () => {
 
                 <Link
                     to="/trending"
-                    className="text-light-3 hover:text-light-2 text-sm font-medium transition text-center py-2"
+                    className="text-light-3 hover:text-light-2 text-sm font-medium transition text-center py-1.5"
                 >
                     Continue as Guest (Preview)
                 </Link>

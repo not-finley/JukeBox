@@ -70,47 +70,48 @@ const SignupForm = () => {
 
   return (
     <Form {...form}>
-      <div className="sm:w-420 flex-center flex-col">
-        <img src="/assets/images/JBlogoSimple.svg" alt="Logo" />
+      <div className="w-full max-w-md mx-auto flex flex-col items-center">
+        <img src="/assets/images/JBlogoSimple.svg" alt="Logo" className="w-50 h-10" />
 
-        <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">Create a new account</h2>
-        <p className="text-light-3 small-medium md:base-regular">
+        <h2 className="h3-bold md:h2-bold pt-3 sm:pt-6 text-center">Create a new account</h2>
+        <p className="text-light-3 small-medium md:base-regular text-center">
           Enter your details to start reviewing.
         </p>
 
-        <div className="w-full mt-6">
+        <div className="w-full mt-4">
           <OAuthButtons redirectAfterAuth={redirectTo} />
         </div>
 
-        <div className="flex items-center gap-3 w-full mt-6">
+        <div className="flex items-center gap-3 w-full mt-4">
           <div className="h-px flex-1 bg-gray-800" />
           <span className="text-xs uppercase text-gray-500">or sign up with email</span>
           <div className="h-px flex-1 bg-gray-800" />
         </div>
 
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
+        {/* Reduced gap-5 to gap-3 for compact layout on short screens */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-3 w-full mt-3">
           {["name", "username", "email", "password"].map((field) => (
             <FormField
               key={field}
               control={form.control}
               name={field as any}
               render={({ field: f }) => (
-                <FormItem>
-                  <FormLabel>{field.charAt(0).toUpperCase() + field.slice(1)}</FormLabel>
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs">{field.charAt(0).toUpperCase() + field.slice(1)}</FormLabel>
                   <FormControl>
                     <Input
                       type={field === "password" ? "password" : "text"}
-                      className="shad-input"
+                      className="shad-input h-10"
                       {...f}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-[10px]" />
                 </FormItem>
               )}
             />
           ))}
 
-          <Button type="submit" className="shad-button_primary">
+          <Button type="submit" className="shad-button_primary mt-2">
             { isSigningIn ? (
               <div className="flex-center gap-2">
                 Loading...
@@ -120,7 +121,7 @@ const SignupForm = () => {
             )}
           </Button>
 
-          <p className="text-small-regular text-light-2 text-center mt-2">
+          <p className="text-small-regular text-light-2 text-center mt-1">
             Already have an account?
             <Link
               to="/sign-in"
