@@ -34,8 +34,8 @@ export const PreviewPlayer = () => {
     };
 
     return (
-        <div className="sticky bottom-20 left-4 right-4 z-[100] animate-in slide-in-from-bottom-4 duration-300 hover:cursor-pointer" onClick={handleTitleClick}>
-            <div className="bg-gray-900/10 backdrop-blur-md border border-white/10 p-3 rounded-2xl flex flex-col gap-2 shadow-2xl max-w-4xl mx-auto">
+        <div className="w-full px-4 animate-in slide-in-from-bottom-4 duration-300 hover:cursor-pointer" onClick={handleTitleClick}>
+            <div className="bg-gray-900/30 backdrop-blur-md border border-white/10 p-3 rounded-2xl flex flex-col gap-2 shadow-2xl max-w-4xl mx-auto">
                 
                 <div className="flex items-center gap-4">
                     <img 

@@ -30,7 +30,7 @@ const Search = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
   
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // PERSISTENCE: Save to localStorage whenever results or query change
   useEffect(() => {
@@ -48,7 +48,6 @@ const Search = () => {
   const performSearch = async (query: string) => {
     if (!query.trim()) return;
 
-    // Fix the "Ghosting": Close suggestions immediately
     setShowSuggestions(false);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     
@@ -85,7 +84,7 @@ const Search = () => {
   };
 
   const handleSuggestionClick = (item: any) => {
-    setShowSuggestions(false); // Clean up UI
+    setShowSuggestions(false);
     saveRecentSearch(item.name || item.title);
     navigate(`/${item.type === "track" ? "song" : item.type}/${item.id}`);
   };
@@ -96,7 +95,7 @@ const Search = () => {
 
     if (!val.trim()) {
       setSuggestions([]);
-      return; // showSuggestions remains true to display Recents
+      return;
     }
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -104,12 +103,9 @@ const Search = () => {
     typingTimeoutRef.current = setTimeout(async () => {
       setIsSuggestionsLoading(true);
       try {
-        // Speed Optimization: Ensure your getSpotifyToken helper 
-        // checks for an existing non-expired token before fetching a new one.
         const token = await getSpotifyToken(); 
         const { sorted } = await spotifySuggestions(val, token);
         
-        // Only show suggestions if the user hasn't cleared the input while we were fetching
         if (val.trim()) {
           setSuggestions(sorted.slice(0, 5));
         }
@@ -118,9 +114,8 @@ const Search = () => {
       } finally {
         setIsSuggestionsLoading(false);
       }
-    }, 300); // Slightly faster debounce
+    }, 300);
   };
-
 
   const handleClear = () => {
     setSearchQuery("");
@@ -141,10 +136,9 @@ const Search = () => {
       <Link 
         key={`${item.type}-${item.id}`} 
         to={`/${linkPath}/${item.id}`}
-        className="group flex flex-col items-center gap-3 p-4 rounded-xl hover:bg-white/5 transition-all relative"
+        className="group flex flex-col items-center gap-3 p-3 sm:p-4 rounded-xl hover:bg-white/5 transition-all relative min-w-0 w-full"
       >
-        <div className="relative aspect-square w-full overflow-hidden shadow-lg">
-          {/* --- TYPE BADGE --- */}
+        <div className="relative aspect-square w-full overflow-hidden shadow-lg bg-gray-900 rounded-lg">
           {!isRound && (
             <div className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
               <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">
@@ -166,18 +160,17 @@ const Search = () => {
           />
         </div>
 
-        <div className="text-center w-full">
-          <p className="text-white text-sm font-semibold truncate leading-tight">{title}</p>
+        <div className="text-center w-full min-w-0">
+          <p className="text-white text-xs sm:text-sm font-semibold truncate leading-tight w-full">{title}</p>
           
-          {/* --- METADATA DIFFERENTIATION --- */}
-          <div className="flex flex-col items-center mt-1">
+          <div className="flex flex-col items-center mt-1 w-full min-w-0">
             {item.type === "track" && (
-              <p className="text-gray-400 text-xs truncate max-w-full">
+              <p className="text-gray-400 text-[11px] sm:text-xs truncate w-full">
                 Song • {item.artists?.map((a: any) => a.name).join(", ") || item.artist}
               </p>
             )}
             {item.type === "album" && (
-              <p className="text-gray-400 text-xs truncate max-w-full">
+              <p className="text-gray-400 text-[11px] sm:text-xs truncate w-full">
                 Album • {item.artist || item.artists?.[0]?.name}
               </p>
             )}
@@ -203,11 +196,10 @@ const Search = () => {
   }, []);
 
   return (
-    // Force the outer container to never expand past 100vw
-    <div className="common-container flex flex-col w-full max-w-full overflow-x-hidden min-h-screen pb-20">
+    <div className="flex flex-col w-full max-w-full overflow-x-hidden min-h-0">
       
-      {/* 1. HEADER SECTION (Stays centered, padding-aware) */}
-      <div className="w-full px-4 pt-6 sm:pt-10 mb-6">
+      {/* 1. HEADER SECTION */}
+      <div className="w-full px-2 sm:px-0 pt-2 sm:pt-4 mb-6">
         <h1 className="text-3xl sm:text-4xl font-black mb-6 text-white text-center">Search</h1>
         
         <div ref={searchContainerRef} className="relative w-full max-w-xl mx-auto">
@@ -218,24 +210,22 @@ const Search = () => {
                 value={searchQuery}
                 onFocus={handleFocus}
                 onChange={(e) => {handleInputChange(e)}}
-                className="border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base h-10 w-full pr-10" // added padding-right
+                className="border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base h-10 w-full pr-10 text-white"
                 placeholder="What do you want to review?"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     performSearch(searchQuery);
-                    (e.target as HTMLInputElement).blur(); // Hide mobile keyboard
+                    (e.target as HTMLInputElement).blur();
                   }
                 }}
               />
               
-              {/* Clear Button (X) */}
               {searchQuery && (
                 <button 
                   onClick={handleClear}
                   className="absolute right-2 p-1 text-gray-400 hover:text-white transition-colors"
                 >
-                  <X size={18} /> 
-                  {/* If you don't use Lucide, use: <img src="/assets/icons/close.svg" className="w-5 h-5" /> */}
+                  <X size={18} />
                 </button>
               )}
             </div>
@@ -251,7 +241,6 @@ const Search = () => {
           {showSuggestions && (searchQuery.trim().length > 0 || recentSearches.length > 0) && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
               
-              {/* CASE 1: Recent Searches (Input is empty) */}
               {searchQuery.length === 0 && recentSearches.length > 0 && (
                 <div className="p-2">
                   <div className="flex justify-between items-center px-3 py-2">
@@ -278,7 +267,6 @@ const Search = () => {
                 </div>
               )}
 
-              {/* CASE 2: API Suggestions (User is typing) */}
               {searchQuery.length > 0 && (
                 <>
                   {isSuggestionsLoading && <SearchSuggestionsSkeleton />}
@@ -303,10 +291,10 @@ const Search = () => {
         </div>
       </div>
 
-      {/* 2. TABS SECTION (The Mobile Scroll Fix) */}
+      {/* 2. TABS SECTION (Fixed sticky spacing to clear topbar) */}
       {results.all.length > 0 && (
-        <div className="w-full sticky top-0 z-40 bg-black/80 backdrop-blur-lg border-b border-white/5">
-          <div className="flex overflow-x-auto no-scrollbar py-3 px-4 gap-2 touch-pan-x">
+        <div className="w-full sticky top-[56px] md:top-0 z-20 bg-[#050505]/95 backdrop-blur-lg border-b border-white/5 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex overflow-x-auto no-scrollbar py-3 gap-2 touch-pan-x max-w-7xl mx-auto">
             {FilterOptions.map((opt) => (
               <button
                 key={opt}
@@ -323,11 +311,11 @@ const Search = () => {
       )}
 
       {/* 3. RESULTS SECTION */}
-      <div className="w-full px-4 mt-6">
+      <div className="w-full mt-6 pb-6">
         {loading ? (
           <div className="w-full py-8"><SearchGridSkeleton /></div>
         ) : results.all.length > 0 ? (
-          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-3 gap-y-6">
+          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-3 gap-y-6 w-full">
             {activeTab === "All" && results.all.map(renderCard)}
             {activeTab === "Songs" && results.songs.map(renderCard)}
             {activeTab === "Albums" && results.albums.map(renderCard)}

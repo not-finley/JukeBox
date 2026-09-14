@@ -37,13 +37,13 @@ const SignedInLayout = () => {
         </div>
 
         {/* Desktop/Mobile Player Wrapper */}
-        {currentTrack && (
-          <div className="fixed md:absolute bottom-16 md:bottom-0 left-0 w-full pb-4 md:pb-6 pointer-events-none z-30">
-             <div className="pointer-events-auto">
-                <PreviewPlayer />
-             </div>
-          </div>
-        )}
+          {currentTrack && (
+            <div className="fixed bottom-16 md:bottom-6 left-0 w-full z-40 pointer-events-none">
+              <div className="pointer-events-auto">
+                  <PreviewPlayer />
+              </div>
+            </div>
+          )}
       </main>
 
       <div className="md:hidden">
