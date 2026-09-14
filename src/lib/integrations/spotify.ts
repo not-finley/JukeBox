@@ -347,7 +347,8 @@ export async function SpotifyTrackById(songId: string, token: string) {
                 release_date: track.album.release_date,
                 popularity: track.popularity,
                 artists: track.artists,
-                isrc: track.external_ids?.isrc || ""
+                isrc: track.external_ids?.isrc || "",
+                track_number: track.track_number
             };
         }
         return null
