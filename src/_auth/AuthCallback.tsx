@@ -8,7 +8,7 @@ import { takePostAuthRedirect } from "@/lib/auth/oauth";
 const AuthCallback = () => {
   const navigate = useNavigate();
   const { checkAuthUser } = useUserContext();
-  const hasExchanged = useRef(false); // Prevents double-processing in Strict Mode
+  const hasExchanged = useRef(false);
 
   useEffect(() => {
     const handleAuth = async () => {
@@ -16,6 +16,22 @@ const AuthCallback = () => {
       hasExchanged.current = true;
 
       try {
+        // 1. Check if tokens exist in the hash fragment (Implicit flow / production behavior)
+        const hash = window.location.hash;
+        if (hash && hash.includes("access_token")) {
+          const params = new URLSearchParams(hash.replace("#", "?"));
+          const access_token = params.get("access_token");
+          const refresh_token = params.get("refresh_token");
+
+          if (access_token && refresh_token) {
+            await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+          }
+        }
+
+        // 2. Standard session retrieval fallback
         const {
           data: { session },
           error: sessionError,
