@@ -281,7 +281,8 @@ export async function addAlbumComplex(album: SpotifyAlbumWithTracks) {
             album_id: album.id,
             spotify_url: s.external_urls.spotify,
             pop: s.popularity, 
-            isrc: s.external_ids?.isrc || null
+            isrc: s.external_ids?.isrc || null,
+            track_number: s.track_number 
         }));
 
         await supabase

@@ -137,6 +137,7 @@ export interface SpotifyTrack {
   external_ids: {
     isrc: string;
   };
+  track_number: number;
 }
 
 export interface SpotifySong {
@@ -150,6 +151,7 @@ export interface SpotifySong {
   release_date: string;
   popularity: number;
   isrc: string;
+  track_number: number;
 }
 
 export interface SpotifyTrackPaging {

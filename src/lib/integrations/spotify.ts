@@ -449,6 +449,7 @@ export async function SpotifyAlbumById(
                         name: a.name,
                         external_urls: a.external_urls,
                     })),
+                    track_number: s.track_number
                 }));
                 fullTracks.push(...mappedTracks);
             }
