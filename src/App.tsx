@@ -54,6 +54,7 @@ const App = () => {
           <meta name="description" content="A place to review and share music!"></meta>
         </Helmet>
         <Routes>
+            <Route path="/auth/callback" element={<AuthCallback />} />
             {/* public routes */}
             <Route element={<AuthLayout />}>
               <Route path="/auth-select" element={<SelectAuth />}/>
@@ -63,7 +64,7 @@ const App = () => {
               <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
             </Route>
 
-            <Route path="/auth/callback" element={<AuthCallback />} />
+            
 
            <Route element={<InfoLayout />}>
               <Route index element={<LandingRedirect />} />
