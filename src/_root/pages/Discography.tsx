@@ -3,7 +3,8 @@ import { AlbumDetails } from '@/types';
 import { Link, useParams } from 'react-router-dom';
 import { DiscographyGridSkeleton } from '@/components/shared/PageSkeletons';
 import { getSpotifyToken, getArtistDiscographyFromSpotify } from '@/lib/integrations/spotify';
-import DiscographyItem from '@/components/DiscographyItem'
+import DiscographyItem from '@/components/DiscographyItem';
+import { ArrowUp } from 'lucide-react'; // Icon for back to top button
 
 const Discography = () => {
     const { id } = useParams();
@@ -11,6 +12,7 @@ const Discography = () => {
     const [notFound, setNotFound] = useState(false);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<"all" | "album" | "single">("all");
+    const [showTopButton, setShowTopButton] = useState(false);
 
     const CACHE_KEY = `discog_${id}`;
     const STATE_KEY = `state_${id}`;
@@ -29,11 +31,10 @@ const Discography = () => {
                     if (cachedState) {
                         const { filter: savedFilter, scrollY } = JSON.parse(cachedState);
                         setFilter(savedFilter);
-                        // Small timeout to allow the DOM to render before scrolling
                         setTimeout(() => window.scrollTo(0, scrollY), 100);
                     }
                     setLoading(false);
-                    return; // Exit early if we have cache
+                    return;
                 }
 
                 const token = await getSpotifyToken();
@@ -54,6 +55,24 @@ const Discography = () => {
 
         if (id) fetchArtistDiscog();
     }, [id]);
+
+    // Track scroll position to toggle Back to Top button
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 300) {
+                setShowTopButton(true);
+            } else {
+                setShowTopButton(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const updateAlbumTracks = (albumId: string, tracks: any[]) => {
         setDiscography(prev => {
@@ -84,135 +103,90 @@ const Discography = () => {
         return true;
     });
 
-
     if (notFound) {
         return (
             <div className="common-container text-center text-gray-300">
                 <h1 className="text-2xl font-semibold mb-2">Discography not found.</h1>
-                <Link to={`/artist/${id}`} onClick={handleNavigation} className="text-indigo-400 hover:underline">
+                <Link to={`/artist/${id}`} onClick={handleNavigation} className="text-emerald-400 hover:underline">
                     Back to Artist
                 </Link>
             </div>
         );
     }
 
-
-
     return (
-        <div className="flex flex-col w-full items-center min-h-[calc(100dvh-145px)]">
-            {/* Sticky Header */}
-            <div className="sticky top-20 w-11/12 md:w-10/12 rounded-lg shadow-xl md:top-0 z-50 px-4 lg:px-6 transition-all duration-300 py-4 bg-slate-900/30 backdrop-blur-md lg:bg-transparent">
-                <div className='relative items-center flex justify-center w-full'>
-                    <Link to={`/artist/${id}`} onClick={handleNavigation} className="absolute left-0 text-gray-400 hover:text-white transition text-sm underline-offset-4 hover:underline">
-                        ← Back
+        <div className="common-container pb-20 relative">
+            <div className="max-w-6xl w-full mx-auto">
+                
+                {/* Header Banner Section - Centered layout */}
+                <div className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-b from-gray-900 to-black p-6 sm:p-8 border border-white/5 shadow-2xl mb-8 flex flex-col items-center text-center">
+                    
+                    {/* Back link positioned cleanly or neatly centered */}
+                    <Link 
+                        to={`/artist/${id}`} 
+                        onClick={handleNavigation} 
+                        className="text-xs font-bold text-emerald-400 uppercase tracking-widest hover:underline mb-2 transition-colors"
+                    >
+                        ← Back to Artist
                     </Link>
-                    <h1 className="text-2xl lg:text-4xl font-bold text-white">Discography</h1>
+
+                    <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-5">
+                        Discography
+                    </h1>
+
+                    {/* Centered Filter Buttons */}
+                    <div className="flex items-center justify-center gap-2 bg-black/40 p-1.5 rounded-xl border border-white/5">
+                        {["all", "album", "single"].map((t) => (
+                            <button
+                                key={t}
+                                onClick={() => setFilter(t as any)}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                                    filter === t 
+                                    ? "bg-emerald-500 text-black shadow-lg" 
+                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                }`}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                <div className="flex justify-center gap-4 mt-6">
-                    {["all", "album", "single"].map((t) => (
-                        <button
-                            key={t}
-                            onClick={() => setFilter(t as any)}
-                            className={`px-4 py-1 rounded-full text-sm font-medium capitalize transition 
-                            ${filter === t ? "bg-emerald-500 text-white" : "bg-zinc-800 text-gray-300 hover:bg-zinc-700"}`}
-                        >
-                            {t}s
-                        </button>
+                {/* Content Container */}
+                <div className="w-full">
+                    {loading && <DiscographyGridSkeleton />}
+                    
+                    {!loading && filteredDiscog?.length === 0 && (
+                        <p className="text-center text-gray-400 py-12 bg-gray-900/40 rounded-2xl border border-white/5 text-sm">
+                            No releases found for this filter.
+                        </p>
+                    )}
+
+                    {!loading && filteredDiscog?.map((album) => (
+                        <div key={album.albumId} className="mb-6">
+                            <DiscographyItem 
+                                album={album} 
+                                onUpdate={updateAlbumTracks}
+                                handleNavigation={handleNavigation}
+                            />
+                        </div>
                     ))}
                 </div>
+
             </div>
 
-            {/* Scrollable content container */}
-            <div className="flex-1 w-full overflow-y-auto px-5 py-5 lg:px-8 lg:p-14 custom-scrollbar">
-                {loading && <DiscographyGridSkeleton />}
-                {notFound && <p className="text-center text-gray-300 py-20">Discography not found</p>}
-
-                {/* Items must be inside the scrollable container for useInView to work correctly */}
-                {!loading && filteredDiscog?.map((album) => (
-                    <DiscographyItem 
-                        key={album.albumId} 
-                        album={album} 
-                        onUpdate={updateAlbumTracks}
-                        handleNavigation={handleNavigation}
-                    />
-                ))}
-            </div>
+            {/* Floating Back to Top Button (Visible on mobile/all screens when scrolled down) */}
+            {showTopButton && (
+                <button
+                    onClick={scrollToTop}
+                    className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-emerald-500 text-black shadow-2xl border border-white/10 hover:bg-emerald-400 transition-all active:scale-95 animate-fade-in"
+                    aria-label="Back to top"
+                >
+                    <ArrowUp size={20} strokeWidth={2.5} />
+                </button>
+            )}
         </div>
     );
 };
 
 export default Discography;
-
-
-//  {filteredDiscog?.map((album) => (
-//                     /* 1. Added 'mx-auto' to ensure the card stays centered in the scrollable view */
-//                     <div key={album.albumId} className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center lg:items-start gap-10 bg-zinc-900/60 p-6 rounded-2xl shadow-lg hover:bg-zinc-800 transition-all duration-200 mb-8">
-                        
-//                         {/* Left: Album Cover */}
-//                         <div className="lg:w-1/3 w-2/3 flex flex-col gap-3">
-//                             <Link
-//                                 onClick={handleNavigation}
-//                                 to={`/album/${album.albumId}`}
-//                                 className="group relative block"
-//                             >
-//                                 <img
-//                                     src={album.album_cover_url}
-//                                     alt={album.title}
-//                                     className="w-full rounded-xl shadow-lg object-cover group-hover:opacity-90 transition"
-//                                 />
-//                                 <span className="absolute bottom-3 right-3 bg-green-500 hover:bg-green-400 text-white text-xs font-semibold px-3 py-1 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition">
-//                                     View Album
-//                                 </span>
-//                             </Link>
-
-//                             {/* 2. Moved Artist Names here, under the cover, or inside the info section for better flow */}
-//                             {album.artists.length > 0 && (
-//                                 <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-//                                     {album.artists.map(artist => (
-//                                         <span key={artist.id} className="text-xs bg-zinc-800 text-gray-400 px-2 py-1 rounded-md border border-zinc-700">
-//                                             {artist.name}
-//                                         </span>
-//                                     ))}
-//                                 </div>
-//                             )}
-//                         </div>
-
-//                         {/* Right: Album Details + Tracklist */}
-//                         <div className="flex flex-col flex-1 w-full text-center lg:text-left">
-//                             <Link
-//                                 onClick={handleNavigation}
-//                                 to={`/album/${album.albumId}`}
-//                                 className="text-3xl font-bold text-white hover:text-emerald-400 transition"
-//                             >
-//                                 {album.title}
-//                             </Link>
-
-//                             <p className="text-gray-500 mb-6 font-medium">
-//                                 {new Date(album.release_date).getFullYear()} • {album.album_type === 'album' ? 'LP' : 'Single/EP'}
-//                             </p>
-
-//                             {/* Tracklist Container */}
-//                             <div className="bg-black/20 rounded-xl p-4">
-//                                 {album.tracks.length > 0 ? (
-//                                     <ul className="text-gray-300 text-base divide-y divide-zinc-700/40 w-full">
-//                                         {album.tracks.map((t, index) => (
-//                                             <li key={t.songId} className="w-full py-2.5 hover:bg-white/5 px-2 rounded-lg transition flex group/track">
-//                                                 <span className="flex-shrink-0 w-8 text-gray-500 font-mono text-sm">{index + 1}</span>
-//                                                 <Link
-//                                                     onClick={handleNavigation}
-//                                                     to={`/song/${t.songId}`}
-//                                                     className="flex-1 truncate hover:text-emerald-400 transition"
-//                                                 >
-//                                                     {t.title}
-//                                                 </Link>
-//                                             </li>
-//                                         ))}
-//                                     </ul>
-//                                 ) : (
-//                                     <p className="text-gray-500 italic text-sm">No tracks found.</p>
-//                                 )}
-//                             </div>
-//                         </div>
-//                     </div>
-//                 ))}

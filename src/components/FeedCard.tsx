@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Activity } from "@/types";
 import { timeAgo } from "@/lib/supabase/api";
 import StarIcon from '@/components/shared/StarIcon';
+import defaultAvatar from "/assets/icons/profile-placeholder.svg";
 
 interface FeedCardProps {
   activity: Activity;
@@ -38,9 +39,12 @@ export const FeedCard = ({
         <div className="flex items-center gap-2.5 min-w-0">
           <Link to={`/profile/${activity.userId}`} onClick={(e) => e.stopPropagation()} className="shrink-0">
             <img
-              src={activity.profileUrl || "/assets/icons/profile-placeholder.svg"}
+              src={activity.profileUrl || defaultAvatar}
               alt={activity.username}
-              className="w-6 h-6 rounded-full object-cover border border-gray-700"
+              className="w-8 h-8 rounded-full object-cover border border-gray-700"
+              onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultAvatar;
+              }}
             />
           </Link>
           <div className="flex items-center gap-1.5 min-w-0 truncate">
@@ -149,7 +153,7 @@ export const FeedCard = ({
           {isExpanded && (
             <div className="mt-2 space-y-1.5 pl-2 border-l border-emerald-500/30">
               {groupedActivities.map((g, idx) => (
-                <div key={g.id || idx} className="flex items-center justify-between text-xs py-1">
+                <div key={g.id || idx} className="flex items-center justify-between text-[12px] py-1">
                   <Link
                     to={`/song/${g.targetId}`}
                     className="text-gray-300 hover:text-white truncate max-w-[280px]"
@@ -157,7 +161,7 @@ export const FeedCard = ({
                   >
                     {g.targetName}
                   </Link>
-                  <span className="text-gray-500 text-[10px]">
+                  <span className="text-gray-500 text-[12px]">
                     {g.rating ? `${g.rating} ★` : "Listened"}
                   </span>
                 </div>
