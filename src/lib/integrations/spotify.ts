@@ -216,14 +216,46 @@ export async function searchSpotify(query: string, token: string): Promise<{ sor
     }
 }
 
+export async function searchSpotifyByType(query: string, type: string, token: string): Promise<any[]> {
+    try {
+        const response = await fetch(
+            `${SPOTIFY_API_BASE_URL}/search?type=${type}&q=${encodeURIComponent(query)}&limit=20`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-export async function spotifySuggestions(query: string, token: string): Promise<{ sorted: any[], unsorted: any[] }> {
+        const data = await response.json();
+        const itemsKey = `${type}s` as keyof typeof data;
+        const rawItems = data[itemsKey]?.items || [];
+
+        return rawItems.map((item: any) => {
+            const artists = item.artists?.map((a: any) => ({ id: a.id, name: a.name })) || [];
+            return {
+                type: type,
+                id: item.id,
+                title: item.name || "",
+                name: item.name || "",
+                album_cover_url: item.images?.[0]?.url || item.album?.images?.[0]?.url || "",
+                image_url: item.images?.[0]?.url || item.album?.images?.[0]?.url || "",
+                spotify_url: item.external_urls?.spotify || "",
+                artists,
+                artist: artists[0]?.name || "",
+                popularity: item.popularity || 0,
+            };
+        });
+    } catch (err) {
+        console.error("Error searching Spotify by type:", err);
+        return [];
+    }
+}
+
+
+export async function spotifySuggestions(query: string, token: string, type: string = "track"): Promise<{ sorted: any[], unsorted: any[] }> {
     try {
         if (!query) return { sorted: [], unsorted: [] };
 
-        // We use a slightly higher limit to allow for better filtering/sorting
+        // Fetch only the specific type requested to save bandwidth and keep suggestions aligned
         const response = await fetch(
-            `${SPOTIFY_API_BASE_URL}/search?type=track,album,artist&q=${encodeURIComponent(query)}&limit=15`,
+            `${SPOTIFY_API_BASE_URL}/search?type=${type}&q=${encodeURIComponent(query)}&limit=10`,
             { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -231,72 +263,60 @@ export async function spotifySuggestions(query: string, token: string): Promise<
         const results: any[] = [];
 
         // Helper to score results
-        const getBaseScore = (name: string, type: string) => {
-            const match = computeMatchScore(query.toLowerCase(), name.toLowerCase());
-            
-            // TIERED WEIGHTING:
-            // 1.0 = Tracks (Users usually want the song first)
-            // 0.9 = Albums
-            // 0.8 = Artists (Prevents artists from drowning out songs)
-            const typeWeight = type === 'track' ? 1.0 : type === 'album' ? 0.9 : 0.8;
-            
-            return match * typeWeight;
+        const getBaseScore = (name: string) => {
+            return computeMatchScore(query.toLowerCase(), name.toLowerCase());
         };
 
-        // Process Tracks
-        data.tracks?.items?.forEach((track: any) => {
-            results.push({
-                type: "track",
-                id: track.id,
-                title: track.name,
-                // Changed to image_url to match artists and UI expectations
-                image_url: track.album?.images?.[0]?.url || "", 
-                artists: track.artists?.map((a: any) => ({ id: a.id, name: a.name })),
-                popularity: track.popularity || 0,
-                matchScore: getBaseScore(track.name, 'track'),
+        if (type === "track") {
+            data.tracks?.items?.forEach((track: any) => {
+                results.push({
+                    type: "track",
+                    id: track.id,
+                    title: track.name,
+                    name: track.name,
+                    image_url: track.album?.images?.[0]?.url || "", 
+                    artists: track.artists?.map((a: any) => ({ id: a.id, name: a.name })),
+                    popularity: track.popularity || 0,
+                    matchScore: getBaseScore(track.name),
+                });
             });
-        });
-
-        // Process Albums
-        data.albums?.items?.forEach((album: any) => {
-            results.push({
-                type: "album",
-                id: album.id,
-                title: album.name,
-                // Changed to image_url
-                image_url: album.images?.[0]?.url || "", 
-                artists: album.artists?.map((a: any) => ({ id: a.id, name: a.name })),
-                matchScore: getBaseScore(album.name, 'album'),
+        } else if (type === "album") {
+            data.albums?.items?.forEach((album: any) => {
+                results.push({
+                    type: "album",
+                    id: album.id,
+                    title: album.name,
+                    name: album.name,
+                    image_url: album.images?.[0]?.url || "", 
+                    artists: album.artists?.map((a: any) => ({ id: a.id, name: a.name })),
+                    matchScore: getBaseScore(album.name),
+                });
             });
-        });
-
-        // Process Artists
-        data.artists?.items?.forEach((artist: any) => {
-            results.push({
-                type: "artist",
-                id: artist.id,
-                name: artist.name,
-                image_url: artist.images?.[0]?.url || "",
-                popularity: artist.popularity || 0,
-                matchScore: getBaseScore(artist.name, 'artist'),
+        } else if (type === "artist") {
+            data.artists?.items?.forEach((artist: any) => {
+                results.push({
+                    type: "artist",
+                    id: artist.id,
+                    name: artist.name,
+                    title: artist.name,
+                    image_url: artist.images?.[0]?.url || "",
+                    popularity: artist.popularity || 0,
+                    matchScore: getBaseScore(artist.name),
+                });
             });
-        });
+        }
 
         const unsorted = [...results];
 
-        // FINAL SORTING LOGIC:
-        // We prioritize Match Score heavily, but use Popularity as a tie-breaker.
+        // FINAL SORTING LOGIC
         const sorted = results.sort((a, b) => {
-            // If one is a significantly better text match, it wins
             if (Math.abs(b.matchScore - a.matchScore) > 0.1) {
                 return b.matchScore - a.matchScore;
             }
-            // Otherwise, let popularity decide (to show "The Weeknd" before a local artist)
             return (b.popularity || 0) - (a.popularity || 0);
         });
 
-        // Return top 7 most relevant items (mixed types)
-        return { sorted: sorted.slice(0, 7), unsorted };
+        return { sorted: sorted.slice(0, 5), unsorted };
     } catch (err) {
         console.error("Error in spotifySuggestions:", err);
         return { sorted: [], unsorted: [] };
