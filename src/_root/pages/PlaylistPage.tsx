@@ -455,7 +455,7 @@ const PlaylistPage = () => {
     
 
     return (
-    <div className="common-container">
+    <div className="">
         {playlist && (
             <div className="w-full max-w-6xl">
                 {/* --- HEADER SECTION --- */}
@@ -672,7 +672,7 @@ const PlaylistPage = () => {
                 </div>
 
                 {/* --- SONG LIST --- */}
-                <div className="px-6 md:px-10 max-w-7xl mx-auto w-full">
+                <div className="md:px-10 max-w-7xl mx-auto w-full">
                     {playlist?.songs?.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 border-t border-white/5">
                             <Music size={64} className="text-gray-700 mb-4" />

@@ -197,10 +197,10 @@ const ProfileComponent = ({
     };
 
     return (
-        <div className="w-full max-w-6xl mx-auto p-4 text-gray-100">
+        <div className="w-full max-w-6xl mx-auto text-gray-100">
         
         {/* --- HEADER SECTION --- */}
-        <header className="flex flex-col md:flex-row gap-8 items-center md:items-end mb-12">
+        <header className="flex flex-col md:flex-row gap-8 items-center md:items-end mb-5">
             <div className="relative group">
         {/* Profile Image Container */}
         <div className={`relative w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden border-2 shadow-2xl transition-all ${editing ? 'border-emerald-500 cursor-pointer' : 'border-gray-800'}`}>
@@ -752,7 +752,7 @@ const NewProfile = () => {
 
 
     return (
-        <div className="user-container flex">
+        <div className=" flex">
         <ProfileComponent userid={user.accountId} profileuser={profileUser} setProfileUser={setProfileUser} activeTab={activeTab} setActiveTab={setActiveTab} isCurrentUser={isCurrentUser} reviews={reviewed} ratings={rated} listened={listened} playlists={playlists} loadingListens={loadingListens} loadingReviews={loadingReviews} loadingRatings={loadingRatings} following={following} />
         </div>
     );
