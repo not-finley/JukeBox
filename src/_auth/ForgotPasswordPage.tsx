@@ -21,9 +21,14 @@ export default function ForgotPasswordPage() {
         setLoading(false);
 
         if (error) {
+            // A 500 unexpected_failure often points to provider mismatches 
+            // or unconfigured SMTP server settings in Supabase dashboard.
+            console.error("Supabase Auth Error:", error);
+
             toast({
-                title: "Error",
-                description: error.message,
+                title: "Couldn't send reset link",
+                description: "If you signed up using Google, please use the Google sign-in button instead. Otherwise, check your email configuration.",
+                variant: "destructive",
             });
         } else {
             toast({
