@@ -39,28 +39,38 @@ function groupLibraryItems(
 
   if (sortBy === "newest" || sortBy === "oldest") {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const oneDay = 24 * 60 * 60 * 1000;
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
 
     items.forEach((item) => {
-      const itemDate = new Date(
-        item.createdAt || item.rating_date || item.listen_date || Date.now()
-      );
-      const itemDay = new Date(
+      const rawDateStr = item.createdAt || item.rating_date || item.listen_date;
+      const itemDate = rawDateStr ? new Date(rawDateStr) : new Date();
+      
+      const itemMidnight = new Date(
         itemDate.getFullYear(),
         itemDate.getMonth(),
         itemDate.getDate()
       ).getTime();
 
-      const diffInDays = Math.round((today - itemDay) / oneDay);
+      let diffInDays = Math.floor((todayMidnight - itemMidnight) / oneDayMs);
+
+      // Clamp negative day differences (caused by timezone shifts or slight clock futures) to 0 ("Today")
+      if (diffInDays < 0) {
+        diffInDays = 0;
+      }
 
       let label = "";
-      if (diffInDays === 0) label = "Today";
-      else if (diffInDays === 1) label = "Yesterday";
-      else if (diffInDays <= 7) label = "This Week";
-      else if (diffInDays <= 30) label = "This Month";
-      else {
-        label = itemDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+      
+      if (diffInDays === 0) {
+        label = "Today";
+      } else if (diffInDays === 1) {
+        label = "Yesterday";
+      } else if (diffInDays > 1 && diffInDays <= 7) {
+        label = "This Week";
+      } else if (diffInDays > 7 && diffInDays <= 30) {
+        label = "This Month";
+      } else {
+        label = itemDate.toLocaleDateString("en-US", { month: "long", year: "numeric" }).toUpperCase();
       }
 
       if (!groups[label]) groups[label] = [];

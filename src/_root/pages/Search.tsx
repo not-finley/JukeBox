@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { searchUsers } from "@/lib/supabase/api";
 import { getSpotifyToken, searchSpotifyByType, spotifySuggestions } from "@/lib/integrations/spotify";
-import { X, Disc, Mic, Music, Users } from "lucide-react";
+import { X, Disc, Mic, Music, Users, Compass } from "lucide-react";
 
-// Letterboxd-style category options (Removed "All")
+// Letterboxd-style category options
 const Categories = [
   { label: "Songs", value: "track", icon: Music },
   { label: "Albums", value: "album", icon: Disc },
@@ -40,8 +40,22 @@ const Search = () => {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSuggestionsLoading, setIsSuggestionsLoading] = useState(false);
-  
+
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // CLOSE SUGGESTIONS ON OUTSIDE CLICK
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // PERSISTENCE
   useEffect(() => {
@@ -75,7 +89,6 @@ const Search = () => {
         setResults(mappedUsers);
       } else {
         const spotifyToken = await getSpotifyToken();
-        // Target only the specific type requested (e.g., 'track', 'album', or 'artist')
         const spotifyResults = await searchSpotifyByType(query, category, spotifyToken);
         setResults(spotifyResults);
       }
@@ -88,7 +101,6 @@ const Search = () => {
 
   const handleCategoryChange = (category: CategoryType) => {
     setActiveCategory(category);
-    // If there's an active query, automatically re-run search for the new category
     if (searchQuery.trim()) {
       performSearch(searchQuery, category);
     }
@@ -157,13 +169,13 @@ const Search = () => {
       <Link 
         key={`${item.type}-${item.id}`} 
         to={`/${linkPath}/${item.id}`}
-        className="group flex flex-col items-center gap-3 p-3 sm:p-4 rounded-xl hover:bg-white/5 transition-all relative min-w-0 w-full"
+        className="group flex flex-col items-center gap-3 p-3 sm:p-4 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 hover:border-emerald-500/30 transition-all duration-300 relative min-w-0 w-full animate-in fade-in zoom-in-95"
       >
-        <div className="relative aspect-square w-full overflow-hidden shadow-lg bg-gray-900 rounded-lg">
+        <div className="relative aspect-square w-full overflow-hidden shadow-lg bg-gray-900 rounded-xl">
           <img
             src={img}
             alt={title}
-            className={`object-cover w-full h-full transition-transform duration-300 group-hover:scale-110 ${isRound ? "rounded-full" : "rounded-lg"}`}
+            className={`object-cover w-full h-full transition-transform duration-500 group-hover:scale-110 ${isRound ? "rounded-full" : "rounded-xl"}`}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               if (target.src !== window.location.origin + fallback) {
@@ -186,6 +198,9 @@ const Search = () => {
                 {item.artist || item.artists?.[0]?.name}
               </p>
             )}
+            {item.type === "user" && (
+              <p className="text-emerald-400 text-[10px] uppercase font-bold tracking-wider mt-0.5">Community User</p>
+            )}
           </div>
         </div>
       </Link>
@@ -195,41 +210,44 @@ const Search = () => {
   return (
     <div className="flex flex-col w-full max-w-full overflow-x-hidden min-h-0">
       
-      {/* 1. LETTERBOXD-STYLE CATEGORY SELECTOR & HEADER */}
-      <div className="w-full px-2 sm:px-0 pt-2 sm:pt-4 mb-6">
-        <h1 className="text-3xl sm:text-4xl font-black mb-6 text-white text-center">Search</h1>
+      {/* HEADER & CATEGORY SELECTOR */}
+      <div className="w-full pt-2 sm:pt-4 mb-6">
+        <h1 className="text-3xl font-bold text-white mb-2 text-center">Search Catalog</h1>
         
-        {/* Category Picker Tabs */}
-        <div className="flex justify-center gap-2 mb-4 overflow-x-auto no-scrollbar">
-          {Categories.map((cat) => {
-            const Icon = cat.icon;
-            const isSelected = activeCategory === cat.value;
-            return (
-              <button
-                key={cat.value}
-                onClick={() => handleCategoryChange(cat.value)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  isSelected 
-                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/20" 
-                    : "bg-gray-900/80 text-gray-400 hover:bg-white/10 hover:text-white border border-white/5"
-                }`}
-              >
-                <Icon size={14} />
-                {cat.label}
-              </button>
-            );
-          })}
+        {/* Category Picker Tabs (Scrollable from left with safe padding to prevent clipping) */}
+        <div className="w-full overflow-x-auto no-scrollbar py-2 mb-6">
+          <div className="flex justify-start sm:justify-center gap-2 px-4 min-w-max mx-auto">
+            {Categories.map((cat) => {
+              const Icon = cat.icon;
+              const isSelected = activeCategory === cat.value;
+              return (
+                <button
+                  key={cat.value}
+                  onClick={() => handleCategoryChange(cat.value)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    isSelected 
+                      ? "bg-emerald-600 text-white shadow-lg shadow-emerald-900/30 scale-105" 
+                      : "bg-gray-900/80 text-gray-400 hover:bg-white/10 hover:text-white border border-white/5"
+                  }`}
+                >
+                  <Icon size={14} />
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div ref={searchContainerRef} className="relative w-full max-w-xl mx-auto">
-          <div className="flex items-center bg-gray-900/50 border border-white/10 rounded-xl p-1.5 focus-within:border-emerald-500/50 transition-all">
+        {/* Search Input Bar */}
+        <div ref={searchContainerRef} className="relative w-full max-w-xl mx-auto px-4 sm:px-0">
+          <div className="flex items-center bg-gray-900/80 border border-white/10 rounded-2xl p-1.5 focus-within:border-emerald-500/50 shadow-inner transition-all">
             <div className="relative flex-1 flex items-center min-w-0">
               <Input
                 type="text"
                 value={searchQuery}
                 onFocus={handleFocus}
                 onChange={handleInputChange}
-                className="border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base h-10 w-full pr-10 text-white"
+                className="border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base h-11 w-full pr-10 text-white placeholder:text-gray-500"
                 placeholder={`Search for ${activeCategory === 'track' ? 'a song' : activeCategory}...`}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -251,7 +269,7 @@ const Search = () => {
 
             <Button 
               onClick={() => performSearch(searchQuery, activeCategory)} 
-              className="bg-emerald-600 hover:bg-emerald-500 rounded-lg h-9 px-4 shrink-0 text-xs font-bold uppercase tracking-wider ml-1"
+              className="bg-emerald-600 hover:bg-emerald-500 rounded-xl h-10 px-5 shrink-0 text-xs font-bold uppercase tracking-wider ml-1 shadow-md shadow-emerald-900/20"
             >
               Go
             </Button>
@@ -259,14 +277,14 @@ const Search = () => {
 
           {/* Suggestions Dropdown */}
           {showSuggestions && (searchQuery.trim().length > 0 || recentSearches.length > 0) && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
+            <div className="absolute top-full left-4 right-4 sm:left-0 sm:right-0 mt-2 bg-gray-900/95 border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-2xl">
               {searchQuery.length === 0 && recentSearches.length > 0 && (
                 <div className="p-2">
                   <div className="flex justify-between items-center px-3 py-2">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase">Recent Searches</p>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Recent Searches</p>
                     <button 
                       onClick={() => {setRecentSearches([]); localStorage.removeItem("recent_searches")}}
-                      className="text-[10px] text-gray-400 hover:text-white"
+                      className="text-[10px] text-gray-400 hover:text-white transition-colors"
                     >
                       Clear All
                     </button>
@@ -278,9 +296,9 @@ const Search = () => {
                         setSearchQuery(q); 
                         performSearch(q, activeCategory); 
                       }}
-                      className="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer rounded-lg group"
+                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 cursor-pointer rounded-xl group transition-colors"
                     >
-                      <span className="text-gray-400 group-hover:text-white text-sm">{q}</span>
+                      <span className="text-gray-300 group-hover:text-white text-sm">{q}</span>
                     </div>
                   ))}
                 </div>
@@ -294,12 +312,12 @@ const Search = () => {
                     <div 
                       key={item.id} 
                       onClick={() => handleSuggestionClick(item)} 
-                      className="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-none"
+                      className="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-none transition-colors"
                     >
-                      <img src={item.image_url || item.album_cover_url || "/assets/icons/default-music.svg"} className="w-10 h-10 object-cover rounded shrink-0" />
+                      <img src={item.image_url || item.album_cover_url || "/assets/icons/default-music.svg"} className="w-10 h-10 object-cover rounded-lg shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-white truncate">{item.name || item.title}</p>
-                        <p className="text-[10px] text-emerald-500 font-bold uppercase">{item.type}</p>
+                        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">{item.type}</p>
                       </div>
                     </div>
                   ))}
@@ -310,17 +328,23 @@ const Search = () => {
         </div>
       </div>
 
-      {/* 2. RESULTS SECTION */}
-      <div className="w-full mt-6 pb-6">
+      {/* RESULTS / DYNAMIC EMPTY STATE SECTION */}
+      <div className="w-full mt-2 px-3 sm:px-0 pb-6">
         {loading ? (
-          <div className="v-full py-8"><SearchGridSkeleton /></div>
+          <div className="w-full py-8"><SearchGridSkeleton /></div>
         ) : results.length > 0 ? (
           <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-x-3 gap-y-6 w-full">
             {results.map(renderCard)}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 opacity-50">
-            <p className="text-gray-400">Search for {activeCategory === 'track' ? 'songs' : activeCategory}...</p>
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 shadow-xl">
+              <Compass size={32} className="animate-pulse" />
+            </div>
+            <h3 className="text-white font-bold text-lg mb-1">Discover {activeCategory}s</h3>
+            <p className="text-gray-400 text-xs sm:text-sm max-w-sm mb-6">
+              Type something above to start exploring!
+            </p>
           </div>
         )}
       </div>

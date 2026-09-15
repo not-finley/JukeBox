@@ -43,7 +43,7 @@ export const FeedCard = ({
               alt={activity.username}
               className="w-8 h-8 rounded-full object-cover border border-gray-700"
               onError={(e) => {
-                  (e.target as HTMLImageElement).src = defaultAvatar;
+                  (e.target as HTMLInputElement).src = defaultAvatar;
               }}
             />
           </Link>
@@ -66,20 +66,20 @@ export const FeedCard = ({
         </div>
       </div>
 
-      {/* Main Content Row: Thumbnail + Expanded Details */}
-      <div className="flex gap-3.5 items-center">
+      {/* Main Content Area: Entire block wrapped in Link to song/album */}
+      <Link
+        to={primaryLink}
+        className="flex gap-3.5 items-center group cursor-pointer"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Album / Song Thumbnail */}
-        <Link
-          to={primaryLink}
-          className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-lg overflow-hidden border border-gray-800 bg-black/40 group"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-lg overflow-hidden border border-gray-800 bg-black/40">
           <img
             src={activity.album_cover_url || "/assets/icons/empty-state.svg"}
             alt={activity.targetName}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-        </Link>
+        </div>
 
         {/* Details, Stars & Review Text making full use of horizontal space */}
         <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -87,13 +87,9 @@ export const FeedCard = ({
             // Layout WITH review text (stacked content)
             <div className="flex flex-col">
               <div className="flex items-baseline justify-between gap-2 mb-1">
-                <Link
-                  to={primaryLink}
-                  className="font-bold text-white hover:text-emerald-400 text-md sm:text-base truncate transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <span className="font-bold text-white group-hover:text-emerald-400 text-md sm:text-base truncate transition-colors">
                   {activity.targetName}
-                </Link>
+                </span>
 
                 {activity.rating && (
                   <div className="flex gap-1 shrink-0">
@@ -113,13 +109,9 @@ export const FeedCard = ({
           ) : (
             // Layout WITHOUT review text (vertically centered use of space)
             <div className="flex items-center justify-between gap-2">
-              <Link
-                to={primaryLink}
-                className="font-bold text-white hover:text-emerald-400 text-md sm:text-base truncate transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <span className="font-bold text-white group-hover:text-emerald-400 text-md sm:text-base truncate transition-colors">
                 {activity.targetName}
-              </Link>
+              </span>
 
               {activity.rating && (
                 <div className="flex gap-1 shrink-0">
@@ -133,7 +125,7 @@ export const FeedCard = ({
             </div>
           )}
         </div>
-      </div>
+      </Link>
 
       {/* Aggregated Batch Section (If Juked multiple tracks) */}
       {isAggregated && groupedActivities.length > 0 && (
