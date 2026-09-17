@@ -1,4 +1,4 @@
-import { addAlbumComplex, addListenedAlbum, addUpdateRatingAlbum, addUpdateRatingSong, deleteRatingAlbum, deleteRatingSong, getAlbumDetailsById, getAlbumTrackRatings, getAllRatingsOfAlbum, getRatingAlbum, hasListenedAlbum, removeListenedAlbum } from '@/lib/supabase/api';
+import { addAlbumComplex, addListenedAlbum, addUpdateRatingAlbum, addUpdateRatingSong, deleteRatingAlbum, deleteRatingSong, getAlbumDetailsById, getAlbumTrackRatings, getAllRatingsOfAlbum, getRatingAlbum, hasListenedAlbum, removeListenedAlbum,backgroundEnrichAlbumPreviews} from '@/lib/supabase/api';
 import { AlbumDetails, Track } from '@/types';
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom';
@@ -192,6 +192,23 @@ const Album = () => {
             fetchAlbumData();
         }
     }, [id, isAuthenticated, user?.accountId]);
+
+    useEffect(() => {
+    if (album && album.tracks) {
+        backgroundEnrichAlbumPreviews(album.tracks).then((enrichedTracks) => {
+            if (enrichedTracks) {
+                // Silently update track preview URLs in state without blocking UI
+                setAlbum(prev => prev ? {
+                    ...prev,
+                    tracks: prev.tracks.map(t => {
+                        const match = enrichedTracks.find((et: any) => et.songId === t.songId);
+                        return match ? { ...t, preview_url: match.preview_url } : t;
+                    })
+                } : null);
+            }
+        });
+    }
+}, [album?.albumId]);
 
     if (loading) {
         return (
