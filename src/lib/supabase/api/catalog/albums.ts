@@ -4,7 +4,6 @@ import { normalizeReleaseDate } from "../utils/dates";
 
 export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails | null> {
     try {
-        // Fetch the album
         const { data: albumData, error: albumError } = await supabase
             .from("albums")
             .select("*")
@@ -13,51 +12,26 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
 
         if (albumError) throw albumError;
         if (!albumData) throw new Error("Album not found");
-
         if (albumData.fully_loaded === false) return null;
 
-
-
-        // fetch all song information
         const { data: songData, error: songError } = await supabase
             .from("songs")
             .select("*")
             .eq("album_id", albumId)
             .order("track_number", { ascending: true });
 
-
         if (songError) throw songError;
         if (!songData) throw new Error("No songs found");
 
-        const trackInputs = songData.map(s => ({
-            songId: s.song_id,
-            title: s.title,
-            artist: s.artist, // Assuming s.artist is the primary artist string
-            isrc: s.isrc
-        }));
-
-        const { data: enrichmentData, error: enrichmentError } = await supabase.functions.invoke('enrich-album', {
-            body: { tracks: trackInputs }
-        });
-
-
-        // fetch artists 
         const { data: artists, error: artistError } = await supabase
             .from("artistalbum")
-            .select(`
-                artist:artists(*)  
-            `)
+            .select(`artist:artists(*)`)
             .eq("album_id", albumId);
 
         if (artistError) throw artistError;
         if (!artists || artists.length === 0) throw new Error("Artist(s) not found");
-
-        // Extract the artist info
         const artistList = artists.map(a => a.artist);
 
-
-
-        // fetch album reviews
         const { data: reviews, error: reviewError } = await supabase
             .from("reviews")
             .select("*, creator:users(*), likes:reviewlikes(*)")
@@ -65,14 +39,6 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
             .order("created_at", { ascending: false });
 
         if (reviewError) throw reviewError;
-
-        //get preview url's 
-        const previewMap = new Map();
-        if (!enrichmentError && enrichmentData?.tracks) {
-            enrichmentData.tracks.forEach((t: any) => {
-                previewMap.set(t.songId, t.preview_url);
-            });
-        }
 
         const album: AlbumDetails = {
             albumId: albumData.album_id,
@@ -92,8 +58,8 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                 album_cover_url: albumData.album_cover_url,
                 release_date: albumData.release_date,
                 popularity: s.pop,
-                isrc: s.isrc, 
-                preview_url: previewMap.get(s.song_id) || null,
+                isrc: s.isrc,  
+                preview_url: s.preview_url || null, // Pull straight from DB if cached, or null
             })),
             album_type: albumData.album_type,
             artists: artistList,
@@ -101,13 +67,10 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                 reviews.map(async (r: any) => {
                     let imageUrl = "";
                     try {
-                        const { data: signedData, error: signedError } = await supabase.storage
+                        const { data: signedData } = await supabase.storage
                             .from("profiles")
-                            .createSignedUrl(`${r.creator.user_id}/profile.jpg`, 60 * 60); // 1 hour
-
-                        if (!signedError && signedData?.signedUrl) {
-                            imageUrl = signedData.signedUrl;
-                        }
+                            .createSignedUrl(`${r.creator.user_id}/profile.jpg`, 60 * 60);
+                        if (signedData?.signedUrl) imageUrl = signedData.signedUrl;
                     } catch (err) {
                         console.error("Failed to generate signed URL:", err);
                     }
@@ -132,11 +95,34 @@ export async function getAlbumDetailsById(albumId: string): Promise<AlbumDetails
                 })
             ),
         };
-        return album
+        return album;
     } catch (error) {
         console.error("Failed to fetch Album:", error);
         return null;
     }
+}
+
+export async function backgroundEnrichAlbumPreviews(tracks: any[]) {
+    try {
+        const trackInputs = tracks.map(s => ({
+            songId: s.songId,
+            title: s.title,
+            artist: s.artist,
+            isrc: s.isrc
+        }));
+
+        const { data: enrichmentData, error: enrichmentError } = await supabase.functions.invoke('enrich-album', {
+            body: { tracks: trackInputs }
+        });
+
+        if (!enrichmentError && enrichmentData?.tracks) {
+            // Optional: update local state or let it populate on next cache pass
+            return enrichmentData.tracks;
+        }
+    } catch (err) {
+        console.error("Background preview enrichment failed:", err);
+    }
+    return null;
 }
 
 
