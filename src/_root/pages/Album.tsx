@@ -128,30 +128,63 @@ const Album = () => {
     };
 
 
-    const fetchAlbum = async () => {
-        setLoading(true);
-        setAlbum(null);
-        try {
-            const fetchedAlbum = await getAlbumDetailsById(id || "");
-            if (!fetchedAlbum) {
-                await addAlbum();
-            } else {
-                setAlbum(fetchedAlbum);
+   const fetchAlbumData = async () => {
+    setLoading(true);
+    setNotFound(false);
+    try {
+        // 1. Check if album exists or fetch it
+        let fetchedAlbum = await getAlbumDetailsById(id || "");
+        if (!fetchedAlbum) {
+            const spotifyToken: string = await getSpotifyToken();
+            const spotifyAlbum = await SpotifyAlbumById(id || "", spotifyToken);
+            if (!spotifyAlbum) {
+                setNotFound(true);
+                setLoading(false);
+                return;
             }
-            const ratings = await getAlbumTrackRatings(id || "", user.accountId);
+            await addAlbumComplex(spotifyAlbum);
+            fetchedAlbum = await getAlbumDetailsById(id || "");
+        }
+        setAlbum(fetchedAlbum);
 
-            const ratingsArray = fetchedAlbum?.tracks.map((t) => {
-                const match = ratings?.find((r) => r.songId === t.songId);
+        // 2. Fire all independent user & global data fetches in parallel!
+        const promises: Promise<any>[] = [
+            getAllRatingsOfAlbum(id || ''),
+        ];
+
+        if (isAuthenticated && user?.accountId && fetchedAlbum) {
+            promises.push(getAlbumTrackRatings(id || "", user.accountId));
+            promises.push(hasListenedAlbum(user.accountId, id || ""));
+            promises.push(getRatingAlbum(id || "", user.accountId));
+        }
+
+        const results = await Promise.all(promises);
+
+        // 3. Unpack results cleanly
+        const globalData = results[0];
+        setGlobalRatings(globalData.counts);
+        setGlobalAverage(globalData.average);
+        setGlobalTotal(globalData.total);
+
+        if (isAuthenticated && user?.accountId && fetchedAlbum) {
+            const trackRatings = results[1];
+            const ratingsArray = fetchedAlbum.tracks.map((t: any) => {
+                const match = trackRatings?.find((r: any) => r.songId === t.songId);
                 return match ? match.rating : 0;
             });
             setSongRatings(ratingsArray || []);
 
-        } catch (error) {
-            console.error("Error fetching Album or reviews:", error);
+            setListened(results[2]); // listenedtemp
+            setRating(results[3]);   // user album rating
         }
 
+    } catch (error) {
+        console.error("Error fetching album data:", error);
+        setNotFound(true);
+    } finally {
         setLoading(false);
-    };
+    }
+};
 
     const listenedClick = async () => {
         if (!isAuthenticated) {
@@ -199,17 +232,11 @@ const Album = () => {
         playAlbum(formattedTracks);
     };
 
-    useEffect(() => {
-        if (id) {
-            fetchAlbum();
-            fetchGlobalRaiting();
-            
-            if (isAuthenticated && user?.accountId) {
-                fetchListened();
-                addUpdateRatingAlbumlocal();
-            }
-        }
-    }, [id, isAuthenticated, user?.accountId]);
+useEffect(() => {
+    if (id) {
+        fetchAlbumData();
+    }
+}, [id, isAuthenticated, user?.accountId]);
 
     if (loading) {
         return (
