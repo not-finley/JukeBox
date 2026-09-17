@@ -35,26 +35,6 @@ const Album = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showPlaylistModal, setShowPlaylistModal] = useState(false);
 
-
-    const addAlbum = async () => {
-        try {
-            const spotifyToken: string = await getSpotifyToken();
-            const spotifyAlbum = await SpotifyAlbumById(id || "", spotifyToken);
-            if (!spotifyAlbum) {
-                setNotFound(true);
-                return;
-            }
-
-            await addAlbumComplex(spotifyAlbum);
-            const fetchedArtist = await getAlbumDetailsById(id || "");
-            setAlbum(fetchedArtist);
-        }
-        catch (error) {
-            setNotFound(true);
-        }
-    }
-
-
     const handleRating = async (e: React.MouseEvent<HTMLButtonElement>, value: number) => {
         if (!isAuthenticated) {
             setShowAuthModal(true);
@@ -74,14 +54,8 @@ const Album = () => {
             setListened(true);
         }
 
-        fetchGlobalRaiting();
+        fetchGlobalRating();
     };
-
-    const addUpdateRatingAlbumlocal = async () => {
-        const num = await getRatingAlbum(id ? id : '', user.accountId);
-        setRating(num);
-    }
-
 
     const handleSongRating = async (e: React.MouseEvent<HTMLButtonElement>, value: number, trackIndex: number) => {
         if (!isAuthenticated) {
@@ -118,73 +92,67 @@ const Album = () => {
         setShowPlaylistModal(true);
     };
 
-
-    const fetchGlobalRaiting = async () => {
+    const fetchGlobalRating = async () => {
         const { counts, average, total } = await getAllRatingsOfAlbum(id || '');
-
         setGlobalRatings(counts);
         setGlobalAverage(average);
         setGlobalTotal(total);
     };
 
-
-   const fetchAlbumData = async () => {
-    setLoading(true);
-    setNotFound(false);
-    try {
-        // 1. Check if album exists or fetch it
-        let fetchedAlbum = await getAlbumDetailsById(id || "");
-        if (!fetchedAlbum) {
-            const spotifyToken: string = await getSpotifyToken();
-            const spotifyAlbum = await SpotifyAlbumById(id || "", spotifyToken);
-            if (!spotifyAlbum) {
-                setNotFound(true);
-                setLoading(false);
-                return;
+    const fetchAlbumData = async () => {
+        setLoading(true);
+        setAlbum(null);
+        setNotFound(false);
+        try {
+            let fetchedAlbum = await getAlbumDetailsById(id || "");
+            if (!fetchedAlbum) {
+                const spotifyToken: string = await getSpotifyToken();
+                const spotifyAlbum = await SpotifyAlbumById(id || "", spotifyToken);
+                if (!spotifyAlbum) {
+                    setNotFound(true);
+                    setLoading(false);
+                    return;
+                }
+                await addAlbumComplex(spotifyAlbum);
+                fetchedAlbum = await getAlbumDetailsById(id || "");
             }
-            await addAlbumComplex(spotifyAlbum);
-            fetchedAlbum = await getAlbumDetailsById(id || "");
+            setAlbum(fetchedAlbum);
+
+            const promises: Promise<any>[] = [
+                getAllRatingsOfAlbum(id || ''),
+            ];
+
+            if (isAuthenticated && user?.accountId && fetchedAlbum) {
+                promises.push(getAlbumTrackRatings(id || "", user.accountId));
+                promises.push(hasListenedAlbum(user.accountId, id || ""));
+                promises.push(getRatingAlbum(id || "", user.accountId));
+            }
+
+            const results = await Promise.all(promises);
+
+            const globalData = results[0];
+            setGlobalRatings(globalData.counts);
+            setGlobalAverage(globalData.average);
+            setGlobalTotal(globalData.total);
+
+            if (isAuthenticated && user?.accountId && fetchedAlbum) {
+                const trackRatings = results[1];
+                const ratingsArray = fetchedAlbum.tracks.map((t: any) => {
+                    const match = trackRatings?.find((r: any) => r.songId === t.songId);
+                    return match ? match.rating : 0;
+                });
+                setSongRatings(ratingsArray || []);
+
+                setListened(results[2]);
+                setRating(results[3]);
+            }
+
+        } catch (error) {
+            console.error("Error fetching Album or reviews:", error);
+            setNotFound(true);
         }
-        setAlbum(fetchedAlbum);
-
-        // 2. Fire all independent user & global data fetches in parallel!
-        const promises: Promise<any>[] = [
-            getAllRatingsOfAlbum(id || ''),
-        ];
-
-        if (isAuthenticated && user?.accountId && fetchedAlbum) {
-            promises.push(getAlbumTrackRatings(id || "", user.accountId));
-            promises.push(hasListenedAlbum(user.accountId, id || ""));
-            promises.push(getRatingAlbum(id || "", user.accountId));
-        }
-
-        const results = await Promise.all(promises);
-
-        // 3. Unpack results cleanly
-        const globalData = results[0];
-        setGlobalRatings(globalData.counts);
-        setGlobalAverage(globalData.average);
-        setGlobalTotal(globalData.total);
-
-        if (isAuthenticated && user?.accountId && fetchedAlbum) {
-            const trackRatings = results[1];
-            const ratingsArray = fetchedAlbum.tracks.map((t: any) => {
-                const match = trackRatings?.find((r: any) => r.songId === t.songId);
-                return match ? match.rating : 0;
-            });
-            setSongRatings(ratingsArray || []);
-
-            setListened(results[2]); // listenedtemp
-            setRating(results[3]);   // user album rating
-        }
-
-    } catch (error) {
-        console.error("Error fetching album data:", error);
-        setNotFound(true);
-    } finally {
         setLoading(false);
-    }
-};
+    };
 
     const listenedClick = async () => {
         if (!isAuthenticated) {
@@ -197,19 +165,6 @@ const Album = () => {
         } else {
             await addListenedAlbum(album ? album.albumId : '', user.accountId)
             setListened(true);
-        }
-    }
-    
-    const fetchListened = async () => {
-        try {
-            const listenedtemp = await hasListenedAlbum(user.accountId, id || "")
-            if (listenedtemp) {
-                setListened(true);
-            } else {
-                setListened(false);
-            }
-        } catch (error) {
-            console.log(error)
         }
     }
 
@@ -232,11 +187,11 @@ const Album = () => {
         playAlbum(formattedTracks);
     };
 
-useEffect(() => {
-    if (id) {
-        fetchAlbumData();
-    }
-}, [id, isAuthenticated, user?.accountId]);
+    useEffect(() => {
+        if (id) {
+            fetchAlbumData();
+        }
+    }, [id, isAuthenticated, user?.accountId]);
 
     if (loading) {
         return (
@@ -257,7 +212,6 @@ useEffect(() => {
                     <div className='w-full max-w-6xl'>
                         {/* MOBILE-FRIENDLY HEADER BANNER */}
                         <div className="relative w-full rounded-2xl overflow-hidden bg-gradient-to-b from-gray-900 to-black p-4 sm:p-6 md:p-8 border border-white/5">
-                            {/* Background image with high blur/dimming for mobile atmosphere */}
                             <div className="absolute inset-0 overflow-hidden opacity-30">
                                 <img
                                     src={album.album_cover_url}
@@ -267,7 +221,6 @@ useEffect(() => {
                             </div>
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
 
-                            {/* Header Content layout */}
                             <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-end gap-5">
                                 <img
                                     src={album.album_cover_url}
@@ -291,7 +244,6 @@ useEffect(() => {
                                         </p>
                                     )}
 
-                                    {/* Action Buttons Row */}
                                     <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
                                         <Button
                                             onClick={handlePlayAlbum}
@@ -340,7 +292,6 @@ useEffect(() => {
                                                     key={index}
                                                     className="group flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 hover:bg-white/5 transition-all gap-2 sm:gap-4"
                                                 >
-                                                    {/* Left Side: Number/Play + Title */}
                                                     <div className="flex items-center gap-3.5 min-w-0 flex-1">
                                                         <div className="relative w-6 h-6 flex-shrink-0 flex items-center justify-center">
                                                             {isCurrent ? (
@@ -374,7 +325,6 @@ useEffect(() => {
                                                         </Link>
                                                     </div>
 
-                                                    {/* Right Side: Star Rating (Responsive: Row-aligned on desktop, indented inline row on mobile) */}
                                                     <div className="flex items-center justify-between sm:justify-end gap-1 pl-9 sm:pl-0 shrink-0">
                                                         <div className="flex items-center gap-0.5">
                                                             {[...Array(5)].map((_, starIndex) => {
@@ -433,7 +383,6 @@ useEffect(() => {
                                     </div>
                                 )}
 
-                                {/* User Actions Card */}
                                 <div className="w-full rounded-2xl bg-gray-900/40 border border-white/5 p-4 shadow-xl">
                                     <div className="flex gap-3 mb-3">
                                         <Button 
@@ -465,7 +414,6 @@ useEffect(() => {
                                         </Link>
                                     </div>
 
-                                    {/* Rating Bar */}
                                     <div className="flex items-center justify-between px-4 h-12 bg-black/40 border border-white/5 rounded-xl">
                                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Your Rating</span>
                                         <div className="flex gap-1">
@@ -489,12 +437,10 @@ useEffect(() => {
                             </section>
                         </div>
 
-                        {/* Suggestions */}
                         <div className="mt-8">
                             <Suggestions currentAlbumId={album.albumId} artistId={album.artists[0]?.artist_id || ""} />
                         </div>
 
-                        {/* Reviews Section */}
                         <section className="mt-8">
                             <h2 className="text-xl sm:text-2xl font-bold mb-4 text-white">Reviews</h2>
                             {album?.reviews.length === 0 ? (
