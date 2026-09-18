@@ -103,55 +103,65 @@ const Album = () => {
         setLoading(true);
         setAlbum(null);
         setNotFound(false);
+        
         try {
-            let fetchedAlbum = await getAlbumDetailsById(id || "");
-            if (!fetchedAlbum) {
-                const spotifyToken: string = await getSpotifyToken();
-                const spotifyAlbum = await SpotifyAlbumById(id || "", spotifyToken);
-                if (!spotifyAlbum) {
-                    setNotFound(true);
-                    setLoading(false);
-                    return;
+            const albumId = id || "";
+            const userId = user?.accountId;
+
+            // 1. Define core album fetch and user-specific fetches concurrently
+            const albumPromise = getAlbumDetailsById(albumId).then(async (fetched) => {
+                if (!fetched) {
+                    const spotifyToken = await getSpotifyToken();
+                    const spotifyAlbum = await SpotifyAlbumById(albumId, spotifyToken);
+                    if (!spotifyAlbum) return null;
+                    await addAlbumComplex(spotifyAlbum);
+                    return await getAlbumDetailsById(albumId);
                 }
-                await addAlbumComplex(spotifyAlbum);
-                fetchedAlbum = await getAlbumDetailsById(id || "");
+                return fetched;
+            });
+
+            // Fire user context requests immediately if authenticated
+            const ratingsPromise = getAllRatingsOfAlbum(albumId);
+            const trackRatingsPromise = isAuthenticated && userId ? getAlbumTrackRatings(albumId, userId) : Promise.resolve([]);
+            const listenedPromise = isAuthenticated && userId ? hasListenedAlbum(userId, albumId) : Promise.resolve(false);
+            const userRatingPromise = isAuthenticated && userId ? getRatingAlbum(albumId, userId) : Promise.resolve(0);
+
+            // Await all independent root promises together
+            const [fetchedAlbum, globalData, trackRatings, hasListened, userRating] = await Promise.all([
+                albumPromise,
+                ratingsPromise,
+                trackRatingsPromise,
+                listenedPromise,
+                userRatingPromise,
+            ]);
+
+            if (!fetchedAlbum) {
+                setNotFound(true);
+                setLoading(false);
+                return;
             }
+
             setAlbum(fetchedAlbum);
-
-            const promises: Promise<any>[] = [
-                getAllRatingsOfAlbum(id || ''),
-            ];
-
-            if (isAuthenticated && user?.accountId && fetchedAlbum) {
-                promises.push(getAlbumTrackRatings(id || "", user.accountId));
-                promises.push(hasListenedAlbum(user.accountId, id || ""));
-                promises.push(getRatingAlbum(id || "", user.accountId));
-            }
-
-            const results = await Promise.all(promises);
-
-            const globalData = results[0];
             setGlobalRatings(globalData.counts);
             setGlobalAverage(globalData.average);
             setGlobalTotal(globalData.total);
 
-            if (isAuthenticated && user?.accountId && fetchedAlbum) {
-                const trackRatings = results[1];
+            if (isAuthenticated && userId) {
                 const ratingsArray = fetchedAlbum.tracks.map((t: any) => {
-                    const match = trackRatings?.find((r: any) => r.songId === t.songId);
+                    const match = (trackRatings as any[])?.find((r: any) => r.songId === t.songId);
                     return match ? match.rating : 0;
                 });
-                setSongRatings(ratingsArray || []);
-
-                setListened(results[2]);
-                setRating(results[3]);
+                setSongRatings(ratingsArray);
+                setListened(hasListened as boolean);
+                setRating(userRating as number);
             }
 
         } catch (error) {
             console.error("Error fetching Album or reviews:", error);
             setNotFound(true);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const listenedClick = async () => {
