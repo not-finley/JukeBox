@@ -139,7 +139,7 @@ const SongDetailsSection = () => {
   }, [id, isAuthenticated, user?.accountId]);
 
   useEffect(() => {
-      if (song && !song.preview_url) {
+      if (song) {
           backgroundEnrichAlbumPreviews([{
               songId: song.songId,
               title: song.title,

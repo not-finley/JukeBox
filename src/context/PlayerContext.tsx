@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { Track } from "@/types/index";
+import { useToast } from "@/hooks/use-toast";
 
 type PlayerContextType = {
     currentTrack: Track | null;
@@ -25,12 +26,43 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     const [progress, setProgress] = useState(0);
     const [volume, setVolume] = useState(0.5);
     
+    const { toast } = useToast();
+    
     // We use a ref so the Audio object persists across re-renders
     const audioRef = useRef<HTMLAudioElement>(new Audio());
 
     useEffect(() => {
         audioRef.current.crossOrigin = "anonymous";
     }, []);
+
+    // Handle Audio Errors (Broken preview URLs, network drops)
+    useEffect(() => {
+        const audio = audioRef.current;
+
+        const handleError = () => {
+            console.warn(`Playback failed for track: "${currentTrack?.title}".`);
+            setIsPlaying(false);
+            setProgress(0);
+
+            toast({
+                variant: "destructive",
+                title: "Playback Error",
+                description: `Could not play preview for "${currentTrack?.title || 'Unknown track'}".`,
+            });
+
+            if (queue.length > 0) {
+                setTimeout(() => {
+                    skipNext();
+                }, 300);
+            } else {
+                // No more tracks left, dismiss the player completely!
+                setCurrentTrack(null);
+            }
+        };
+
+        audio.addEventListener("error", handleError);
+        return () => audio.removeEventListener("error", handleError);
+    }, [queue, currentTrack, toast]);
 
     useEffect(() => {
         const audio = audioRef.current;
@@ -67,7 +99,6 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         // small delay prevents ORB spam detection
         const timeout = setTimeout(() => {
             audio.src = currentTrack.preview_url;
-            
             audio.volume = volume;
 
             const onCanPlay = () => {
@@ -77,22 +108,21 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
             };
 
             audio.addEventListener("canplay", onCanPlay, { once: true });
-        }, 120); // magic anti-thrash number
+        }, 120);
 
         return () => clearTimeout(timeout);
     }, [currentTrack]);
 
     useEffect(() => {
-    const audio = audioRef.current;
+        const audio = audioRef.current;
 
-    if (currentTrack && 'mediaSession' in navigator) {
-        // 1. Update the Metadata
+        if (currentTrack && 'mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: currentTrack.title,
                 artist: currentTrack.artist,
-                album:  "Unknown Album",
+                album: "Unknown Album",
                 artwork: [
-                    { src: currentTrack.album_cover_url, sizes: '96x96',   type: 'image/png' },
+                    { src: currentTrack.album_cover_url, sizes: '96x96', type: 'image/png' },
                     { src: currentTrack.album_cover_url, sizes: '128x128', type: 'image/png' },
                     { src: currentTrack.album_cover_url, sizes: '192x192', type: 'image/png' },
                     { src: currentTrack.album_cover_url, sizes: '256x256', type: 'image/png' },
@@ -101,10 +131,8 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
                 ]
             });
 
-            // 2. Sync playback state
             navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
 
-            // 3. Add Action Handlers (Physical Buttons)
             navigator.mediaSession.setActionHandler('play', () => {
                 togglePlay();
             });
@@ -112,7 +140,6 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
                 togglePlay();
             });
             
-            // Optional: Seek handlers
             navigator.mediaSession.setActionHandler('seekbackward', (details) => {
                 const skipTime = details.seekOffset || 10;
                 audio.currentTime = Math.max(audio.currentTime - skipTime, 0);
@@ -153,21 +180,21 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         if (currentTrack?.songId === track.songId) {
             togglePlay();
         } else {
-            setQueue([]); // Clear queue if playing a single track
+            setQueue([]); 
             setCurrentTrack(track);
         }
     };
 
     const playAlbum = (tracks: Track[], startIndex = 0) => {
         if (tracks.length === 0) return;
-        setQueue(tracks.slice(startIndex + 1)); // Set the rest of the album as queue
+        setQueue(tracks.slice(startIndex + 1)); 
         setCurrentTrack(tracks[startIndex]);
     };
 
     const skipNext = () => {
         if (queue.length > 0) {
             const nextTrack = queue[0];
-            setQueue(prev => prev.slice(1)); // Remove the track we're about to play
+            setQueue(prev => prev.slice(1)); 
             setCurrentTrack(nextTrack);
         }
     };
@@ -201,7 +228,7 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     return (
         <PlayerContext.Provider value={{ 
             currentTrack, 
-            setCurrentTrack, // Added this so the close button works
+            setCurrentTrack, 
             playTrack, 
             isPlaying, 
             togglePlay, 
@@ -218,7 +245,6 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-// This is the missing piece! 
 export const usePlayerContext = () => {
     const context = useContext(PlayerContext);
     if (context === undefined) {
