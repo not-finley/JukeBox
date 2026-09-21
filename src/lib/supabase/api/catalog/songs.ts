@@ -114,9 +114,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
 
         if (reviewError) throw reviewError;
 
-        const preview_url = await getDeezerPreview(songData.title, songData.artists, songData.isrc)
-
-        // Build song object
+        // Build song object (pulling preview_url straight from DB cache)
         const song: SongDetails = {
             songId: songData.song_id,
             title: songData.title,
@@ -140,7 +138,6 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
                         email: r.creator.email,
                         imageUrl: await getProfileUrl(r.creator.user_id, r.creator.avatar_url),
                         bio: r.creator.bio ?? "",
-
                     },
                     song: songData,
                     likes: r.likes.length,
@@ -149,7 +146,7 @@ export async function getSongDetailsById(songId: string): Promise<SongDetails | 
                 }))
             ),
             isrc: songData.isrc,
-            preview_url: preview_url
+            preview_url: songData.preview_url || null // Pull from cache, fallback to null
         };
 
         return song;

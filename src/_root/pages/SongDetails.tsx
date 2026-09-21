@@ -1,6 +1,6 @@
 import { SongDetails } from "@/types";
 import { Link, useParams } from "react-router-dom";
-import { addListenedSong, addUpdateRatingSong, addSongToDatabase, getAllRatingsOfSong, getRatingSong, getSongDetailsById, hasListenedSong, removeListenedSong, deleteRatingSong } from "@/lib/supabase/api";
+import { addListenedSong, addUpdateRatingSong, addSongToDatabase, getAllRatingsOfSong, getRatingSong, getSongDetailsById, hasListenedSong, removeListenedSong, deleteRatingSong, backgroundEnrichAlbumPreviews } from "@/lib/supabase/api";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SongDetailSkeleton } from "@/components/shared/PageSkeletons";
@@ -64,28 +64,6 @@ const SongDetailsSection = () => {
     fetchGlobalRaiting();
   };
 
-  const addUpdateRatingSonglocal = async () => {
-    const num = await getRatingSong(id ? id : '', user.accountId);
-    setRating(num);
-  }
-
-  const addSong = async () => {
-    try {
-      const spotifyToken: string = await getSpotifyToken();
-      const spotifySong = await SpotifyTrackById(id ? id : "", spotifyToken);
-      if (!spotifySong) {
-        return;
-      }
-
-      await addSongToDatabase(spotifySong);
-      const fetchedSong = await getSongDetailsById(id || "");
-      setSong(fetchedSong);
-    }
-    catch (error) {
-      setNotFound(true);
-    }
-  }
-
   const handleAddToPlaylist = () => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
@@ -94,33 +72,62 @@ const SongDetailsSection = () => {
     setShowPlaylistModal(true);
   };
 
-  const fetchSongAndReviews = async () => {
+  const fetchSongData = async () => {
+    setLoading(true);
+    setNotFound(false);
     try {
-      const fetchedSong = await getSongDetailsById(id || "");
+      const songId = id || "";
+      const userId = user?.accountId;
+
+      // 1. Define core song fetch (with Spotify fallback if missing)
+      const songPromise = getSongDetailsById(songId).then(async (fetched) => {
+        if (!fetched) {
+          const spotifyToken: string = await getSpotifyToken();
+          const spotifySong = await SpotifyTrackById(songId, spotifyToken);
+          if (!spotifySong) return null;
+          await addSongToDatabase(spotifySong);
+          return await getSongDetailsById(songId);
+        }
+        fetched.reviews.sort((a, b) => b.createdAt - a.createdAt);
+        return fetched;
+      });
+
+      // 2. Fire user-specific and global context requests concurrently
+      const globalRatingsPromise = getAllRatingsOfSong(songId);
+      const listenedPromise = isAuthenticated && userId ? hasListenedSong(userId, songId) : Promise.resolve(false);
+      const userRatingPromise = isAuthenticated && userId ? getRatingSong(songId, userId) : Promise.resolve(0);
+
+      // Await all independent root promises together
+      const [fetchedSong, globalData, hasListened, userRating] = await Promise.all([
+        songPromise,
+        globalRatingsPromise,
+        listenedPromise,
+        userRatingPromise,
+      ]);
+
       if (!fetchedSong) {
-        await addSong();
-      } else {
-        fetchedSong.reviews.sort((a, b) => b.createdAt - a.createdAt);
-        setSong(fetchedSong);
+        setNotFound(true);
+        setLoading(false);
+        return;
       }
+
+      setSong(fetchedSong);
+      setGlobalRatings(globalData.counts);
+      setGlobalAverage(globalData.average);
+      setGlobalTotal(globalData.total);
+
+      if (isAuthenticated && userId) {
+        setListened(hasListened as boolean);
+        setRating(userRating as number);
+      }
+
     } catch (error) {
       console.error("Error fetching song or reviews:", error);
+      setNotFound(true);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
-
-  const fetchListened = async () => {
-    try {
-      const listenedtemp = await hasListenedSong(user.accountId, id || "")
-      if (listenedtemp) {
-        setListened(true);
-      } else {
-        setListened(false);
-      }
-    } catch (error) {
-      console.log(error)
-    }
-  }
 
   useEffect(() => {
     if (!id) {
@@ -128,14 +135,23 @@ const SongDetailsSection = () => {
       setLoading(false);
       return;
     }
-    fetchSongAndReviews();
-    fetchGlobalRaiting();
+    fetchSongData();
+  }, [id, isAuthenticated, user?.accountId]);
 
-    if (isAuthenticated && user?.accountId) {
-      fetchListened();
-      addUpdateRatingSonglocal();
-    }
-  }, [id, user?.accountId, isAuthenticated]);
+  useEffect(() => {
+      if (song && !song.preview_url) {
+          backgroundEnrichAlbumPreviews([{
+              songId: song.songId,
+              title: song.title,
+              artist: song.artists[0]?.name,
+              isrc: song.isrc
+          }]).then((enrichedTracks) => {
+              if (enrichedTracks && enrichedTracks[0]?.preview_url) {
+                  setSong(prev => prev ? { ...prev, preview_url: enrichedTracks[0].preview_url } : null);
+              }
+          });
+      }
+  }, [song?.songId]);
 
   const listenedClick = async () => {
     if (!isAuthenticated) {
