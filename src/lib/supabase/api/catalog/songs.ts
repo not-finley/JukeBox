@@ -1,6 +1,5 @@
 import { Song, SongDetails, SpotifySong } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
-import { getDeezerPreview } from "@/lib/integrations/deezer";
 import { normalizeReleaseDate } from "../utils/dates";
 import { getProfileUrl } from "../users";
 
