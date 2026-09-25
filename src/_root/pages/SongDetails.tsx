@@ -20,6 +20,7 @@ import NotFound from "@/components/shared/NotFound";
 const SongDetailsSection = () => {
   const { id } = useParams();
   const [song, setSong] = useState<SongDetails | null>(null);
+  const hasPreview = Boolean(song?.preview_url);
   const [loading, setLoading] = useState(true);
   const [listened, setListened] = useState(true);
   const [songNotFound, setNotFound] = useState(false);
@@ -303,23 +304,30 @@ const SongDetailsSection = () => {
             <div className="mb-8 flex flex-wrap items-center gap-2.5">
                 <Button
                     onClick={() => {
-                      if (!isAuthenticated) {
-                        setShowAuthModal(true);
-                        return;
-                      }
-                      if (isCurrent) {
-                        togglePlay();
-                      } else {
-                        playTrack({
-                          title: song.title, 
-                          songId: song.songId, 
-                          preview_url: song.preview_url, 
-                          album_cover_url: song.album_cover_url, 
-                          artist: song.artists.map(a => a.name).join(", "), 
-                          isrc: song.isrc
-                        });
-                      }
-                    }}
+                        if (!isAuthenticated) {
+                          setShowAuthModal(true);
+                          return;
+                        }
+                        if (!hasPreview) {
+                          // Optional: fallback to opening Spotify if preview is missing
+                          if (song?.spotify_url) {
+                            window.open(song.spotify_url, "_blank");
+                          }
+                          return;
+                        }
+                        if (isCurrent) {
+                          togglePlay();
+                        } else {
+                          playTrack({
+                            title: song.title, 
+                            songId: song.songId, 
+                            preview_url: song.preview_url, 
+                            album_cover_url: song.album_cover_url, 
+                            artist: song.artists.map(a => a.name).join(", "), 
+                            isrc: song.isrc
+                          });
+                        }
+                      }}
                     className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold h-10 px-5 rounded-xl transition-all active:scale-95 shadow-lg"
                 >
                     {isCurrent && isPlaying ? <Pause fill="black" size={16} /> : <Play fill="black" size={16} />}

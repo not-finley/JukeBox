@@ -177,6 +177,15 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     const playTrack = (track: Track) => {
+        if (!track.preview_url) {
+            toast({
+                variant: "destructive",
+                title: "Unavailable",
+                description: `No audio preview available for "${track.title}".`,
+            });
+            return;
+        }
+
         if (currentTrack?.songId === track.songId) {
             togglePlay();
         } else {
@@ -187,8 +196,19 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
 
     const playAlbum = (tracks: Track[], startIndex = 0) => {
         if (tracks.length === 0) return;
+        
+        const targetTrack = tracks[startIndex];
+        if (!targetTrack?.preview_url) {
+            toast({
+                variant: "destructive",
+                title: "Unavailable",
+                description: `No audio preview available for "${targetTrack?.title || 'this track'}".`,
+            });
+            return;
+        }
+
         setQueue(tracks.slice(startIndex + 1)); 
-        setCurrentTrack(tracks[startIndex]);
+        setCurrentTrack(targetTrack);
     };
 
     const skipNext = () => {
