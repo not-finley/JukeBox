@@ -1,173 +1,112 @@
 import { Link } from "react-router-dom";
-import { Music, Headphones, Disc3, ShieldCheck, Users } from "lucide-react";
-
-const SoundWave = ({ position }: { position: "left" | "right" }) => (
-  <div 
-    className={`absolute bottom-0 ${position === "left" ? "left-4 lg:left-10" : "right-4 lg:right-10"} 
-    hidden lg:flex items-end gap-1.5 opacity-20 pointer-events-none select-none`}
-    style={{ maskImage: 'linear-gradient(to top, black 40%, transparent 10q20%)', WebkitMaskImage: 'linear-gradient(to top, black 40%, transparent 100%)' }}
-  >
-    {[...Array(10)].map((_, i) => (
-      <div
-        key={i}
-        className="w-1 bg-emerald-400 rounded-full animate-wave origin-bottom"
-        style={{
-          height: `${50 + (i % 3) * 15}px`,
-          animationDelay: `${i * 0.15}s`,
-          animationDuration: `${1 + (i % 4) * 0.2}s`
-        }}
-      />
-    ))}
-  </div>
-);
+import { Headphones, Music, Users, ArrowUpRight } from "lucide-react";
 
 const About = () => {
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-20 text-light-1 overflow-hidden">
-      
+    <div className="max-w-4xl mx-auto px-6 py-16 md:py-24 text-zinc-100">
       {/* Hero Section */}
-      <section className="relative text-center mb-24 md:mb-32 pt-8 md:pt-16">
-        <SoundWave position="left" />
-        <SoundWave position="right" />
+      <section className="mb-20 md:mb-28">
+        <p className="text-xs uppercase tracking-widest text-emerald-400 font-mono mb-4">
+          About Jukeboxd
+        </p>
+        <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 text-white leading-tight">
+          Music has a memory. <br />
+          <span className="text-zinc-500 font-normal">Catalog yours.</span>
+        </h1>
+        <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl leading-relaxed mb-8">
+          Jukeboxd is a personal soundtrack journal. Track albums, log listens, rate rare finds, and share your musical identity with friends.
+        </p>
 
-        <div className="relative z-10">
-          {/* Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-6 animate-pulse">
-            The Letterboxd for Music Discovery
-          </div>
-
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-6 tracking-tight bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent pb-2">
-            Music has a memory.
-          </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-light-3 max-w-2xl mx-auto leading-relaxed mb-10">
-            Jukeboxd is your personal soundtrack journal. Track albums, log listens, rate rare finds, and share your musical identity with friends.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link
-              to="/sign-up"
-              className="w-full sm:w-auto px-8 py-4 rounded-full bg-emerald-500 text-dark-1 font-bold hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/25 hover:scale-105"
-            >
-              Start Logging Free
-            </Link>
-            <Link
-              to="/trending"
-              className="w-full sm:w-auto px-8 py-4 rounded-full border border-white/10 hover:border-emerald-500 text-light-2 hover:text-emerald-400 transition-all backdrop-blur-sm bg-white/[0.02]"
-            >
-              Explore Community
-            </Link>
-          </div>
-        </div>
-
-       
-      </section>
-
-      {/* Founder Story */}
-      <section className="grid md:grid-cols-2 gap-12 md:gap-16 items-center mb-28 md:mb-36">
-        <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase">
-            Indie Built
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            Built by a real music lover, for music lovers.
-          </h2>
-          <p className="text-light-2 leading-relaxed text-base sm:text-lg">
-            Jukeboxd is an independent platform crafted for people who care deeply about full-album listens, underground artists, and cataloging every era of their taste.
-          </p>
-          <div className="space-y-3 pt-2 text-light-3 text-sm sm:text-base">
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="text-emerald-400 shrink-0" size={20} />
-              <span>Zero bloated social network clutter or algorithmic feeds.</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="text-emerald-400 shrink-0" size={20} />
-              <span>Pure focus on your personal library and musical legacy.</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="group relative bg-gradient-to-br from-emerald-500/10 via-cyan-500/5 to-transparent border border-white/10 rounded-3xl p-8 sm:p-10 backdrop-blur-md overflow-hidden shadow-xl">
-          <Disc3 className="text-emerald-400 mb-6 animate-spin-slow" size={40} />
-          <blockquote className="relative z-10 text-light-1 italic text-lg sm:text-xl font-medium leading-relaxed">
-            “I wanted a clean, beautiful Letterboxd alternative specifically for music listening history, so I built it.”
-          </blockquote>
-          <div className="relative z-10 mt-6 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex-center font-bold text-emerald-400 text-sm">
-              F
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white">Finley</p>
-              <p className="text-xs text-light-3">Creator & Developer</p>
-            </div>
-          </div>
-          <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-emerald-500/10 blur-3xl rounded-full group-hover:bg-emerald-500/20 transition-all pointer-events-none" />
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            to="/sign-up"
+            className="px-6 py-3 rounded-md bg-zinc-100 text-zinc-950 font-medium hover:bg-white transition-colors text-sm"
+          >
+            Start Logging Free
+          </Link>
+          <Link
+            to="/trending"
+            className="px-6 py-3 rounded-md border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition-colors text-sm flex items-center gap-1.5"
+          >
+            Explore Community
+            <ArrowUpRight size={16} className="text-zinc-500" />
+          </Link>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="mb-28 md:mb-36">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h3 className="text-3xl sm:text-4xl font-extrabold mb-4 tracking-tight">
-            Everything your taste deserves
-          </h3>
-          <p className="text-light-3 text-sm sm:text-base">
-            Designed with precision performance, deep listening states, and clean aesthetic layouts.
-          </p>
-        </div>
+      {/* Founder / Vision Section */}
+      <section className="border-t border-zinc-800/80 pt-16 mb-20 md:mb-28">
+        <div className="grid md:grid-cols-12 gap-8 items-start">
+          <div className="md:col-span-5">
+            <h2 className="text-2xl font-semibold tracking-tight text-white mb-3">
+              Built for listeners.
+            </h2>
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              Crafted for people who care deeply about full-album listens, cataloging eras of their taste, and cutting out algorithmic noise.
+            </p>
+          </div>
 
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="md:col-span-7 md:pl-6">
+            <blockquote className="border-l-2 border-emerald-500/80 pl-6 py-1 text-lg text-zinc-200 italic font-normal leading-relaxed">
+              “I wanted a clean, focused alternative specifically built for music listening history—without social clutter or engagement bait.”
+            </blockquote>
+            <p className="mt-4 pl-6 text-xs text-zinc-500 font-mono">
+              Finley — Creator & Developer
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Core Capabilities */}
+      <section className="border-t border-zinc-800/80 pt-16 mb-20 md:mb-28">
+        <h3 className="text-xs uppercase tracking-widest text-zinc-500 font-mono mb-10">
+          Features
+        </h3>
+
+        <div className="grid sm:grid-cols-3 gap-8">
           {[
             {
               icon: Headphones,
               title: "Track Every Listen",
-              desc: "Build your permanent digital archive of albums, EPs, and deep cuts you spin."
+              desc: "Build a permanent digital archive of full albums, EPs, and rare spins."
             },
             {
               icon: Music,
               title: "Rate & Review",
-              desc: "Capture your honest thoughts, star rankings, and favorite standout tracks."
+              desc: "Log your thoughts, star rankings, and favorite standout tracks."
             },
             {
               icon: Users,
-              title: "Discover Community",
-              desc: "Follow fellow listeners, compare ratings, and uncover what your friends are spinning."
+              title: "Discover Together",
+              desc: "Follow fellow listeners, swap ratings, and see what your friends spin."
             }
           ].map((feature, i) => (
-            <div
-              key={i}
-              className="group p-8 rounded-3xl border border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent hover:from-white/[0.06] hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1 shadow-lg"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex-center text-emerald-400 mb-6 transition-transform duration-300 group-hover:scale-110">
-                <feature.icon size={24} />
-              </div>
-              <h4 className="text-xl font-bold mb-3 text-white">{feature.title}</h4>
-              <p className="text-light-3 text-sm sm:text-base leading-relaxed">{feature.desc}</p>
+            <div key={i} className="space-y-3">
+              <feature.icon size={20} className="text-zinc-400 stroke-[1.75]" />
+              <h4 className="text-base font-medium text-white">{feature.title}</h4>
+              <p className="text-sm text-zinc-400 leading-relaxed">{feature.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Bottom CTA Banner */}
-      <section className="relative overflow-hidden text-center bg-gradient-to-br from-emerald-600 via-teal-700 to-cyan-800 rounded-3xl p-10 sm:p-16 text-white shadow-2xl border border-emerald-400/20">
-        <div className="relative z-10 max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-4 tracking-tight">
-            Start building your musical legacy.
+      {/* Footer CTA */}
+      <section className="border-t border-zinc-800/80 pt-16 pb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-white tracking-tight">
+            Ready to log your first album?
           </h2>
-          <p className="text-base sm:text-lg mb-8 font-medium text-emerald-100/90">
-            Every album tells a story. Keep track of yours forever, completely free.
+          <p className="text-sm text-zinc-400 mt-1">
+            Free forever. No credit card required.
           </p>
-
-          <Link
-            to="/sign-up"
-            className="inline-block px-10 py-4 rounded-full bg-white text-dark-1 font-bold shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
-          >
-            Join Jukeboxd Free
-          </Link>
         </div>
 
-        {/* Ambient background rings */}
-        <div className="absolute -top-24 -left-24 w-72 h-72 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-black/20 rounded-full blur-2xl pointer-events-none" />
+        <Link
+          to="/sign-up"
+          className="inline-flex justify-center items-center px-6 py-3 rounded-md bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-medium text-sm transition-colors shrink-0"
+        >
+          Get Started
+        </Link>
       </section>
     </div>
   );
