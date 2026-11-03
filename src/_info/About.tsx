@@ -14,7 +14,7 @@ const About = () => {
           <span className="text-zinc-500 font-normal">Catalog yours.</span>
         </h1>
         <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl leading-relaxed mb-8">
-          Jukeboxd is a personal soundtrack journal. Track albums, log listens, rate rare finds, and share your musical identity with friends.
+          Jukeboxd is a music journal. Track albums, log listens, rate songs, and share your music with friends.
         </p>
 
         <div className="flex flex-wrap items-center gap-4">
@@ -39,16 +39,16 @@ const About = () => {
         <div className="grid md:grid-cols-12 gap-8 items-start">
           <div className="md:col-span-5">
             <h2 className="text-2xl font-semibold tracking-tight text-white mb-3">
-              Built for listeners.
+              Created for listeners.
             </h2>
             <p className="text-sm text-zinc-400 leading-relaxed">
-              Crafted for people who care deeply about full-album listens, cataloging eras of their taste, and cutting out algorithmic noise.
+              Made for people who care deeply about full-album listens, cataloging eras of their taste, and cutting out algorithmic noise.
             </p>
           </div>
 
           <div className="md:col-span-7 md:pl-6">
             <blockquote className="border-l-2 border-emerald-500/80 pl-6 py-1 text-lg text-zinc-200 italic font-normal leading-relaxed">
-              “I wanted a clean, focused alternative specifically built for music listening history—without social clutter or engagement bait.”
+              “I wanted a clean, focused alternative specifically built for music listening history, without social clutter or engagement bait.”
             </blockquote>
             <p className="mt-4 pl-6 text-xs text-zinc-500 font-mono">
               Finley — Creator & Developer
@@ -78,7 +78,7 @@ const About = () => {
             {
               icon: Users,
               title: "Discover Together",
-              desc: "Follow fellow listeners, swap ratings, and see what your friends spin."
+              desc: "Follow fellow listeners, swap ratings, and see what your friends discover."
             }
           ].map((feature, i) => (
             <div key={i} className="space-y-3">
